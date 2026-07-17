@@ -42,13 +42,28 @@ function blob(rr,amp,asp,seed,t,pts){ ctx.beginPath(); const n=pts||110;
 
 XS.render=function(app){
   const t=app.time/1000; bg(t);
-  const spec=app.spec, S=app.S; if(!spec){ return; }
-  if(spec.tissue) drawTissue(app,t);
-  else if(spec.isVirus) drawVirus(app,t);
-  else drawCell(app,t);
-  drawScan(app);
-  envTint(S);
+  const menuDemo = (app.phase==='menu') && app.demo;
+  const spec = menuDemo ? app.demo : app.spec; if(!spec){ return; }
+  const oy = app.phase==='assignment' ? -Math.min(R*0.26,100) : 0;   // lift cell above the dock
+  ctx.save(); ctx.translate(0,oy); if(menuDemo) ctx.globalAlpha=0.5;
+  const da = menuDemo ? {spec, S:null, phase:'menu', time:app.time} : app;
+  if(spec.tissue) drawTissue(da,t);
+  else if(spec.isVirus) drawVirus(da,t);
+  else drawCell(da,t);
+  ctx.restore();
+  if(!menuDemo){ drawScan(app); envTint(app.S); }
 };
+/* rounded-rect path (for the boxy plant cell) */
+function roundRectPath(x,y,hw,hh,r){ ctx.beginPath();
+  ctx.moveTo(x-hw+r,y-hh); ctx.lineTo(x+hw-r,y-hh); ctx.quadraticCurveTo(x+hw,y-hh,x+hw,y-hh+r);
+  ctx.lineTo(x+hw,y+hh-r); ctx.quadraticCurveTo(x+hw,y+hh,x+hw-r,y+hh);
+  ctx.lineTo(x-hw+r,y+hh); ctx.quadraticCurveTo(x-hw,y+hh,x-hw,y+hh-r);
+  ctx.lineTo(x-hw,y-hh+r); ctx.quadraticCurveTo(x-hw,y-hh,x-hw+r,y-hh); ctx.closePath(); }
+/* plant cells are rigid rectangular boxes; everything else is an organic blob */
+function cellPath(spec,rad,wob,asp,seed,t){
+  if(spec && spec.kingdomKey==='Plantae'){ const s=rad; roundRectPath(cx,cy, s*1.12, s*0.9, s*0.16); }
+  else blob(rad,wob,asp,seed,t);
+}
 
 /* ---------------- CELL ---------------- */
 function drawCell(app,t){
@@ -60,7 +75,7 @@ function drawCell(app,t){
   a.addColorStop(0,`rgba(${kc.join(',')},${0.09+0.12*health})`);a.addColorStop(1,`rgba(${kc.join(',')},0)`);
   ctx.fillStyle=a;ctx.beginPath();ctx.arc(cx,cy,rad*2.1,0,6.3);ctx.fill();ctx.restore();
   // cytoplasm
-  blob(rad,wob,asp,seed,t);
+  cellPath(spec,rad,wob,asp,seed,t);
   const body=ctx.createRadialGradient(cx-rad*.25,cy-rad*.25,rad*.1,cx,cy,rad*1.05);
   body.addColorStop(0,`rgba(${kc.join(',')},.20)`);
   body.addColorStop(.6,`rgba(${Math.round(kc[0]*.5)},${Math.round(kc[1]*.6)},${Math.round(kc[2]*.7)},.15)`);
@@ -71,20 +86,20 @@ function drawCell(app,t){
   const wall=spec.K.wall;
   if(mI>0.35){
     if(wall==='cellulose'||wall==='chitin'){
-      ctx.lineWidth=cl(rad*.05,3,8);ctx.strokeStyle=`rgba(${kc.join(',')},${0.4+0.4*mI})`;blob(rad,wob,asp,seed,t);ctx.stroke();
-      ctx.lineWidth=cl(rad*.018,1.5,4);ctx.strokeStyle=`rgba(${kc.join(',')},${0.7*mI})`;blob(rad*0.9,wob,asp,seed,t);ctx.stroke();
+      ctx.lineWidth=cl(rad*.05,3,8);ctx.strokeStyle=`rgba(${kc.join(',')},${0.4+0.4*mI})`;cellPath(spec,rad,wob,asp,seed,t);ctx.stroke();
+      ctx.lineWidth=cl(rad*.018,1.5,4);ctx.strokeStyle=`rgba(${kc.join(',')},${0.7*mI})`;cellPath(spec,rad*0.9,wob,asp,seed,t);ctx.stroke();
     } else if(wall==='pepti'){
-      ctx.lineWidth=cl(rad*.03,2,5);ctx.strokeStyle=`rgba(${kc.join(',')},${0.55*mI+.3})`;ctx.shadowColor=`rgba(${kc.join(',')},.7)`;ctx.shadowBlur=12;blob(rad,wob,asp,seed,t);ctx.stroke();
-      ctx.shadowBlur=0;ctx.lineWidth=1.4;ctx.strokeStyle=`rgba(${kc.join(',')},${0.5*mI})`;blob(rad*0.88,wob,asp,seed,t);ctx.stroke();
+      ctx.lineWidth=cl(rad*.03,2,5);ctx.strokeStyle=`rgba(${kc.join(',')},${0.55*mI+.3})`;ctx.shadowColor=`rgba(${kc.join(',')},.7)`;ctx.shadowBlur=12;cellPath(spec,rad,wob,asp,seed,t);ctx.stroke();
+      ctx.shadowBlur=0;ctx.lineWidth=1.4;ctx.strokeStyle=`rgba(${kc.join(',')},${0.5*mI})`;cellPath(spec,rad*0.88,wob,asp,seed,t);ctx.stroke();
     } else {
-      ctx.lineWidth=cl(rad*.028,2,6);ctx.strokeStyle=`rgba(${kc.join(',')},${0.5+0.4*mI})`;ctx.shadowColor=`rgba(${kc.join(',')},.8)`;ctx.shadowBlur=cl(18*mI+4,4,22);blob(rad,wob,asp,seed,t);ctx.stroke();
+      ctx.lineWidth=cl(rad*.028,2,6);ctx.strokeStyle=`rgba(${kc.join(',')},${0.5+0.4*mI})`;ctx.shadowColor=`rgba(${kc.join(',')},.8)`;ctx.shadowBlur=cl(18*mI+4,4,22);cellPath(spec,rad,wob,asp,seed,t);ctx.stroke();
     }
-  } else { ctx.lineWidth=cl(rad*.03,2,6);ctx.strokeStyle=`rgba(${kc.join(',')},${0.4+0.4*mI})`;ctx.setLineDash([rad*.18*mI+4,rad*.10]);blob(rad,wob,asp,seed,t);ctx.stroke();ctx.setLineDash([]); }
+  } else { ctx.lineWidth=cl(rad*.03,2,6);ctx.strokeStyle=`rgba(${kc.join(',')},${0.4+0.4*mI})`;ctx.setLineDash([rad*.18*mI+4,rad*.10]);cellPath(spec,rad,wob,asp,seed,t);ctx.stroke();ctx.setLineDash([]); }
   ctx.restore();
   // appendages behind organelles
   for(const p of spec.parts){ if(p.shape==='flagellum') drawFlagellum(p,rad,asp,t); if(p.shape==='cilia') drawCilia(rad,asp,wob,seed,t,p); if(p.shape==='pili') drawPili(rad,asp,t,p); }
   // clip and draw organelles
-  ctx.save(); blob(rad,wob,asp,seed,t); ctx.clip();
+  ctx.save(); cellPath(spec,rad,wob,asp,seed,t); ctx.clip();
   for(const p of spec.parts){ if(['flagellum','cilia','pili','spike','tail'].includes(p.shape)) {markPos(p,rad,asp);continue;} drawPart(app,p,rad,asp,t); }
   ctx.restore();
   inspectRings(app,rad);

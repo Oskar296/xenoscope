@@ -184,3 +184,39 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border:none;border-ra
   .classgrid{grid-template-columns:repeat(2,1fr)}
 }
 @media (max-width:900px) and (min-width:561px){ .btn-row.agents{flex-wrap:wrap} }
+
+/* ---------- home screen ---------- */
+.tagline{color:var(--ink);font-size:14px;line-height:1.5;margin:2px 0 14px;opacity:.94}
+.tagline b{color:var(--mint)}
+.how{display:flex;gap:9px;margin:0 0 15px;flex-wrap:wrap}
+.how-step{flex:1;min-width:150px;display:flex;gap:9px;align-items:flex-start;border:1px solid var(--line);border-radius:12px;padding:9px 10px;background:rgba(255,255,255,.02)}
+.how-ico{font-size:19px;line-height:1}
+.how-step b{font-size:12.5px} .how-step small{display:block;color:var(--dim);font-size:10.5px;margin-top:2px;line-height:1.35}
+.rk-left{flex:1;min-width:180px}
+.xpbar{height:5px;border-radius:5px;background:rgba(255,255,255,.08);overflow:hidden;margin-top:8px;max-width:240px}
+.xpbar>i{display:block;height:100%;background:linear-gradient(90deg,#1c8f7a,var(--mint))}
+.lbl{margin:12px 0 6px;font-size:11px;letter-spacing:1px}
+
+/* ---------- persistent notes (top-left readout) ---------- */
+.notes-cap{margin:0 0 8px}
+.rl-sep{height:1px;background:var(--line);margin:12px 0}
+#left .readout{max-height:210px;overflow:auto}
+.readout .ro-name{animation:pop .25s ease}
+@keyframes pop{from{transform:scale(.9);opacity:.4}to{transform:scale(1);opacity:1}}
+
+/* ---------- lighter overlays so the live specimen shows through ---------- */
+.overlay{background:radial-gradient(760px 520px at 50% 42%,rgba(6,18,24,.70),rgba(3,7,10,.92))}
+.card{animation:cardIn .25s ease}
+@keyframes cardIn{from{transform:translateY(10px) scale(.99);opacity:0}to{transform:none;opacity:1}}
+
+/* ---------- compact assignment dock (stops covering the cell) ---------- */
+.dock-treat{padding:9px 13px;gap:12px;max-height:150px}
+.dock-treat .abtn{padding:5px 9px;min-width:88px;font-size:10.5px}
+.dock-treat .abtn small{font-size:8.5px;margin-top:0}
+.dock-treat .sldwrap{width:150px}
+.dock-treat .sldtrack{height:18px}
+.dock-treat .dock-lab{margin-bottom:5px}
+.dock-treat .btn-row.agents{max-width:440px}
+
+/* ---------- accessibility ---------- */
+@media (prefers-reduced-motion: reduce){ *{animation-duration:.001ms!important;transition-duration:.001ms!important} }

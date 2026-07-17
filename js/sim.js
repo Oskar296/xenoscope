@@ -158,13 +158,13 @@ function threat(spec,S){
   // effective (selective) damage + broad damage
   let v=0, integ=0;
   const eff=spec.kill;
-  if(eff.includes('antibiotic')) v+=cl(S.antibiotic/50,0,1)*2.0, integ+=cl(S.antibiotic/50,0,1)*1.0;
-  if(eff.includes('antifungal')) v+=cl(S.antifungal/50,0,1)*2.1;
-  if(eff.includes('antiviral')) v+=cl(S.antiviral/50,0,1)*2.2;
-  if(eff.includes('lysozyme')) integ+=cl(S.lysozyme/50,0,1)*2.0;
-  if(eff.includes('hypotonic')) integ+=cl(S.hypotonic/50,0,1)*2.2;   // burst wall-less
-  if(eff.includes('hypertonic')) v+=cl(S.hypertonic/50,0,1)*2.0;     // plasmolyse walled
-  if(eff.includes('detergent')) v+=cl(S.detergent/50,0,1)*2.1;       // dissolve membrane / envelope
+  if(eff.includes('antibiotic')) v+=cl(S.antibiotic/50,0,1)*2.4, integ+=cl(S.antibiotic/50,0,1)*1.0;
+  if(eff.includes('antifungal')) v+=cl(S.antifungal/50,0,1)*2.4;
+  if(eff.includes('antiviral')) v+=cl(S.antiviral/50,0,1)*2.5;
+  if(eff.includes('lysozyme')) integ+=cl(S.lysozyme/50,0,1)*2.2;
+  if(eff.includes('hypotonic')) integ+=cl(S.hypotonic/50,0,1)*2.4;   // burst wall-less
+  if(eff.includes('hypertonic')) v+=cl(S.hypertonic/50,0,1)*2.4;     // plasmolyse walled
+  if(eff.includes('detergent')) v+=cl(S.detergent/50,0,1)*2.4;       // dissolve membrane / envelope
   // broad toxin hits everything; wrong-agent still tiny effect so it's not totally inert
   v += cl(S.toxin/50,0,1)*1.0;
   const wrongAg=(S.antibiotic+S.antifungal+S.antiviral+S.lysozyme+S.hypotonic+S.hypertonic+S.detergent);

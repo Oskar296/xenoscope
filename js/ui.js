@@ -12,6 +12,13 @@ XS.ui=UI;
 let readoutHTML='';
 function learn(url){ return url?` <a class="learn" href="${url}" target="_blank" rel="noopener">Learn more ↗</a>`:''; }
 function nutText(s){ return s.isVirus?'requires a host cell':s.chemo?'chemoautotroph — chemical energy':s.autotroph?'autotroph — photosynthesis':'heterotroph — consumes organics'; }
+function sfx(n){ if(XS.sfx) XS.sfx.play(n); }
+/* persistent "Notes" readout shown top-left across all phases */
+function readoutBlock(){
+  return `<div class="cap notes-cap">🔎 Notes</div>`+
+    `<div class="readout" id="roLeft">${readoutHTML||'<span class="muted">Inspect a structure or run an assay — what you learn is kept here.</span>'}</div>`+
+    `<div class="rl-sep"></div>`;
+}
 
 UI.init=function(){
   UI.top=$('top'); UI.left=$('left'); UI.right=$('right'); UI.dock=$('dock');
@@ -38,6 +45,7 @@ function onMove(e){
 function onDown(e){
   const app=XS.app; if(app.phase!=='investigate'||app.scan) return;
   const p=XS.partAt(app,e.clientX,e.clientY); if(!p) return;
+  sfx('scan');
   app.scan={active:true,x:e.clientX,y:e.clientY,start:app.time,dur:900,part:p};
 }
 
@@ -47,7 +55,7 @@ UI.tick=function(dt){
   // resolve inspection scan
   if(app.scan && app.scan.active && app.time-app.scan.start>=app.scan.dur){
     const info=XS.inspect(app.scan.part); app.scan=null;
-    if(info){ readoutHTML=`<div class="ro-name">${info.name}</div><div class="ro-fn">${info.fn}</div>`+
+    if(info){ sfx('blip'); readoutHTML=`<div class="ro-name">${info.name}</div><div class="ro-fn">${info.fn}</div>`+
       (info.more?`<div class="ro-more">${info.more}</div>`:'')+
       `<div class="ro-fact">💡 ${info.fact}${learn(info.wiki)}</div>`; }
     UI.renderTop(); UI.renderInvestigate(); UI.renderRight(); // refresh worksheet, readout & dossier
@@ -82,12 +90,14 @@ UI.renderTop=function(){
     `<span class="sep"></span><span class="rankwrap"><span class="rk">${rank.name}</span><span class="xp">${XS.progress.xp} XP</span></span>`+
     `<button class="ibtn only-mobile" id="tgLeft" title="Panel">📋</button>`+
     `<button class="ibtn only-mobile" id="tgRight" title="Notes">📄</button>`+
+    `<button class="ibtn" id="muteBtn" title="Sound">${XS.sfx&&XS.sfx.enabled?'🔊':'🔇'}</button>`+
     `<button class="ibtn" id="codexBtn" title="Codex">📖</button>`+
     `<button class="ibtn" id="menuBtn" title="Menu">☰</button>`;
-  $('codexBtn').onclick=UI.showCodex; $('menuBtn').onclick=UI.showMenu;
+  $('codexBtn').onclick=()=>{sfx('click');UI.showCodex();}; $('menuBtn').onclick=()=>{sfx('click');UI.showMenu();};
+  $('muteBtn').onclick=()=>{ const on=XS.sfx.toggle(); $('muteBtn').textContent=on?'🔊':'🔇'; };
   const tl=$('tgLeft'), tr=$('tgRight');
-  if(tl) tl.onclick=()=>{UI.right.classList.remove('open');UI.left.classList.toggle('open');};
-  if(tr) tr.onclick=()=>{UI.left.classList.remove('open');UI.right.classList.toggle('open');};
+  if(tl) tl.onclick=()=>{sfx('click');UI.right.classList.remove('open');UI.left.classList.toggle('open');};
+  if(tr) tr.onclick=()=>{sfx('click');UI.left.classList.remove('open');UI.right.classList.toggle('open');};
 };
 
 /* ---------------- investigation: left worksheet ---------------- */
@@ -98,6 +108,7 @@ UI.renderInvestigate=function(){
   const totalTests=Object.values(XS.SUBS).filter(s=>s.type==='test').length;
   const T=XS.TIERS[app.tier];
   UI.left.innerHTML=
+    readoutBlock()+
     `<div class="cap">Investigation</div>`+
     `<div class="prog"><span>Structures identified</span><b>${found}/${total}</b></div>`+
     `<div class="track"><i style="width:${found/total*100}%;background:linear-gradient(90deg,#2f8f7f,var(--aqua))"></i></div>`+
@@ -118,7 +129,7 @@ UI.renderInvestigateDock=function(){
     `</div>`;
   UI.dock.querySelectorAll('[data-t]').forEach(b=>{
     b.onmouseenter=()=>showInfo(XS.SUBS[b.dataset.t].info);
-    b.onclick=()=>{ const r=XS.runTest(b.dataset.t); readoutHTML=`<div class="ro-name">${XS.SUBS[b.dataset.t].name}</div><div class="ro-fn">${r}</div>`; UI.renderRight(); UI.renderInvestigate(); b.classList.add('used'); };
+    b.onclick=()=>{ sfx('blip'); const r=XS.runTest(b.dataset.t); readoutHTML=`<div class="ro-name">${XS.SUBS[b.dataset.t].name}</div><div class="ro-fn">${r}</div>`; UI.renderInvestigate(); UI.renderRight(); b.classList.add('used'); };
   });
 };
 
@@ -126,12 +137,10 @@ UI.renderInvestigateDock=function(){
 UI.renderRight=function(){
   const app=XS.app, spec=app.spec;
   if(app.phase==='investigate'){
-    UI.right.innerHTML=`<div class="cap">Readout</div><div class="readout" id="ro">${readoutHTML||'<span class="muted">Click a structure on the specimen, or run a reagent test, to learn what it is.</span>'}</div>`+
-      dossierHTML(spec);
+    UI.right.innerHTML=`<div class="cap">Dossier</div>`+dossierHTML(spec);
   } else {
     UI.right.innerHTML=`<div class="cap">Dossier</div>`+dossierHTML(spec)+
-      `<div class="hintbox" style="margin-top:10px">${XS.TIERS[app.tier].hint?'💡 '+XS.TASKS[spec.task].hint(spec):'Apply what you learned in the investigation.'}</div>`+
-      `<div class="readout" id="ro">${readoutHTML||''}</div>`;
+      `<div class="hintbox" style="margin-top:10px">${XS.TIERS[app.tier].hint?'💡 '+XS.TASKS[spec.task].hint(spec):'Apply what you learned in the investigation.'}</div>`;
   }
 };
 function dossierHTML(spec){
@@ -150,7 +159,7 @@ function dossierHTML(spec){
   }
   return `<div class="dossier">${items.join('')}</div>`;
 }
-function showInfo(txt){ readoutHTML=`<div class="ro-fn">${txt}</div>`; const ro=$('ro'); if(ro)ro.innerHTML=readoutHTML; }
+function showInfo(txt){ readoutHTML=`<div class="ro-fn">${txt}</div>`; const ro=$('roLeft'); if(ro)ro.innerHTML=readoutHTML; }
 
 /* ---------------- vitals (assignment) ---------------- */
 UI.renderVitals=function(){
@@ -162,7 +171,8 @@ UI.renderVitals=function(){
     `<div class="rval"><div class="num" id="vnum">0</div><div class="rlab">${spec.isVirus?'TITRE':'VITALITY'}</div></div></div>`+
     `<div class="bar"><div class="bl"><span>${spec.isVirus?'STABILITY':'INTEGRITY'}</span><b id="intv">100%</b></div><div class="track"><i id="intb" style="width:100%;background:linear-gradient(90deg,#2f8f7f,var(--aqua))"></i></div></div>`+
     `<div class="bar"><div class="bl"><span>HOMEOSTASIS</span><b id="homv">—</b></div><div class="homeo"><span class="mid"></span><i id="homb"></i></div></div>`+
-    (T.need>0?`<div class="bar"><div class="bl"><span>OBJECTIVE HOLD · ${T.need}s</span><b id="holdv">0.0s</b></div><div class="track"><i id="holdb" style="width:0;background:linear-gradient(90deg,#8f7a1c,var(--warn))"></i></div></div>`:'');
+    (T.need>0?`<div class="bar"><div class="bl"><span>OBJECTIVE HOLD · ${T.need}s</span><b id="holdv">0.0s</b></div><div class="track"><i id="holdb" style="width:0;background:linear-gradient(90deg,#8f7a1c,var(--warn))"></i></div></div>`:'')+
+    `<div style="height:12px"></div>`+readoutBlock();
   $('vring').style.stroke = T.tone==='good'?'var(--mint)':T.tone==='bad'?'var(--coral)':'var(--warn)';
 };
 UI.updateAssignment=function(){
@@ -198,7 +208,7 @@ UI.renderAssignmentDock=function(){
   $('tp').oninput=e=>{XS.setEnv(null,+e.target.value);$('tpv').textContent=Math.round(+e.target.value);};
   UI.dock.querySelectorAll('[data-a]').forEach(b=>{
     b.onmouseenter=()=>showInfo(XS.SUBS[b.dataset.a].info);
-    b.onclick=()=>{ XS.treat(b.dataset.a); b.animate([{transform:'scale(.96)'},{transform:'scale(1)'}],{duration:150}); };
+    b.onclick=()=>{ sfx('drop'); XS.treat(b.dataset.a); const ro=$('roLeft'); if(ro){readoutHTML=`<div class="ro-fn">${XS.SUBS[b.dataset.a].info}</div>`;ro.innerHTML=readoutHTML;} b.animate([{transform:'scale(.94)'},{transform:'scale(1)'}],{duration:150}); };
   });
   // optimum band markers
   setOpt(spec);
@@ -215,25 +225,36 @@ UI.hideOverlay=function(){ UI.overlay.classList.remove('on'); UI.overlay.innerHT
 function card(html){ UI.overlay.innerHTML=`<div class="card">${html}</div>`; UI.overlay.classList.add('on'); }
 
 UI.showMenu=function(){
+  XS.app.phase='menu';
+  // a live specimen drifts behind the menu so the home screen matches the game
+  XS.app.demo=XS.genSpecimen(XS.pick(['Plantae','Animalia','Protista','Monera','Fungi']), 'field');
   const rank=XS.rankFor(XS.progress.xp), next=XS.nextRank(XS.progress.xp);
   const cx=XS.codex();
+  const pct=next? Math.round((XS.progress.xp - rank.xp)/(next.xp-rank.xp)*100):100;
   const tiers=Object.entries(XS.TIERS).map(([k,t])=>`<button class="tierbtn ${k===XS.app.tier?'sel':''}" data-tier="${k}"><b>${t.label}</b><small>${t.blurb}</small></button>`).join('');
-  const kings=Array.from(XS.unlockedKingdoms());
   card(
-    `<div class="sub">Xenobiology Division · Training Bench</div>`+
+    `<div class="sub">Xenobiology Division · Live Specimen Bench</div>`+
     `<h1><span class="x">XENO</span><span class="o">SCOPE</span></h1>`+
-    `<p>Investigate one specimen — animal, plant, bacterium, <b>archaeon</b>, protist, fungus or virus — including real organisms from Earth. <b>Identify</b> its organelles and biology with the microscope and assays, then carry out your assignment. You learn real cell biology as you rank up.</p>`+
-    `<div class="rankcard"><div><div class="rk-big">${rank.name}</div><div class="muted">${XS.progress.xp} XP${next?` · ${next.xp-XS.progress.xp} to ${next.name}`:' · max rank'}</div></div>`+
-      `<div class="rk-stats"><span>🧬 ${cx.organelles.length}/${cx.totalOrganelles} organelles</span><span>🔬 ${cx.organisms.length}/${cx.totalOrganisms} types</span><span>🌍 ${XS.progress.species.length}/${(XS.EARTH||[]).length} Earth species</span><span>✓ ${XS.progress.wins} wins</span></div></div>`+
-    `<div class="muted" style="margin:10px 0 5px;font-size:11px;letter-spacing:1px">DIFFICULTY</div>`+
+    `<div class="tagline">Put one alien or Earth cell under the scope — <b>read its biology</b>, then keep it alive or take it down.</div>`+
+    `<div class="how">`+
+      `<div class="how-step"><div class="how-ico">🔬</div><div><b>Probe</b><small>Click every structure &amp; run assays to identify it</small></div></div>`+
+      `<div class="how-step"><div class="how-ico">🧫</div><div><b>Classify</b><small>Name its kingdom — animal to archaeon to virus</small></div></div>`+
+      `<div class="how-step"><div class="how-ico">⚗️</div><div><b>Act</b><small>Use the right food, agent or shock for the job</small></div></div>`+
+    `</div>`+
+    `<div class="rankcard"><div class="rk-left"><div class="rk-big">${rank.name}</div><div class="muted">${XS.progress.xp} XP${next?` · ${next.xp-XS.progress.xp} to ${next.name}`:' · max rank'}</div>`+
+      `<div class="xpbar"><i style="width:${pct}%"></i></div></div>`+
+      `<div class="rk-stats"><span>🧬 ${cx.organelles.length}/${cx.totalOrganelles} organelles</span><span>🔬 ${cx.organisms.length}/${cx.totalOrganisms} types</span><span>🌍 ${XS.progress.species.length}/${(XS.EARTH||[]).length} Earth life</span><span>✓ ${XS.progress.wins} wins</span></div></div>`+
+    `<div class="muted lbl">DIFFICULTY</div>`+
     `<div class="tiers">${tiers}</div>`+
     `<div class="cta"><button class="btn pri" id="startBtn">▶ Receive Specimen</button>`+
       `<button class="btn" id="codexBtn2">📖 Codex</button>`+
-      (XS.progress.xp>0?`<button class="btn ghost" id="resetBtn">Reset progress</button>`:'')+`</div>`
+      `<button class="btn ghost" id="muteBtn2">${XS.sfx&&XS.sfx.enabled?'🔊 Sound on':'🔇 Sound off'}</button>`+
+      (XS.progress.xp>0?`<button class="btn ghost" id="resetBtn">Reset</button>`:'')+`</div>`
   );
-  UI.overlay.querySelectorAll('.tierbtn').forEach(b=>b.onclick=()=>{XS.app.tier=b.dataset.tier;UI.overlay.querySelectorAll('.tierbtn').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');});
-  $('startBtn').onclick=()=>{ UI.hideOverlay(); XS.startRun(XS.app.tier); UI.renderPhase(); };
-  $('codexBtn2').onclick=UI.showCodex;
+  UI.overlay.querySelectorAll('.tierbtn').forEach(b=>b.onclick=()=>{sfx('click');XS.app.tier=b.dataset.tier;UI.overlay.querySelectorAll('.tierbtn').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');});
+  $('startBtn').onclick=()=>{ sfx('click'); UI.hideOverlay(); XS.startRun(XS.app.tier); UI.renderPhase(); };
+  $('codexBtn2').onclick=()=>{sfx('click');UI.showCodex();};
+  $('muteBtn2').onclick=()=>{ const on=XS.sfx.toggle(); $('muteBtn2').textContent=on?'🔊 Sound on':'🔇 Sound off'; };
   const rb=$('resetBtn'); if(rb) rb.onclick=()=>{ if(confirm('Reset all progress and Codex?')){XS.resetProgress();UI.showMenu();} };
 };
 
@@ -248,8 +269,8 @@ UI.showClassify=function(){
   );
   UI.overlay.querySelectorAll('.classbtn').forEach(b=>b.onclick=()=>{
     const r=XS.classify(b.dataset.k);
-    if(r.ok){ UI.hideOverlay(); UI.showBriefing(); }
-    else { b.classList.add('wrong'); UI.showClassify(); }
+    if(r.ok){ sfx('ok'); UI.hideOverlay(); UI.showBriefing(); }
+    else { sfx('err'); b.classList.add('wrong'); UI.showClassify(); }
   });
   $('backInv').onclick=UI.hideOverlay;
 };
@@ -268,11 +289,12 @@ UI.showBriefing=function(){
     (XS.TIERS[XS.app.tier].hint?`<div class="hintbox">💡 ${T.hint(spec)}</div>`:'')+
     `<div class="cta"><button class="btn pri" id="beginBtn">▶ Begin assignment</button></div>`
   );
-  $('beginBtn').onclick=()=>{ UI.hideOverlay(); XS.beginAssignment(); UI.renderPhase(); };
+  $('beginBtn').onclick=()=>{ sfx('click'); UI.hideOverlay(); XS.beginAssignment(); UI.renderPhase(); };
 };
 
 UI.showResult=function(){
   const app=XS.app, spec=app.spec, T=XS.TASKS[spec.task], win=app.result.win;
+  sfx(win?'win':'lose'); if(app.rankUp) setTimeout(()=>sfx('rank'),650);
   const xpList=app.lastXP.slice(0,5).map(x=>`<div class="xp-row"><span>${x.reason}</span><b>+${x.n}</b></div>`).join('');
   const rankUp=app.rankUp?`<div class="rankup">⬆ Promoted to <b>${app.rankUp.name}</b>! ${app.rankUp.unlock.length?'Unlocked: '+app.rankUp.unlock.map(k=>XS.KINGDOMS[k].label).join(', '):''}</div>`:'';
   card(
@@ -285,7 +307,7 @@ UI.showResult=function(){
     `<div class="rev">FEEDS ON <span class="hl">${spec.isVirus?'host cells':spec.chemo?'minerals (chemoautotroph)':spec.autotroph?'light (photosynthesis)':'glucose'}</span> · VULNERABLE TO <span class="hl">${XS.SUBS[spec.kill[0]]?XS.SUBS[spec.kill[0]].name:spec.kill[0]}</span></div>`+
     `<div class="cta"><button class="btn pri" id="nextBtn">▶ Next specimen</button><button class="btn" id="menuBtn3">☰ Menu</button><button class="btn" id="codexBtn3">📖 Codex</button></div>`
   );
-  $('nextBtn').onclick=()=>{ UI.hideOverlay(); XS.startRun(XS.app.tier); UI.renderPhase(); };
+  $('nextBtn').onclick=()=>{ sfx('click'); UI.hideOverlay(); XS.startRun(XS.app.tier); UI.renderPhase(); };
   $('menuBtn3').onclick=UI.showMenu; $('codexBtn3').onclick=UI.showCodex;
 };
 
