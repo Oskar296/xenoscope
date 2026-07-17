@@ -10,6 +10,8 @@ const UI={};
 XS.ui=UI;
 
 let readoutHTML='';
+function learn(url){ return url?` <a class="learn" href="${url}" target="_blank" rel="noopener">Learn more ↗</a>`:''; }
+function nutText(s){ return s.isVirus?'requires a host cell':s.chemo?'chemoautotroph — chemical energy':s.autotroph?'autotroph — photosynthesis':'heterotroph — consumes organics'; }
 
 UI.init=function(){
   UI.top=$('top'); UI.left=$('left'); UI.right=$('right'); UI.dock=$('dock');
@@ -17,6 +19,7 @@ UI.init=function(){
   const cv=$('c');
   cv.addEventListener('pointermove',onMove);
   cv.addEventListener('pointerdown',onDown);
+  cv.addEventListener('pointerdown',()=>{UI.left.classList.remove('open');UI.right.classList.remove('open');});
   cv.addEventListener('pointerleave',()=>{XS.app.hoverPart=null;UI.zlab.classList.remove('on');});
   window.addEventListener('keydown',e=>{ if(e.key==='Escape'&&UI.overlay.classList.contains('on')&&XS.app.phase!=='menu'&&XS.app.phase!=='result') UI.hideOverlay(); });
   UI.showMenu();
@@ -44,7 +47,9 @@ UI.tick=function(dt){
   // resolve inspection scan
   if(app.scan && app.scan.active && app.time-app.scan.start>=app.scan.dur){
     const info=XS.inspect(app.scan.part); app.scan=null;
-    if(info){ readoutHTML=`<div class="ro-name">${info.name}</div><div class="ro-fn">${info.fn}</div><div class="ro-fact">💡 ${info.fact}</div>`; }
+    if(info){ readoutHTML=`<div class="ro-name">${info.name}</div><div class="ro-fn">${info.fn}</div>`+
+      (info.more?`<div class="ro-more">${info.more}</div>`:'')+
+      `<div class="ro-fact">💡 ${info.fact}${learn(info.wiki)}</div>`; }
     UI.renderTop(); UI.renderInvestigate(); UI.renderRight(); // refresh worksheet, readout & dossier
   }
   if(app.phase==='investigate') UI.updateInvestigate();
@@ -65,18 +70,24 @@ UI.renderTop=function(){
   const rank=XS.rankFor(XS.progress.xp);
   const named = app.phase!=='investigate';
   const kchip = named? `<span class="kchip">${XS.KINGDOM_ANSWER[spec.kingdomKey]}</span>`:'';
+  const earthTag = (named&&spec.earth)? `<span class="earthtag">🌍 Earth</span>`:'';
   let objHTML='';
   if(app.phase==='assignment'){ const T=XS.TASKS[spec.task];
     objHTML=`<span class="sep"></span><span class="chip ${T.tone}">${T.name}</span><span class="obj2">${T.obj(spec)}</span>`; }
   else objHTML=`<span class="sep"></span><span class="chip neutral">INVESTIGATE</span><span class="obj2">Identify the specimen</span>`;
   UI.top.innerHTML=
     `<span class="sid">${spec.id}</span>`+
-    `<span class="name ${named?'':'unk'}">${named?spec.name:'UNIDENTIFIED SPECIMEN'}</span>${kchip}`+
+    `<span class="name ${named?'':'unk'}">${named?spec.name:'UNIDENTIFIED SPECIMEN'}</span>${kchip}${earthTag}`+
     objHTML+
     `<span class="sep"></span><span class="rankwrap"><span class="rk">${rank.name}</span><span class="xp">${XS.progress.xp} XP</span></span>`+
+    `<button class="ibtn only-mobile" id="tgLeft" title="Panel">📋</button>`+
+    `<button class="ibtn only-mobile" id="tgRight" title="Notes">📄</button>`+
     `<button class="ibtn" id="codexBtn" title="Codex">📖</button>`+
     `<button class="ibtn" id="menuBtn" title="Menu">☰</button>`;
   $('codexBtn').onclick=UI.showCodex; $('menuBtn').onclick=UI.showMenu;
+  const tl=$('tgLeft'), tr=$('tgRight');
+  if(tl) tl.onclick=()=>{UI.right.classList.remove('open');UI.left.classList.toggle('open');};
+  if(tr) tr.onclick=()=>{UI.left.classList.remove('open');UI.right.classList.toggle('open');};
 };
 
 /* ---------------- investigation: left worksheet ---------------- */
@@ -84,13 +95,15 @@ UI.renderInvestigate=function(){
   const app=XS.app, spec=app.spec;
   const found=spec.inspected.size, total=spec.organelleIds.length;
   const tests=Object.keys(app.tests).length;
+  const totalTests=Object.values(XS.SUBS).filter(s=>s.type==='test').length;
   const T=XS.TIERS[app.tier];
   UI.left.innerHTML=
     `<div class="cap">Investigation</div>`+
     `<div class="prog"><span>Structures identified</span><b>${found}/${total}</b></div>`+
     `<div class="track"><i style="width:${found/total*100}%;background:linear-gradient(90deg,#2f8f7f,var(--aqua))"></i></div>`+
-    `<div class="prog" style="margin-top:10px"><span>Reagent tests</span><b>${tests}/3</b></div>`+
-    `<div class="hintbox">${T.hint?'💡 Click every structure on the specimen to identify it, then run stains. When ready, classify its kingdom.':'Identify structures and classify the kingdom.'}</div>`+
+    `<div class="prog" style="margin-top:10px"><span>Assays run</span><b>${tests}/${totalTests}</b></div>`+
+    `<div class="track"><i style="width:${tests/totalTests*100}%;background:linear-gradient(90deg,#7a6a2f,var(--warn))"></i></div>`+
+    `<div class="hintbox">${T.hint?'💡 Click every structure to identify it, and run assays for hidden clues (a lipid assay tells archaea from bacteria!). Then classify.':'Identify structures &amp; run assays, then classify.'}</div>`+
     `<button class="btn pri wide" id="toClassify">Submit classification →</button>`;
   $('toClassify').onclick=UI.showClassify;
 };
@@ -99,10 +112,10 @@ UI.updateInvestigate=function(){ /* worksheet static; refreshed on inspect */ };
 /* investigation dock: stains */
 UI.renderInvestigateDock=function(){
   UI.dock.className='panel dock-tests';
-  const tests=['iodine','gram','methylene'];
-  UI.dock.innerHTML=`<div class="dock-lab">REAGENT TESTS</div>`+
+  const tests=Object.keys(XS.SUBS).filter(id=>XS.SUBS[id].type==='test');
+  UI.dock.innerHTML=`<div class="dock-lab">ASSAYS &amp; STAINS</div><div class="btn-row tests-row">`+
     tests.map(id=>{const s=XS.SUBS[id];return `<button class="abtn test" data-t="${id}"><b>${s.name}</b><small>${s.short}</small></button>`;}).join('')+
-    `<div class="dock-note">Hover any tool to read what it does.</div>`;
+    `</div>`;
   UI.dock.querySelectorAll('[data-t]').forEach(b=>{
     b.onmouseenter=()=>showInfo(XS.SUBS[b.dataset.t].info);
     b.onclick=()=>{ const r=XS.runTest(b.dataset.t); readoutHTML=`<div class="ro-name">${XS.SUBS[b.dataset.t].name}</div><div class="ro-fn">${r}</div>`; UI.renderRight(); UI.renderInvestigate(); b.classList.add('used'); };
@@ -128,9 +141,12 @@ function dossierHTML(spec){
   const st=XS.app.tests;
   if(st.iodine) items.push(`<div class="dl-row"><span>Starch</span><b>${spec.hasStarch?'yes':'no'}</b></div>`);
   if(st.gram&&spec.gram) items.push(`<div class="dl-row"><span>Gram</span><b>${spec.gram}</b></div>`);
+  if(st.lipid&&spec.kingdomKey==='Archaea') items.push(`<div class="dl-row"><span>Lipids</span><b>ether</b></div>`);
   if(XS.app.phase!=='investigate'){
-    items.push(`<div class="dl-row"><span>Nutrition</span><b>${spec.isVirus?'needs host':spec.autotroph?'autotroph (light)':'heterotroph (glucose)'}</b></div>`);
+    if(spec.earth) items.push(`<div class="dl-row"><span>Reference</span><b>🌍 ${spec.species}</b></div>`);
+    items.push(`<div class="dl-row"><span>Nutrition</span><b>${spec.isVirus?'needs host':spec.chemo?'chemoautotroph':spec.autotroph?'autotroph (light)':'heterotroph (glucose)'}</b></div>`);
     items.push(`<div class="dl-row"><span>Optimum</span><b>pH ${spec.optPH}, ${spec.optT}°C</b></div>`);
+    items.push(`<div class="dl-row"><span>Vulnerable to</span><b>${XS.SUBS[spec.kill[0]]?XS.SUBS[spec.kill[0]].name:spec.kill[0]}</b></div>`);
   }
   return `<div class="dossier">${items.join('')}</div>`;
 }
@@ -168,7 +184,7 @@ UI.renderAssignmentDock=function(){
   const spec=XS.app.spec;
   UI.dock.className='panel dock-treat';
   const nutrition=['glucose','light','minerals'].concat(spec.isVirus?['host']:[]);
-  const agents=['antibiotic','antifungal','antiviral','lysozyme','hypotonic','hypertonic','toxin'];
+  const agents=['antibiotic','antifungal','antiviral','lysozyme','detergent','hypotonic','hypertonic','toxin'];
   const btn=id=>{const s=XS.SUBS[id];return `<button class="abtn treat" data-a="${id}"><b>${s.name}</b><small>${s.short}</small><span class="lvl"></span></button>`;};
   UI.dock.innerHTML=
     `<div class="dock-col"><div class="sldwrap"><div class="sh"><span>pH</span><b id="phv">${spec.optPH}</b></div>`+
@@ -206,9 +222,9 @@ UI.showMenu=function(){
   card(
     `<div class="sub">Xenobiology Division · Training Bench</div>`+
     `<h1><span class="x">XENO</span><span class="o">SCOPE</span></h1>`+
-    `<p>Investigate one alien specimen — animal, plant, bacterium, protist, fungus, or virus. <b>Identify</b> its organelles and biology, then carry out your assignment. You learn real cell biology as you rank up.</p>`+
+    `<p>Investigate one specimen — animal, plant, bacterium, <b>archaeon</b>, protist, fungus or virus — including real organisms from Earth. <b>Identify</b> its organelles and biology with the microscope and assays, then carry out your assignment. You learn real cell biology as you rank up.</p>`+
     `<div class="rankcard"><div><div class="rk-big">${rank.name}</div><div class="muted">${XS.progress.xp} XP${next?` · ${next.xp-XS.progress.xp} to ${next.name}`:' · max rank'}</div></div>`+
-      `<div class="rk-stats"><span>🧬 ${cx.organelles.length}/${cx.totalOrganelles} organelles</span><span>🔬 ${cx.organisms.length}/${cx.totalOrganisms} organisms</span><span>✓ ${XS.progress.wins} wins</span></div></div>`+
+      `<div class="rk-stats"><span>🧬 ${cx.organelles.length}/${cx.totalOrganelles} organelles</span><span>🔬 ${cx.organisms.length}/${cx.totalOrganisms} types</span><span>🌍 ${XS.progress.species.length}/${(XS.EARTH||[]).length} Earth species</span><span>✓ ${XS.progress.wins} wins</span></div></div>`+
     `<div class="muted" style="margin:10px 0 5px;font-size:11px;letter-spacing:1px">DIFFICULTY</div>`+
     `<div class="tiers">${tiers}</div>`+
     `<div class="cta"><button class="btn pri" id="startBtn">▶ Receive Specimen</button>`+
@@ -243,9 +259,10 @@ UI.showBriefing=function(){
   UI.renderTop();
   card(
     `<div class="sub">Specimen identified · ${spec.id}</div>`+
-    `<h2>${spec.name} <span class="kchip">${XS.KINGDOM_ANSWER[spec.kingdomKey]}</span></h2>`+
+    `<h2>${spec.name} <span class="kchip">${XS.KINGDOM_ANSWER[spec.kingdomKey]}</span>${spec.earth?' <span class="earthtag">🌍 Earth reference</span>':''}</h2>`+
     `<p>${spec.blurb}</p>`+
-    `<div class="brief-row"><span>Nutrition</span><b>${spec.isVirus?'requires a host cell':spec.autotroph?'autotroph — photosynthesis':'heterotroph — consumes organics'}</b></div>`+
+    (spec.earth&&spec.fact?`<div class="factbox">💡 ${spec.fact}${learn('https://en.wikipedia.org/wiki/'+spec.wiki)}</div>`:'')+
+    `<div class="brief-row"><span>Nutrition</span><b>${nutText(spec)}</b></div>`+
     `<div class="brief-row"><span>Comfort</span><b>pH ${spec.optPH} · ${spec.optT}°C</b></div>`+
     `<div class="assign"><div class="chip ${T.tone}">${T.name}</div><div class="assign-obj">${T.obj(spec)}</div></div>`+
     (XS.TIERS[XS.app.tier].hint?`<div class="hintbox">💡 ${T.hint(spec)}</div>`:'')+
@@ -263,8 +280,9 @@ UI.showResult=function(){
     `<div class="verdict ${win?'win':'lose'}">${win?'✦ '+T.winT:'ASSIGNMENT FAILED'}</div>`+
     `<p>${win?`You correctly handled <b>${spec.name}</b> (${XS.KINGDOM_ANSWER[spec.kingdomKey]}).`:`<b>${spec.name}</b> — ${app.S&&app.S.integrity<=0?'the membrane ruptured':app.S&&app.S.vitality>=100?'it slipped from your control':'the objective was missed'}. Review the biology and try again.`}</p>`+
     rankUp+
+    (spec.earth&&spec.fact?`<div class="factbox">💡 ${spec.fact}${learn('https://en.wikipedia.org/wiki/'+spec.wiki)}</div>`:'')+
     `<div class="xp-list">${xpList}</div>`+
-    `<div class="rev">FEEDS ON <span class="hl">${spec.isVirus?'host cells':spec.autotroph?'light (photosynthesis)':'glucose'}</span> · VULNERABLE TO <span class="hl">${XS.SUBS[spec.kill[0]]?XS.SUBS[spec.kill[0]].name:spec.kill[0]}</span></div>`+
+    `<div class="rev">FEEDS ON <span class="hl">${spec.isVirus?'host cells':spec.chemo?'minerals (chemoautotroph)':spec.autotroph?'light (photosynthesis)':'glucose'}</span> · VULNERABLE TO <span class="hl">${XS.SUBS[spec.kill[0]]?XS.SUBS[spec.kill[0]].name:spec.kill[0]}</span></div>`+
     `<div class="cta"><button class="btn pri" id="nextBtn">▶ Next specimen</button><button class="btn" id="menuBtn3">☰ Menu</button><button class="btn" id="codexBtn3">📖 Codex</button></div>`
   );
   $('nextBtn').onclick=()=>{ UI.hideOverlay(); XS.startRun(XS.app.tier); UI.renderPhase(); };
@@ -274,20 +292,29 @@ UI.showResult=function(){
 UI.showCodex=function(){
   const cx=XS.codex();
   const org=Object.entries(XS.ORG).map(([id,o])=>{const known=XS.progress.organelles.includes(id);
-    return `<div class="cx ${known?'':'locked'}"><div class="cx-h"><span class="cx-dot" style="color:${o.col};background:${known?o.col:'#2a3a44'}"></span>${known?o.name:'???'}</div>${known?`<div class="cx-fn">${o.fn}</div><div class="cx-fact">💡 ${o.fact}</div>`:'<div class="cx-fn muted">Inspect this structure on a specimen to unlock.</div>'}</div>`;}).join('');
+    const more=(XS.MORE||{})[id], wiki=(XS.WIKI||{})[id];
+    return `<div class="cx ${known?'':'locked'}"><div class="cx-h"><span class="cx-dot" style="color:${o.col};background:${known?o.col:'#2a3a44'}"></span>${known?o.name:'???'}</div>`+
+      (known?`<div class="cx-fn">${o.fn}</div>${more?`<div class="cx-fn">${more}</div>`:''}<div class="cx-fact">💡 ${o.fact}${learn(wiki)}</div>`
+            :'<div class="cx-fn muted">Inspect this structure on a specimen to unlock.</div>')+`</div>`;}).join('');
   const orgz=XS.KLIST.map(k=>{const known=XS.progress.organisms.includes(k);const K=XS.KINGDOMS[k];
-    return `<div class="cx ${known?'':'locked'}"><div class="cx-h"><span class="cx-dot" style="color:rgb(${K.col.join(',')});background:${known?`rgb(${K.col.join(',')})`:'#2a3a44'}"></span>${known?K.label:'???'}</div>${known?`<div class="cx-fn">${K.blurb}</div>`:'<div class="cx-fn muted">Encounter one to unlock.</div>'}</div>`;}).join('');
+    return `<div class="cx ${known?'':'locked'}"><div class="cx-h"><span class="cx-dot" style="color:rgb(${K.col.join(',')});background:${known?`rgb(${K.col.join(',')})`:'#2a3a44'}"></span>${known?K.label:'???'}</div>`+
+      (known?`<div class="cx-fn">${K.blurb}</div><div class="cx-fact">${learn((XS.KWIKI||{})[k])}</div>`:'<div class="cx-fn muted">Encounter one to unlock.</div>')+`</div>`;}).join('');
+  const spx=(XS.EARTH||[]).map(e=>{const known=XS.progress.species.includes(e.species);
+    return `<div class="cx ${known?'':'locked'}"><div class="cx-h"><span class="cx-dot" style="color:rgb(${XS.KINGDOMS[e.kind].col.join(',')});background:${known?`rgb(${XS.KINGDOMS[e.kind].col.join(',')})`:'#2a3a44'}"></span>${known?e.species:'??? '+'('+XS.KINGDOMS[e.kind].label+')'}</div>`+
+      (known?`<div class="cx-fn">${e.blurb}</div><div class="cx-fact">💡 ${e.fact}${learn('https://en.wikipedia.org/wiki/'+e.wiki)}</div>`:'<div class="cx-fn muted">Encounter this real organism to unlock.</div>')+`</div>`;}).join('');
   card(
-    `<div class="sub">Xeno-Codex · ${cx.organelles.length+cx.organisms.length+cx.subs.length} entries</div>`+
+    `<div class="sub">Xeno-Codex · ${cx.organelles.length+cx.organisms.length+XS.progress.species.length} entries</div>`+
     `<div class="cx-tabs"><button class="cx-tab sel" data-tab="org">Organelles ${cx.organelles.length}/${cx.totalOrganelles}</button>`+
-    `<button class="cx-tab" data-tab="orgz">Organisms ${cx.organisms.length}/${cx.totalOrganisms}</button></div>`+
+    `<button class="cx-tab" data-tab="orgz">Types ${cx.organisms.length}/${cx.totalOrganisms}</button>`+
+    `<button class="cx-tab" data-tab="spx">Earth life ${XS.progress.species.length}/${(XS.EARTH||[]).length}</button></div>`+
     `<div class="cx-list" id="cxOrg">${org}</div>`+
     `<div class="cx-list" id="cxOrgz" style="display:none">${orgz}</div>`+
+    `<div class="cx-list" id="cxSpx" style="display:none">${spx}</div>`+
     `<div class="cta"><button class="btn pri" id="cxClose">Close</button></div>`
   );
   UI.overlay.querySelectorAll('.cx-tab').forEach(b=>b.onclick=()=>{
     UI.overlay.querySelectorAll('.cx-tab').forEach(x=>x.classList.remove('sel')); b.classList.add('sel');
-    $('cxOrg').style.display=b.dataset.tab==='org'?'':'none'; $('cxOrgz').style.display=b.dataset.tab==='orgz'?'':'none';
+    $('cxOrg').style.display=b.dataset.tab==='org'?'':'none'; $('cxOrgz').style.display=b.dataset.tab==='orgz'?'':'none'; $('cxSpx').style.display=b.dataset.tab==='spx'?'':'none';
   });
   $('cxClose').onclick=()=>{ UI.hideOverlay(); if(XS.app.phase==='menu')UI.showMenu(); };
 };

@@ -1,12 +1,15 @@
 # 🔬 XENOSCOPE — Cell Biology Lab
 
-An **educational** alien-biology game. You investigate one specimen at a time —
-it could be an **animal, plant, bacterium, protist, fungus, virus,** or a piece of
-**plant vascular tissue** — identify its organelles and biology, then carry out an
-assignment. You genuinely learn real cell biology as you rank up.
+An **educational** biology game. You investigate one specimen at a time —
+an **animal, plant, bacterium, archaeon, protist, fungus, virus,** or a piece of
+**plant vascular tissue** — and it's often a **real organism from Earth** (E. coli,
+Amoeba, baker's yeast, a human red blood cell, influenza, a bacteriophage…).
+Identify its organelles and biology, then carry out an assignment. You genuinely
+learn real cell biology as you rank up.
 
-Built to be **rich but approachable**: ~60% knowledge, 40% action. No build step,
-no dependencies — plain HTML/CSS/JS split across several files.
+Built to be **rich but approachable**: ~60% knowledge, 40% action. Works on
+**desktop and mobile**. No build step, no dependencies — plain HTML/CSS/JS split
+across several files. Every organelle links to **“Learn more ↗”** on Wikipedia.
 
 ## ▶ Play
 
@@ -23,10 +26,13 @@ progress on `file://`.
 ## The loop: **investigate → classify → decide**
 
 1. **Investigate (untimed).** Click every structure on the specimen to identify it —
-   each reveals its **name, function, and a fact**, and unlocks a Codex entry. Run
-   **reagent tests** (iodine for starch, Gram stain, methylene blue) for more clues.
-2. **Classify.** Name the specimen's kingdom. Correct answers earn more XP; wrong
-   guesses cost you a little.
+   each reveals its **name, function, a fact, and a Learn-more link**, and unlocks a
+   Codex entry. Run **nine assays** for hidden clues: iodine (starch), Gram stain,
+   methylene blue, nucleic-acid (DNA/RNA), motility, pigment spectroscopy, catalase,
+   endospore stain, and a **membrane-lipid assay** — the definitive way to tell an
+   **archaeon** from a bacterium.
+2. **Classify.** Name the specimen's kingdom/domain (now including **Archaea**).
+   Correct answers earn more XP; wrong guesses cost you a little.
 3. **Assignment.** Carry out the order (cultivate, neutralise, stabilise, bloom,
    quarantine) using the medium and reagents.
 
