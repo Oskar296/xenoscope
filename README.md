@@ -1,15 +1,22 @@
-# 🔬 XENOSCOPE — Cell Biology Lab
+# 🔬 XENOSCOPE — Field Xenobiology
 
-An **educational** biology game. You investigate one specimen at a time —
-an **animal, plant, bacterium, archaeon, protist, fungus, virus,** or a piece of
-**plant vascular tissue** — and it's often a **real organism from Earth** (E. coli,
-Amoeba, baker's yeast, a human red blood cell, influenza, a bacteriophage…).
-Identify its organelles and biology, then carry out an assignment. You genuinely
-learn real cell biology as you rank up.
+An **educational** biology game with a **macro → micro** loop. You're a field
+xenobiologist studying a whole alien organism on its exoplanet — a **fauna**
+(animal‑grade beast), **flora** (plant), or **fungal** body. You get **one of two
+orders**:
 
-Built to be **rich but approachable**: ~60% knowledge, 40% action. Works on
-**desktop and mobile**. No build step, no dependencies — plain HTML/CSS/JS split
-across several files. Every organelle links to **“Learn more ↗”** on Wikipedia.
+- 💚 **Preserve** — the organism is sick. Find the afflicted tissue, diagnose the
+  infection, and cure it before it dies.
+- ☠️ **Neutralize** — the organism is an invasive threat. Find the tissue it can’t
+  defend and take the whole thing down.
+
+You **zoom into its tissues** to reach the cells, inspect their organelles (real
+biology, with “Learn more ↗” links), read the diagnosis, then apply the right
+treatment. The biology is honest — **antivirals only work on viruses, antibiotics
+only on bacteria, osmotic shock only bursts wall‑less cells**, and so on — so the
+wrong treatment does nothing. You genuinely learn cell biology as you rank up.
+
+No build step, no dependencies. Works on **desktop and mobile**.
 
 ## ▶ Play
 
@@ -20,55 +27,34 @@ cd xenoscope
 python3 -m http.server 8000   # then open http://localhost:8000
 ```
 
-You can also open `index.html` directly, though some browsers disable saved
-progress on `file://`.
+Or just open `index.html` (some browsers disable saved progress on `file://`).
 
-## The loop: **investigate → classify → decide**
+## The loop: **survey → zoom → treat**
 
-1. **Investigate (untimed).** Click every structure on the specimen to identify it —
-   each reveals its **name, function, a fact, and a Learn-more link**, and unlocks a
-   Codex entry. Run **nine assays** for hidden clues: iodine (starch), Gram stain,
-   methylene blue, nucleic-acid (DNA/RNA), motility, pigment spectroscopy, catalase,
-   endospore stain, and a **membrane-lipid assay** — the definitive way to tell an
-   **archaeon** from a bacterium.
-2. **Classify.** Name the specimen's kingdom/domain (now including **Archaea**).
-   Correct answers earn more XP; wrong guesses cost you a little.
-3. **Assignment.** Carry out the order (cultivate, neutralise, stabilise, bloom,
-   quarantine) using the medium and reagents.
+1. **Survey.** See the whole creature on its exoplanet and read your orders
+   (Preserve or Neutralize). Glowing **markers** sit on each anatomical region.
+2. **Zoom in.** Click a marker to enter that tissue — you see its **cells**, can
+   **inspect organelles** to learn their biology, and get a **diagnosis**. In an
+   infected region you’ll literally see the **pathogen particles** (a virus,
+   bacteria or fungal threads) crowding the cells.
+3. **Treat.** Apply a treatment to the tissue you’re in:
+   - **Preserve** → match the cure to the pathogen (antiviral / antibiotic /
+     antifungal).
+   - **Neutralize** → exploit the creature’s cell weakness (osmotic shock for a
+     wall‑less animal, herbicide for a walled plant, antifungal for a fungus).
 
-## Selective toxicity — why identification matters
+   The right tissue + the right agent wins. Wrong ones cost you host stress /
+   let the organism adapt — so diagnose before you dose.
 
-The biology is honest, so the **right tool for the organism works and the wrong one
-barely does**:
+## Depth & replayability
 
-- **Antibiotics** kill bacteria (peptidoglycan wall / 70S ribosome) — useless on
-  viruses and your own cells.
-- **Antivirals** work only on viruses; **antifungals** only on fungi.
-- **Osmotic shock** bursts wall-less cells (animal, protist) but walled cells resist.
-- **Autotrophs** need **light + minerals** (photosynthesis); feeding them sugar does
-  nothing. **Heterotrophs** need **glucose**. A **virus** needs a **host cell culture**.
-
-Use the wrong agent and you'll waste the assignment — so read the specimen first.
-
-## Every organelle, named
-
-No more generic "organelles" — you inspect and learn each one individually:
-**nucleus, nucleolus, nucleoid, mitochondria, chloroplasts, thylakoids, ribosomes,
-rough ER, Golgi apparatus, lysosomes, vacuoles, contractile & food vacuoles, cell
-walls (cellulose / chitin / peptidoglycan), capsule, flagella, cilia, pili,
-pseudopodia, plasmids, spores, centrioles, eyespot**, the plant tissues **xylem &
-phloem**, and viral parts **capsid, genome, envelope, spikes, tail fibres** — each
-with its real function and a memorable fact.
-
-## Difficulty: tiers **and** career progression
-
-- **Tiers** — *Intern* (generous tolerances, hints, pre-scanned structures),
-  *Field Xenobiologist* (standard), *Director* (no hints, tight margins, decoy
-  reagents).
-- **Career** — earn XP for inspecting structures, classifying correctly and
-  completing assignments. Ranking up **unlocks tougher organisms** (protists →
-  fungi → plant tissue → viruses) and grows your **Codex**. Progress is saved
-  locally.
+- **Three organism forms** on **five exoplanets**, procedurally drawn.
+- **Difficulty tiers** (Intern / Field / Director — Director hides the treatment
+  recommendation, so you must reason from the biology).
+- **XP & ranks**, a growing **Codex** of organelles and cell types, **10
+  achievements** with unlock toasts, and a seeded **🗓 Daily** assignment with a
+  shareable result.
+- **Sound**: synth SFX, volume slider, ambient toggle. Honours reduced‑motion.
 
 ## Project layout
 
@@ -77,15 +63,17 @@ xenoscope/
   index.html         · shell
   css/styles.css     · all styling
   js/
-    data.js          · organelles, organisms, substances, tasks, ranks (content)
-    sim.js           · specimen generation + assignment biology model
-    draw.js          · canvas renderer (cells, viruses, tissue, every organelle)
-    game.js          · phases, XP/rank progression, Codex (localStorage)
+    data.js          · organelles, cell kingdoms, reagents, ranks, wiki links
+    sfx.js           · Web-Audio sound engine
+    sim.js           · cell generation (used for the zoomed-in views)
+    world.js         · macro organisms, planets, regions, scenario + treat logic
+    draw.js          · canvas renderer — planets, creatures, cells, organelles
+    game.js          · phases, progression (XP/ranks), Codex, achievements, daily
     ui.js            · panels, overlays, input
     main.js          · bootstrap + game loop
 ```
 
 Plain `<script>` tags, one global `XS` namespace — no bundler, runs anywhere.
 
-*Every specimen is generated fresh and is original to this project; the biology it
-teaches is real.*
+*Every organism, planet and affliction is generated fresh; the biology it teaches
+is real.*
