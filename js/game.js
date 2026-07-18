@@ -8,17 +8,21 @@
 "use strict";
 const KEY='xenoscope.save.v1';
 
-XS.app={ phase:'menu', tier:'field', spec:null, S:null, time:0,
+XS.app={ phase:'menu', tier:'field', spec:null, S:null, time:0, daily:false, toasts:[],
   hoverPart:null, scan:null, result:null, tests:{}, classifyTries:0, lastXP:[], rankUp:null };
 
+function fresh(){ return { xp:0, organelles:[], organisms:[], subs:[], species:[], badges:[],
+  runs:0, wins:0, streak:0, bestStreak:0, dirWins:0, virusKills:0 }; }
 XS.progress=null;
 XS.loadProgress=function(){
   try{ XS.progress=JSON.parse(localStorage.getItem(KEY)); }catch(e){ XS.progress=null; }
-  if(!XS.progress) XS.progress={ xp:0, organelles:[], organisms:[], subs:[], species:[], runs:0, wins:0 };
-  ['organelles','organisms','subs','species'].forEach(k=>{ if(!Array.isArray(XS.progress[k])) XS.progress[k]=[]; });
+  if(!XS.progress) XS.progress=fresh();
+  const d=fresh();
+  for(const k in d){ if(Array.isArray(d[k])){ if(!Array.isArray(XS.progress[k])) XS.progress[k]=[]; }
+    else if(typeof XS.progress[k]!=='number') XS.progress[k]=d[k]; }
 };
 XS.saveProgress=function(){ try{ localStorage.setItem(KEY,JSON.stringify(XS.progress)); }catch(e){} };
-XS.resetProgress=function(){ XS.progress={ xp:0, organelles:[], organisms:[], subs:[], species:[], runs:0, wins:0 }; XS.saveProgress(); };
+XS.resetProgress=function(){ XS.progress=fresh(); XS.saveProgress(); };
 
 XS.rankFor=function(xp){ let r=XS.RANKS[0]; for(const R of XS.RANKS) if(xp>=R.xp) r=R; return r; };
 XS.nextRank=function(xp){ for(const R of XS.RANKS) if(xp<R.xp) return R; return null; };
@@ -37,11 +41,12 @@ XS.award=function(n,reason){
 };
 
 /* ---------------- run lifecycle ---------------- */
-XS.startRun=function(tier){
+XS.startRun=function(tier, forcePool){
   XS.app.tier=tier||XS.app.tier;
+  XS.app.daily=false;
   const T=XS.TIERS[XS.app.tier];
   const unlocked=Array.from(XS.unlockedKingdoms());
-  const pool=unlocked.length?unlocked:['Animalia','Plantae','Monera'];
+  const pool=forcePool||(unlocked.length?unlocked:['Animalia','Plantae','Monera']);
   // ~40% of runs present a real Earth reference specimen (great for study)
   const earthPool=(XS.EARTH||[]).filter(e=>pool.includes(e.kind));
   let spec;
@@ -58,6 +63,7 @@ XS.startRun=function(tier){
   // record discoveries
   if(!XS.progress.organisms.includes(spec.kingdomKey)){ XS.progress.organisms.push(spec.kingdomKey); XS.award(15,'New organism type: '+spec.K.label); }
   if(spec.earth && !XS.progress.species.includes(spec.species)){ XS.progress.species.push(spec.species); XS.award(10,'Earth reference: '+spec.species); }
+  XS.checkAchievements();
 };
 function buildDecoys(spec, n){
   if(!n) return [];
@@ -71,7 +77,7 @@ XS.inspect=function(part){
   const id=part.id, org=XS.ORG[id]; if(!org) return null;
   const isNew=!spec.inspected.has(id);
   spec.inspected.add(id);
-  if(isNew && !XS.progress.organelles.includes(id)){ XS.progress.organelles.push(id); XS.award(5,'Learned: '+org.name); }
+  if(isNew && !XS.progress.organelles.includes(id)){ XS.progress.organelles.push(id); XS.award(5,'Learned: '+org.name); XS.checkAchievements(); }
   return {id, name:org.name, fn:org.fn, fact:org.fact, more:(XS.MORE||{})[id], wiki:(XS.WIKI||{})[id]};
 };
 
@@ -100,12 +106,18 @@ XS.runTest=function(id){
 XS.classify=function(answer){
   const spec=XS.app.spec; const correct=XS.KINGDOM_ANSWER[spec.kingdomKey];
   if(answer===correct){
-    const bonus=Math.max(4, 24 - XS.app.classifyTries*8);
-    XS.award(bonus,'Correct classification: '+correct);
+    const firstTry = XS.app.classifyTries===0;
+    XS.award(Math.max(4, 24 - XS.app.classifyTries*8),'Correct classification: '+correct);
+    if(firstTry){
+      XS.progress.streak=(XS.progress.streak||0)+1;
+      if(XS.progress.streak>XS.progress.bestStreak) XS.progress.bestStreak=XS.progress.streak;
+      if(XS.progress.streak>=2) XS.award(Math.min(XS.progress.streak*2,20),'Streak ×'+XS.progress.streak);
+    } else XS.progress.streak=0;
+    XS.saveProgress(); XS.checkAchievements();
     XS.app.phase='briefing';
-    return {ok:true, correct};
+    return {ok:true, correct, streak:XS.progress.streak, firstTry};
   }
-  XS.app.classifyTries++;
+  XS.app.classifyTries++; XS.progress.streak=0; XS.saveProgress();
   return {ok:false, correct, tries:XS.app.classifyTries};
 };
 
@@ -125,9 +137,46 @@ XS.setEnv=function(ph,temp){ const S=XS.app.S; if(!S)return; if(ph!=null)S.ph=ph
 
 XS.finishRun=function(win){
   if(XS.app.result) return;
-  XS.progress.runs++; if(win)XS.progress.wins++;
-  if(win) XS.award(30,'Assignment complete');
-  XS.app.result={win}; XS.app.phase='result'; XS.saveProgress();
+  const spec=XS.app.spec;
+  XS.progress.runs++;
+  if(win){ XS.progress.wins++;
+    if(XS.app.tier==='director') XS.progress.dirWins=(XS.progress.dirWins||0)+1;
+    if(spec.isVirus && spec.task==='neutralize') XS.progress.virusKills=(XS.progress.virusKills||0)+1;
+    XS.award(30,'Assignment complete');
+  }
+  XS.app.result={win}; XS.app.phase='result'; XS.saveProgress(); XS.checkAchievements();
+};
+
+/* ---------------- achievements ---------------- */
+XS.ACHIEVEMENTS=[
+  {id:'first',      icon:'🔬', name:'First Contact',   desc:'Complete your first assignment', check:p=>p.wins>=1},
+  {id:'sharp',      icon:'🎯', name:'Sharp Eye',       desc:'Classify 5 specimens correctly in a row', check:p=>p.bestStreak>=5},
+  {id:'bookworm',   icon:'📖', name:'Bookworm',        desc:'Learn 10 different organelles', check:p=>p.organelles.length>=10},
+  {id:'taxonomist', icon:'🧬', name:'Taxonomist',      desc:'Encounter every organism type', check:p=>p.organisms.length>=Object.keys(XS.KINGDOMS).length},
+  {id:'naturalist', icon:'🌍', name:'Field Naturalist',desc:'Meet 5 real Earth organisms', check:p=>p.species.length>=5},
+  {id:'virologist', icon:'🦠', name:'Virologist',      desc:'Neutralise a virus', check:p=>p.virusKills>=1},
+  {id:'seasoned',   icon:'🏅', name:'Seasoned',        desc:'Complete 10 assignments', check:p=>p.wins>=10},
+  {id:'director',   icon:'⚡', name:'Top Brass',       desc:'Win a Director-difficulty run', check:p=>p.dirWins>=1},
+  {id:'earthbound', icon:'🪐', name:'Earthbound',      desc:'Meet every Earth organism', check:p=>p.species.length>=(XS.EARTH||[]).length},
+  {id:'scholar',    icon:'🎓', name:'Xeno-Scholar',    desc:'Learn every organelle', check:p=>p.organelles.length>=Object.keys(XS.ORG).length},
+];
+XS.checkAchievements=function(){
+  const newly=[];
+  for(const a of XS.ACHIEVEMENTS){ if(!XS.progress.badges.includes(a.id) && a.check(XS.progress)){ XS.progress.badges.push(a.id); newly.push(a); } }
+  if(newly.length){ XS.saveProgress(); XS.app.toasts=(XS.app.toasts||[]).concat(newly.map(a=>({icon:a.icon,title:a.name,desc:a.desc}))); }
+  return newly;
+};
+
+/* ---------------- daily specimen (seeded, same for everyone) ---------------- */
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a);
+  t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+XS.dailyKey=function(){ const d=new Date();
+  return d.getUTCFullYear()+'-'+String(d.getUTCMonth()+1).padStart(2,'0')+'-'+String(d.getUTCDate()).padStart(2,'0'); };
+XS.startDaily=function(){
+  const k=XS.dailyKey(); const seed=k.split('-').reduce((s,n)=>s*100+ (+n),0);
+  const orig=Math.random; Math.random=mulberry32(seed);
+  try{ XS.startRun('field', XS.KLIST); }finally{ Math.random=orig; }
+  XS.app.daily=true;
 };
 
 /* codex helpers for UI */

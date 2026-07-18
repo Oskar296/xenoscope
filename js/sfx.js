@@ -5,12 +5,15 @@
 ===================================================================== */
 (function(XS){
 "use strict";
-let ctx=null, master=null, enabled=true;
+let ctx=null, master=null, enabled=true, vol=0.7, ambOn=false, ambNodes=null;
 try{ enabled = localStorage.getItem('xenoscope.mute')!=='1'; }catch(e){}
+try{ const v=parseFloat(localStorage.getItem('xenoscope.vol')); if(!isNaN(v)) vol=v; }catch(e){}
+try{ ambOn = localStorage.getItem('xenoscope.amb')==='1'; }catch(e){}
 
 function ensure(){ if(ctx) return;
   try{ ctx=new (window.AudioContext||window.webkitAudioContext)(); master=ctx.createGain();
-    master.gain.value=0.16; master.connect(ctx.destination); }catch(e){ ctx=null; } }
+    master.gain.value=0.22*vol; master.connect(ctx.destination); }catch(e){ ctx=null; } }
+function setMaster(){ if(master) master.gain.value=0.22*vol; }
 function tone(f,dur,type,g,f2){ if(!ctx)return; const t=ctx.currentTime;
   const o=ctx.createOscillator(), gn=ctx.createGain();
   o.type=type||'sine'; o.frequency.setValueAtTime(f,t); if(f2) o.frequency.exponentialRampToValueAtTime(f2,t+dur);
@@ -32,11 +35,27 @@ const SND={
   rank:()=>seq([[659,0.16,'sine',0.3],[880,0.16,'sine',0.3],[1175,0.26,'sine',0.34]]),
 };
 
+function ambientStart(){ if(!ctx||ambNodes) return; const t=ctx.currentTime;
+  const g=ctx.createGain(); g.gain.value=0.0; g.connect(master); g.gain.linearRampToValueAtTime(0.05, t+1.5);
+  const o1=ctx.createOscillator(); o1.type='sine'; o1.frequency.value=55;
+  const o2=ctx.createOscillator(); o2.type='sine'; o2.frequency.value=82.4;
+  const lfo=ctx.createOscillator(); lfo.frequency.value=0.07; const lg=ctx.createGain(); lg.gain.value=0.02;
+  lfo.connect(lg); lg.connect(g.gain); o1.connect(g); o2.connect(g);
+  o1.start(); o2.start(); lfo.start(); ambNodes={g,o1,o2,lfo}; }
+function ambientStop(){ if(!ambNodes) return; const {g,o1,o2,lfo}=ambNodes; const t=ctx.currentTime;
+  g.gain.linearRampToValueAtTime(0.0001,t+0.5); [o1,o2,lfo].forEach(o=>{try{o.stop(t+0.6);}catch(e){}}); ambNodes=null; }
+
 XS.sfx={
   play(n){ if(!enabled)return; ensure(); if(ctx&&ctx.state==='suspended')ctx.resume(); (SND[n]||SND.click)(); },
-  unlock(){ ensure(); if(ctx&&ctx.state==='suspended')ctx.resume(); },
+  unlock(){ ensure(); if(ctx&&ctx.state==='suspended')ctx.resume(); if(ambOn&&enabled) ambientStart(); },
   toggle(){ enabled=!enabled; try{ localStorage.setItem('xenoscope.mute', enabled?'0':'1'); }catch(e){}
-    if(enabled){ ensure(); if(ctx&&ctx.state==='suspended')ctx.resume(); SND.blip(); } return enabled; },
+    if(enabled){ ensure(); if(ctx&&ctx.state==='suspended')ctx.resume(); SND.blip(); if(ambOn)ambientStart(); }
+    else ambientStop(); return enabled; },
+  setVolume(v){ vol=Math.max(0,Math.min(1,v)); try{ localStorage.setItem('xenoscope.vol', String(vol)); }catch(e){} ensure(); setMaster(); },
+  get volume(){ return vol; },
+  toggleAmbient(){ ambOn=!ambOn; try{ localStorage.setItem('xenoscope.amb', ambOn?'1':'0'); }catch(e){}
+    ensure(); if(ctx&&ctx.state==='suspended')ctx.resume(); if(ambOn&&enabled)ambientStart(); else ambientStop(); return ambOn; },
+  get ambient(){ return ambOn; },
   get enabled(){ return enabled; }
 };
 window.addEventListener('pointerdown',()=>XS.sfx.unlock(),{once:true});

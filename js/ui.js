@@ -23,6 +23,7 @@ function readoutBlock(){
 UI.init=function(){
   UI.top=$('top'); UI.left=$('left'); UI.right=$('right'); UI.dock=$('dock');
   UI.overlay=$('overlay'); UI.zlab=$('zlab');
+  UI.toastWrap=el('div','toastwrap'); UI.toastWrap.id='toasts'; document.body.appendChild(UI.toastWrap);
   const cv=$('c');
   cv.addEventListener('pointermove',onMove);
   cv.addEventListener('pointerdown',onDown);
@@ -62,6 +63,14 @@ UI.tick=function(dt){
   }
   if(app.phase==='investigate') UI.updateInvestigate();
   if(app.phase==='assignment') UI.updateAssignment();
+  if(app.toasts && app.toasts.length) UI.showToast(app.toasts.shift());
+};
+UI.showToast=function(t){
+  sfx('rank');
+  const d=el('div','toast',`<div class="t-ico">${t.icon}</div><div><div class="t-t">🏆 Achievement — ${t.title}</div><div class="t-d">${t.desc}</div></div>`);
+  UI.toastWrap.appendChild(d);
+  requestAnimationFrame(()=>d.classList.add('in'));
+  setTimeout(()=>{ d.classList.remove('in'); setTimeout(()=>d.remove(),400); },4400);
 };
 
 /* ---------------- phase router ---------------- */
@@ -85,7 +94,7 @@ UI.renderTop=function(){
   else objHTML=`<span class="sep"></span><span class="chip neutral">INVESTIGATE</span><span class="obj2">Identify the specimen</span>`;
   UI.top.innerHTML=
     `<span class="sid">${spec.id}</span>`+
-    `<span class="name ${named?'':'unk'}">${named?spec.name:'UNIDENTIFIED SPECIMEN'}</span>${kchip}${earthTag}`+
+    `<span class="name ${named?'':'unk'}">${named?spec.name:'UNIDENTIFIED SPECIMEN'}</span>${kchip}${earthTag}${app.daily?'<span class="earthtag daily">🗓 Daily</span>':''}`+
     objHTML+
     `<span class="sep"></span><span class="rankwrap"><span class="rk">${rank.name}</span><span class="xp">${XS.progress.xp} XP</span></span>`+
     `<button class="ibtn only-mobile" id="tgLeft" title="Panel">📋</button>`+
@@ -247,15 +256,34 @@ UI.showMenu=function(){
     `<div class="muted lbl">DIFFICULTY</div>`+
     `<div class="tiers">${tiers}</div>`+
     `<div class="cta"><button class="btn pri" id="startBtn">▶ Receive Specimen</button>`+
+      `<button class="btn" id="dailyBtn">🗓 Daily</button>`+
       `<button class="btn" id="codexBtn2">📖 Codex</button>`+
-      `<button class="btn ghost" id="muteBtn2">${XS.sfx&&XS.sfx.enabled?'🔊 Sound on':'🔇 Sound off'}</button>`+
-      (XS.progress.xp>0?`<button class="btn ghost" id="resetBtn">Reset</button>`:'')+`</div>`
+      `<button class="btn" id="achBtn">🏆 ${XS.progress.badges.length}/${XS.ACHIEVEMENTS.length}</button></div>`+
+    `<div class="setrow">`+
+      `<span class="setlbl">🔊</span><input type="range" id="volSld" min="0" max="100" value="${Math.round((XS.sfx?XS.sfx.volume:.7)*100)}">`+
+      `<button class="chipbtn ${XS.sfx&&XS.sfx.enabled?'on':''}" id="muteBtn2">${XS.sfx&&XS.sfx.enabled?'Sound on':'Muted'}</button>`+
+      `<button class="chipbtn ${XS.sfx&&XS.sfx.ambient?'on':''}" id="ambBtn">Ambient</button>`+
+      (XS.progress.xp>0?`<button class="chipbtn" id="resetBtn">Reset</button>`:'')+`</div>`
   );
   UI.overlay.querySelectorAll('.tierbtn').forEach(b=>b.onclick=()=>{sfx('click');XS.app.tier=b.dataset.tier;UI.overlay.querySelectorAll('.tierbtn').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');});
   $('startBtn').onclick=()=>{ sfx('click'); UI.hideOverlay(); XS.startRun(XS.app.tier); UI.renderPhase(); };
+  $('dailyBtn').onclick=()=>{ sfx('click'); UI.hideOverlay(); XS.startDaily(); UI.renderPhase(); };
   $('codexBtn2').onclick=()=>{sfx('click');UI.showCodex();};
-  $('muteBtn2').onclick=()=>{ const on=XS.sfx.toggle(); $('muteBtn2').textContent=on?'🔊 Sound on':'🔇 Sound off'; };
+  $('achBtn').onclick=()=>{ sfx('click'); UI.showAchievements(); };
+  $('volSld').oninput=e=>{ if(XS.sfx) XS.sfx.setVolume((+e.target.value)/100); };
+  $('volSld').onchange=()=>sfx('blip');
+  $('muteBtn2').onclick=()=>{ const on=XS.sfx.toggle(); const b=$('muteBtn2'); b.textContent=on?'Sound on':'Muted'; b.classList.toggle('on',on); };
+  $('ambBtn').onclick=()=>{ const on=XS.sfx.toggleAmbient(); $('ambBtn').classList.toggle('on',on); };
   const rb=$('resetBtn'); if(rb) rb.onclick=()=>{ if(confirm('Reset all progress and Codex?')){XS.resetProgress();UI.showMenu();} };
+};
+
+UI.showAchievements=function(){
+  const list=XS.ACHIEVEMENTS.map(a=>{const got=XS.progress.badges.includes(a.id);
+    return `<div class="ach ${got?'got':''}"><div class="ach-ico">${got?a.icon:'🔒'}</div><div><div class="ach-n">${got?a.name:'???'}</div><div class="ach-d">${a.desc}</div></div></div>`;}).join('');
+  card(`<div class="sub">Achievements · ${XS.progress.badges.length}/${XS.ACHIEVEMENTS.length}</div>`+
+    `<div class="ach-grid">${list}</div>`+
+    `<div class="cta"><button class="btn pri" id="achClose">Close</button></div>`);
+  $('achClose').onclick=()=>{ UI.hideOverlay(); UI.showMenu(); };
 };
 
 UI.showClassify=function(){
@@ -297,18 +325,23 @@ UI.showResult=function(){
   sfx(win?'win':'lose'); if(app.rankUp) setTimeout(()=>sfx('rank'),650);
   const xpList=app.lastXP.slice(0,5).map(x=>`<div class="xp-row"><span>${x.reason}</span><b>+${x.n}</b></div>`).join('');
   const rankUp=app.rankUp?`<div class="rankup">⬆ Promoted to <b>${app.rankUp.name}</b>! ${app.rankUp.unlock.length?'Unlocked: '+app.rankUp.unlock.map(k=>XS.KINGDOMS[k].label).join(', '):''}</div>`:'';
+  const streakLine=XS.progress.bestStreak>0?`<div class="streakline">🎯 Classification streak <b>${XS.progress.streak}</b> · best <b>${XS.progress.bestStreak}</b></div>`:'';
+  const shareStr=app.daily?`XENOSCOPE Daily ${XS.dailyKey()} — ${spec.name} ${win?'✅ '+T.name.toLowerCase():'❌ failed'}`:'';
+  const dailyBlock=app.daily?`<div class="sharebox"><div class="share-h">🗓 Daily ${XS.dailyKey()}</div><div class="sharestr" id="shareStr">${shareStr}</div><button class="chipbtn" id="copyShare">📋 Copy result</button></div>`:'';
   card(
     `<div class="sub">Assignment report · ${spec.id}</div>`+
     `<div class="verdict ${win?'win':'lose'}">${win?'✦ '+T.winT:'ASSIGNMENT FAILED'}</div>`+
     `<p>${win?`You correctly handled <b>${spec.name}</b> (${XS.KINGDOM_ANSWER[spec.kingdomKey]}).`:`<b>${spec.name}</b> — ${app.S&&app.S.integrity<=0?'the membrane ruptured':app.S&&app.S.vitality>=100?'it slipped from your control':'the objective was missed'}. Review the biology and try again.`}</p>`+
-    rankUp+
+    rankUp+ streakLine+
     (spec.earth&&spec.fact?`<div class="factbox">💡 ${spec.fact}${learn('https://en.wikipedia.org/wiki/'+spec.wiki)}</div>`:'')+
     `<div class="xp-list">${xpList}</div>`+
     `<div class="rev">FEEDS ON <span class="hl">${spec.isVirus?'host cells':spec.chemo?'minerals (chemoautotroph)':spec.autotroph?'light (photosynthesis)':'glucose'}</span> · VULNERABLE TO <span class="hl">${XS.SUBS[spec.kill[0]]?XS.SUBS[spec.kill[0]].name:spec.kill[0]}</span></div>`+
+    dailyBlock+
     `<div class="cta"><button class="btn pri" id="nextBtn">▶ Next specimen</button><button class="btn" id="menuBtn3">☰ Menu</button><button class="btn" id="codexBtn3">📖 Codex</button></div>`
   );
   $('nextBtn').onclick=()=>{ sfx('click'); UI.hideOverlay(); XS.startRun(XS.app.tier); UI.renderPhase(); };
   $('menuBtn3').onclick=UI.showMenu; $('codexBtn3').onclick=UI.showCodex;
+  const cs=$('copyShare'); if(cs) cs.onclick=()=>{ try{ navigator.clipboard.writeText(shareStr); cs.textContent='✓ Copied'; }catch(e){ cs.textContent='select & copy ↑'; } };
 };
 
 UI.showCodex=function(){

@@ -45,7 +45,8 @@ XS.render=function(app){
   const menuDemo = (app.phase==='menu') && app.demo;
   const spec = menuDemo ? app.demo : app.spec; if(!spec){ return; }
   const oy = app.phase==='assignment' ? -Math.min(R*0.26,100) : 0;   // lift cell above the dock
-  ctx.save(); ctx.translate(0,oy); if(menuDemo) ctx.globalAlpha=0.5;
+  ctx.save(); ctx.translate(0,oy);
+  if(menuDemo){ ctx.globalAlpha=0.62; ctx.translate(cx,cy); ctx.rotate(Math.sin(t*0.16)*0.09); ctx.translate(-cx,-cy); }
   const da = menuDemo ? {spec, S:null, phase:'menu', time:app.time} : app;
   if(spec.tissue) drawTissue(da,t);
   else if(spec.isVirus) drawVirus(da,t);
@@ -261,7 +262,11 @@ function inspectRings(app,rad){
     const on=app.spec.inspected.has(p.id);
     const hov=app.hoverPart===p;
     if(on){ ctx.strokeStyle='rgba(94,242,214,.55)';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(p._x,p._y,p._r+4,0,6.3);ctx.stroke(); }
-    if(hov&&app.phase==='investigate'){ ctx.strokeStyle='rgba(255,255,255,.85)';ctx.lineWidth=2;ctx.setLineDash([4,4]);ctx.beginPath();ctx.arc(p._x,p._y,p._r+6,0,6.3);ctx.stroke();ctx.setLineDash([]); }
+    if(hov&&app.phase==='investigate'){
+      ctx.strokeStyle='rgba(255,255,255,.85)';ctx.lineWidth=2;ctx.setLineDash([4,4]);ctx.beginPath();ctx.arc(p._x,p._y,p._r+6,0,6.3);ctx.stroke();ctx.setLineDash([]);
+      const pr=p._r+8+(Math.sin((app.time||0)/170)*3+3);
+      ctx.strokeStyle='rgba(94,242,214,.4)';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(p._x,p._y,pr,0,6.3);ctx.stroke();
+    }
   }
   ctx.restore();
 }
