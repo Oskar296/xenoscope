@@ -231,6 +231,18 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border:none;border-ra
 .steparr{color:var(--dim2);font-size:11px}
 .dock-group.active{border:1px solid rgba(94,242,214,.32);border-radius:12px;padding:6px 9px;background:rgba(94,242,214,.04);box-shadow:0 0 16px rgba(94,242,214,.12)}
 .dock-group.active .dock-lab{color:var(--aqua)}
+/* interactive tutorial coach */
+.coach{position:fixed;top:74px;left:50%;transform:translateX(-50%);width:min(600px,94vw);z-index:24;
+  background:linear-gradient(180deg,rgba(14,30,34,.97),rgba(9,20,26,.98));border:1px solid var(--aqua);border-radius:16px;
+  padding:13px 16px;box-shadow:0 18px 50px #000b,0 0 0 1px rgba(94,242,214,.25),0 0 30px rgba(94,242,214,.16);animation:coachIn .3s ease}
+@keyframes coachIn{from{transform:translate(-50%,-8px);opacity:0}to{transform:translate(-50%,0);opacity:1}}
+.coach-h{font-size:13px;font-weight:800;color:var(--aqua);letter-spacing:.3px;margin-bottom:5px}
+.coach-d{font-size:12.5px;line-height:1.55;color:var(--ink)}
+.coach-d b{color:var(--mint)}
+.coach-btns{margin-top:10px;display:flex;justify-content:flex-end;gap:8px}
+@media (max-width:900px){ .coach{top:62px;width:94vw;padding:11px 13px} .coach-d{font-size:12px} }
+.btn.pulse{border-color:var(--aqua);animation:btnpulse 1.7s ease-in-out infinite}
+@keyframes btnpulse{0%,100%{box-shadow:0 0 0 0 rgba(94,242,214,0)}50%{box-shadow:0 0 0 4px rgba(94,242,214,.16),0 0 18px rgba(94,242,214,.3)}}
 .abtn.identify{border-color:var(--warn);min-width:118px}
 .abtn.identify b{color:var(--warn)}
 .idgroup{max-width:150px}

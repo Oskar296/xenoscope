@@ -31,6 +31,7 @@ UI.init=function(){
   UI.top=$('top'); UI.left=$('left'); UI.right=$('right'); UI.dock=$('dock');
   UI.overlay=$('overlay'); UI.zlab=$('zlab');
   UI.toastWrap=el('div','toastwrap'); UI.toastWrap.id='toasts'; document.body.appendChild(UI.toastWrap);
+  UI.coach=el('div','coach'); UI.coach.id='coach'; UI.coach.style.display='none'; document.body.appendChild(UI.coach);
   const cv=$('c');
   cv.addEventListener('pointermove',onMove);
   cv.addEventListener('pointerdown',onDown);
@@ -73,6 +74,24 @@ UI.tick=function(dt){
   }
   if(app.phase==='survey'||app.phase==='zoom') UI.updateVitals();
   if(app.toasts && app.toasts.length) UI.showToast(app.toasts.shift());
+  if(app.tutorial){ const s=XS.tutorialStep(); if(s>app.tutorial.step){ app.tutorial.step=s; UI.updateCoach(); } }
+};
+/* interactive tutorial coach banner */
+UI.startTutorial=function(){ XS.startTutorial(); UI.renderPhase(); UI.updateCoach(); };
+UI.updateCoach=function(){ const T=XS.app.tutorial; if(!T){ UI.coach.style.display='none'; return; }
+  const msgs=[
+    {t:'Step 1 · Survey', d:'This is a whole alien organism on its exoplanet. Its tissues are marked with glowing rings. <b>Click a ring</b> on the organism to zoom into that tissue.'},
+    {t:'Step 2 · Analyse', d:'In the dock below, run a couple of <b>Lab assays</b>. Since something is <i>infecting</i> this tissue, the <b>Particle morphology</b> and <b>Invader coat assay</b> examine the invader itself. Each result lands in the <b>Evidence</b> panel on the right.'},
+    {t:'Step 3 · Diagnose', d:'Read the Evidence: the invader is <b>rod-shaped with a peptidoglycan wall</b> and its own ribosomes — that means a <b>Bacterium</b>. Hit <b>⌖ Identify</b> and pick it.'},
+    {t:'Step 4 · Treat', d:'Treatments just unlocked. A bacterium is destroyed by an <b>Antibiotic</b> — click it, and keep applying until the infection clears.'},
+    {t:'✓ You’ve got it!', d:'That’s the whole loop: <b>Survey → Analyse → Diagnose → Treat</b>. Match the right treatment to the evidence and you win. On harder tiers you’ll juggle more clues and complications — but it’s always these four steps.'},
+  ];
+  const m=msgs[T.step]||msgs[0], done=T.step>=4;
+  UI.coach.innerHTML=`<div class="coach-h">🎓 ${m.t}</div><div class="coach-d">${m.d}</div>`+
+    `<div class="coach-btns">${done?'<button class="btn pri" id="coachDone">▶ Start playing</button>':'<button class="chipbtn" id="coachSkip">Skip tutorial</button>'}</div>`;
+  UI.coach.style.display='block';
+  const sk=$('coachSkip'); if(sk) sk.onclick=()=>{ XS.endTutorial(); UI.coach.style.display='none'; UI.showMenu(); };
+  const dn=$('coachDone'); if(dn) dn.onclick=()=>{ XS.endTutorial(); UI.coach.style.display='none'; UI.showMenu(); };
 };
 UI.showToast=function(t){ sfx('rank');
   const d=el('div','toast',`<div class="t-ico">${t.icon}</div><div><div class="t-t">🏆 Achievement — ${t.title}</div><div class="t-d">${t.desc}</div></div>`);
@@ -81,7 +100,7 @@ UI.showToast=function(t){ sfx('rank');
 };
 
 /* ---------------- phase router ---------------- */
-UI.renderPhase=function(){ UI.top.style.display='flex'; UI.renderTop(); UI.renderLeft(); UI.renderRight(); UI.renderDock(); };
+UI.renderPhase=function(){ UI.top.style.display='flex'; UI.renderTop(); UI.renderLeft(); UI.renderRight(); UI.renderDock(); if(!XS.app.tutorial && UI.coach) UI.coach.style.display='none'; };
 
 /* ---------------- top bar ---------------- */
 UI.renderTop=function(){
@@ -274,8 +293,10 @@ UI.showMenu=function(){
       `<div class="rk-stats"><span>💚 ${p.saves} saved</span><span>☠️ ${p.kills} neutralised</span><span>🧬 ${cx.organelles.length}/${cx.totalOrganelles} organelles</span></div></div>`+
     `<div class="muted lbl">DIFFICULTY</div><div class="tiers">${tiers}</div>`+
     `<div class="cta"><button class="btn pri" id="startBtn">▶ Receive Assignment</button>`+
+      `<button class="btn ${!p.tutorialSeen?'pulse':''}" id="tutBtn">🎓 Tutorial</button>`+
       `<button class="btn" id="dailyBtn">🗓 Daily</button><button class="btn" id="codexBtn2">📖 Codex</button>`+
       `<button class="btn" id="achBtn">🏆 ${p.badges.length}/${XS.ACHIEVEMENTS.length}</button></div>`+
+      (!p.tutorialSeen?`<div class="muted" style="margin-top:8px;font-size:12px">🆕 New here? Start with the <b>🎓 Tutorial</b> — it walks you through a case step by step.</div>`:'')+
     `<div class="setrow"><span class="setlbl">🔊</span><input type="range" id="volSld" min="0" max="100" value="${Math.round((XS.sfx?XS.sfx.volume:.7)*100)}">`+
       `<button class="chipbtn ${XS.sfx&&XS.sfx.enabled?'on':''}" id="muteBtn2">${XS.sfx&&XS.sfx.enabled?'Sound on':'Muted'}</button>`+
       `<button class="chipbtn ${XS.sfx&&XS.sfx.ambient?'on':''}" id="ambBtn">Ambient</button>`+
@@ -283,6 +304,7 @@ UI.showMenu=function(){
   );
   UI.overlay.querySelectorAll('.tierbtn').forEach(b=>b.onclick=()=>{sfx('click');XS.app.tier=b.dataset.tier;UI.overlay.querySelectorAll('.tierbtn').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');});
   $('startBtn').onclick=()=>{ sfx('click'); UI.hideOverlay(); XS.startMission(null,XS.app.tier); UI.renderPhase(); };
+  $('tutBtn').onclick=()=>{ sfx('click'); UI.hideOverlay(); UI.startTutorial(); };
   $('dailyBtn').onclick=()=>{ sfx('click'); UI.hideOverlay(); XS.startDaily(); UI.renderPhase(); };
   $('codexBtn2').onclick=()=>{sfx('click');UI.showCodex();};
   $('achBtn').onclick=()=>{ sfx('click'); UI.showAchievements(); };
@@ -301,6 +323,7 @@ UI.showAchievements=function(){
 };
 
 UI.showResult=function(){
+  if(XS.app.tutorial){ XS.app.tutorial.step=4; UI.updateCoach(); return; }   // tutorial handles its own finish
   const app=XS.app, sc=app.sc, O=XS.OBJECTIVE_INFO[sc.objective], win=app.result.win;
   sfx(win?'win':'lose'); if(app.rankUp) setTimeout(()=>sfx('rank'),650);
   const xpList=app.lastXP.slice(0,5).map(x=>`<div class="xp-row"><span>${x.reason}</span><b>+${x.n}</b></div>`).join('');

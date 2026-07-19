@@ -14,7 +14,7 @@ XS.app={ phase:'menu', tier:'field', time:0, daily:false, toasts:[],
   lastXP:[], rankUp:null, missionWrong:0, demo:null };
 
 function fresh(){ return { xp:0, organelles:[], organisms:[], subs:[], badges:[], archetypes:[], species:[],
-  runs:0, wins:0, saves:0, kills:0, flawless:0, scans:0, dirWins:0, assays:0, sharpWins:0, hardWins:0 }; }
+  runs:0, wins:0, saves:0, kills:0, flawless:0, scans:0, dirWins:0, assays:0, sharpWins:0, hardWins:0, tutorialSeen:0 }; }
 XS.progress=null;
 XS.loadProgress=function(){
   try{ XS.progress=JSON.parse(localStorage.getItem(KEY)); }catch(e){ XS.progress=null; }
@@ -37,7 +37,7 @@ XS.award=function(n,reason){
 
 /* ---------------- mission lifecycle ---------------- */
 XS.startMission=function(objective, tier){
-  XS.app.tier=tier||XS.app.tier; XS.app.daily=false;
+  XS.app.tier=tier||XS.app.tier; XS.app.daily=false; XS.app.tutorial=null;
   const sc=XS.buildScenario(objective||(Math.random()<0.5?'preserve':'neutralize'), XS.app.tier);
   XS.app.sc=sc; XS.app.phase='survey'; XS.app.spec=null; XS.app.zoomRegion=null; XS.app.zoomPathogen=null;
   XS.app.hoverRegion=null; XS.app.hoverPart=null; XS.app.scan=null; XS.app.result=null; XS.app.rankUp=null; XS.app.missionWrong=0;
@@ -61,6 +61,27 @@ XS.doDiagnose=function(choice){
     else { XS.app.missionWrong++; sc.dxClean=false; } }
   return res;
 };
+
+/* guided tutorial: a clean, fixed scenario (bacterial infection of an animal) */
+XS.startTutorial=function(){
+  XS.app.tier='field';
+  const sc=XS.buildScenario('preserve','field');
+  sc.pathType='bacterium'; sc.agent='antibiotic'; sc.dxAnswer='Bacterium';
+  sc.traits=[]; sc.shielded=false; sc.resistantStrain=false; sc.harsh=false; sc.mutating=false; sc.cures=null; sc.symbiontId=null; sc.assayBudget=null;
+  sc.regions.forEach(r=>{ r.symbiont=false; r.decoy=false; });
+  XS.app.sc=sc; XS.app.phase='survey'; XS.app.spec=null; XS.app.zoomRegion=null; XS.app.zoomPathogen=null;
+  XS.app.hoverRegion=null; XS.app.hoverPart=null; XS.app.scan=null; XS.app.result=null; XS.app.rankUp=null; XS.app.missionWrong=0; XS.app.daily=false;
+  XS.app.tutorial={step:0};
+};
+XS.tutorialStep=function(){ const app=XS.app, sc=app.sc; if(!sc) return 0;
+  if(app.result) return 4;
+  if(app.phase==='survey') return 0;
+  const r=app.zoomRegion;
+  if(sc.diagnosed) return 3;
+  if(r && r.evidence.length>=2) return 2;
+  return 1;
+};
+XS.endTutorial=function(){ XS.app.tutorial=null; XS.progress.tutorialSeen=1; XS.saveProgress(); };
 
 XS.enterRegion=function(region){
   const sc=XS.app.sc; if(!sc) return;
