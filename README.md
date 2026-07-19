@@ -1,20 +1,25 @@
 # 🔬 XENOSCOPE — Field Xenobiology
 
 An **educational** biology game with a **macro → micro** loop. You're a field
-xenobiologist studying a whole alien organism on its exoplanet — a **fauna**
-(animal‑grade beast), **flora** (plant), or **fungal** body. You get **one of two
-orders**:
+xenobiologist studying a whole alien organism on its exoplanet — drawn from a
+catalogue of **31 species across the six kingdoms of life** (animals, plants,
+fungi, protists, bacteria and archaea) — and **every individual is unique**: its
+colour, size, proportions, limb/spine counts and skin pattern are rolled fresh,
+so no two look alike. You get **one of two orders**:
 
-- 💚 **Preserve** — the organism is sick. Find the afflicted tissue, diagnose the
-  infection, and cure it before it dies.
-- ☠️ **Neutralize** — the organism is an invasive threat. Find the tissue it can’t
-  defend and take the whole thing down.
+- 💚 **Preserve** — the organism is sick. Work out *what* is attacking it, find the
+  afflicted tissue, and apply the one correct cure before it dies.
+- ☠️ **Neutralize** — the organism is an invasive threat. Work out *what kind of
+  organism* it is, find the tissue it can’t defend, and hit its one true weakness.
 
-You **zoom into its tissues** to reach the cells, inspect their organelles (real
-biology, with “Learn more ↗” links), read the diagnosis, then apply the right
-treatment. The biology is honest — **antivirals only work on viruses, antibiotics
-only on bacteria, osmotic shock only bursts wall‑less cells**, and so on — so the
-wrong treatment does nothing. You genuinely learn cell biology as you rank up.
+The cause is **hidden**. You **zoom into its tissues**, run **lab assays** (Gram
+stain, membrane‑lipid, pigment, motility, nuclear stain…), inspect organelles
+(real biology, with “Learn more ↗” links), and read the **evidence** you gather.
+Only when you can **commit a correct diagnosis** do treatments unlock — and the
+biology is honest: **antivirals only work on viruses, antibiotics only on bacteria
+(never archaea — they have no peptidoglycan), osmotic shock only bursts wall‑less
+cells**, and so on. Wrong calls are punished, harder on higher tiers, so you can’t
+win by guessing — you have to actually reason it out.
 
 No build step, no dependencies. Works on **desktop and mobile**.
 
@@ -29,31 +34,42 @@ python3 -m http.server 8000   # then open http://localhost:8000
 
 Or just open `index.html` (some browsers disable saved progress on `file://`).
 
-## The loop: **survey → zoom → treat**
+## The loop: **survey → analyse → diagnose → treat**
 
 1. **Survey.** See the whole creature on its exoplanet and read your orders
    (Preserve or Neutralize). Glowing **markers** sit on each anatomical region.
-2. **Zoom in.** Click a marker to enter that tissue — you see its **cells**, can
-   **inspect organelles** to learn their biology, and get a **diagnosis**. In an
-   infected region you’ll literally see the **pathogen particles** (a virus,
-   bacteria or fungal threads) crowding the cells.
-3. **Treat.** Apply a treatment to the tissue you’re in:
-   - **Preserve** → match the cure to the pathogen (antiviral / antibiotic /
-     antifungal).
-   - **Neutralize** → exploit the creature’s cell weakness (osmotic shock for a
-     wall‑less animal, herbicide for a walled plant, antifungal for a fungus).
-
-   The right tissue + the right agent wins. Wrong ones cost you host stress /
-   let the organism adapt — so diagnose before you dose.
+2. **Analyse.** Click a marker to zoom into a tissue and meet its **cells**. Run
+   **lab assays** and **inspect organelles** — each result is a real clue that lands
+   in your **Evidence** log. A structural assay reveals whether *this* tissue is the
+   soft target; an infected region literally shows the **invader particles**.
+3. **Diagnose.** Hit **⌖ Identify** and commit a call — the pathogen (Virus /
+   Bacterium / Fungus / Parasite) for Preserve, or the organism’s kingdom for
+   Neutralize. A wrong call raises the fail meter; a right one **unlocks the
+   treatments**.
+4. **Treat.** Pick from the full agent slate. The one that matches the biology wins;
+   everything else is punished — e.g. an **archaeon shrugs off antibiotics** (no
+   peptidoglycan) and only falls to **detergent**, which you can only know by
+   running the membrane‑lipid assay.
 
 ## Depth & replayability
 
-- **Three organism forms** on **five exoplanets**, procedurally drawn.
-- **Difficulty tiers** (Intern / Field / Director — Director hides the treatment
-  recommendation, so you must reason from the biology).
-- **XP & ranks**, a growing **Codex** of organelles and cell types, **10
-  achievements** with unlock toasts, and a seeded **🗓 Daily** assignment with a
-  shareable result.
+- **31 species across six kingdoms** on **six exoplanets** — 26 distinct body‑plans
+  (medusa, arthropod, cephalopod, worm, anemone, crinoid, urchin, diatom,
+  radiolarian, coral & bracket fungus, puffball, biofilm, stromatolite, archaeal
+  vent colony…) × **per‑individual procedural morphology**, so the bestiary is
+  effectively unlimited.
+- **A real deduction loop** — the answer is hidden; you gather evidence with **10
+  lab assays** + organelle inspection, then commit a diagnosis before you can treat.
+- **6 kinds of affliction** — virus, bacterium, fungus, parasite, **prion** (only a
+  denaturant works) and **chemical toxin** (no organism at all — needs an antitoxin).
+- **8 complications** that recombine onto any specimen — drug‑resistant, biofilm
+  shield, mutualistic symbiont, virulent, extreme habitat, **co‑infection** (two
+  cures), **necrotic decoy** (a false target) and **rapidly‑mutating**.
+- **Difficulty tiers** (Intern / Field / Director). Field & Director require a correct
+  diagnosis and punish wrong calls; **Director adds up to two complications and a
+  limited assay budget**, so you must choose which tests to spend.
+- **XP & ranks**, a growing **Codex**, **15 achievements** with unlock toasts, and a
+  seeded **🗓 Daily** assignment with a shareable result.
 - **Sound**: synth SFX, volume slider, ambient toggle. Honours reduced‑motion.
 
 ## Project layout

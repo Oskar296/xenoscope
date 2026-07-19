@@ -241,11 +241,11 @@ XS.SUBS = {
 /* ---------------- DIFFICULTY TIERS ---------------- */
 XS.TIERS = {
   intern:  {label:'Intern', hint:true, prescan:2, margin:1.35, decoys:0, drift:0.7,
-    blurb:'Generous tolerances, on-screen hints, two structures pre-scanned. Learn the ropes.'},
-  field:   {label:'Field Xenobiologist', hint:true, prescan:0, margin:1.0, decoys:1, drift:1.0,
-    blurb:'The standard run. Hints on, nothing pre-scanned.'},
+    blurb:'Gentle penalties and on-screen hints; you can treat without a formal diagnosis. Learn the ropes.'},
+  field:   {label:'Field Xenobiologist', hint:false, prescan:0, margin:1.0, decoys:1, drift:1.0,
+    blurb:'The standard run — run assays and commit a correct diagnosis before treatment unlocks.'},
   director:{label:'Director', hint:false, prescan:0, margin:0.7, decoys:2, drift:1.25,
-    blurb:'No hints, tight tolerances, decoy substances. For seasoned xenobiologists.'},
+    blurb:'No hints and harsh penalties for wrong calls. Reason from the evidence alone.'},
 };
 
 /* ---------------- RANKS (career progression) ----------------

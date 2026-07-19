@@ -31,27 +31,30 @@ b{font-weight:600}
 .chip.good{color:var(--mint);background:rgba(94,242,214,.09);border-color:rgba(94,242,214,.4)}
 .chip.bad{color:var(--coral);background:rgba(255,94,120,.09);border-color:rgba(255,125,146,.4)}
 .chip.neutral{color:var(--warn);background:rgba(255,196,107,.09);border-color:rgba(255,196,107,.4)}
-#top .obj2{font-size:12px;color:var(--dim);white-space:nowrap}
+#top .obj2{font-size:10.5px;color:var(--dim);white-space:nowrap}
 #top .sep{width:1px;height:20px;background:var(--line)}
-.rankwrap{display:flex;flex-direction:column;line-height:1.15}
-.rankwrap .rk{color:var(--mint);font-size:12px;font-weight:600}
-.rankwrap .xp{color:var(--dim);font-size:10px;font-family:var(--mono)}
+.titlewrap{display:flex;flex-direction:column;line-height:1.2;min-width:0}
+.topgap{flex:0 0 6px}
+.rankpill{display:flex;align-items:center;gap:6px;padding:3px 10px;border:1px solid var(--line);border-radius:20px;background:rgba(255,255,255,.03);white-space:nowrap}
+.rankpill .rk{color:var(--mint);font-size:11.5px;font-weight:600}
+.rankpill .xp{color:var(--dim);font-size:10px;font-family:var(--mono)}
+.rankpill .xp::after{content:' XP'}
 .ibtn{width:30px;height:30px;border-radius:9px;border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--dim);cursor:pointer;font-size:14px;display:grid;place-items:center;transition:.15s}
 .ibtn:hover{color:var(--ink);border-color:var(--line2);background:rgba(255,255,255,.07)}
 
 /* left panel */
-#left{left:16px;top:50%;transform:translateY(-50%);width:196px;padding:16px 15px}
+#left{left:16px;top:50%;transform:translateY(-50%);width:196px;padding:16px 15px;max-height:88vh;overflow-y:auto}
 .prog{display:flex;justify-content:space-between;font-size:11px;color:var(--dim);margin:6px 0 5px}
 .prog b{color:var(--ink);font-family:var(--mono)}
 .track{height:6px;border-radius:6px;background:rgba(255,255,255,.06);overflow:hidden;position:relative}
 .track>i{position:absolute;top:0;bottom:0;left:0;border-radius:6px;transition:width .3s}
 .hintbox{margin:12px 0;font-size:11px;line-height:1.5;color:var(--dim);background:rgba(94,242,214,.05);border:1px solid var(--line);border-radius:10px;padding:9px 10px}
 .btn.wide{width:100%;margin-top:4px}
-.ring{position:relative;width:120px;height:120px;margin:2px auto 8px}
-.ring svg{transform:rotate(-90deg)}
-.ring .rval{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
-.ring .num{font-size:30px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
-.ring .rlab{font-size:9px;letter-spacing:2px;color:var(--dim);margin-top:3px}
+.ring{position:relative;width:120px;height:120px;margin:2px auto 10px}
+.ring svg{display:block;transform:rotate(-90deg)}
+.ring .rval{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;line-height:1;pointer-events:none}
+.ring .num{font-size:28px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.ring .rlab{font-size:8.5px;letter-spacing:1.6px;color:var(--dim);margin-top:5px;font-weight:600}
 .bar{margin-top:11px}
 .bar .bl{display:flex;justify-content:space-between;font-size:10.5px;color:var(--dim);margin-bottom:5px}
 .bar .bl b{color:var(--ink);font-family:var(--mono);font-size:11px}
@@ -163,7 +166,7 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border:none;border-ra
 /* ---------- mobile / touch ---------- */
 @media (max-width:900px){
   #top{max-width:98vw;gap:8px;padding:8px 10px;z-index:22}
-  #top .obj2,#top .sep,.rankwrap .rk{display:none}
+  #top .obj2,#top .sep,.rankpill{display:none}
   .only-mobile{display:grid}
   /* side panels become slide-in drawers (below the top bar) */
   #left,#right{top:94px;bottom:128px;transform:none;width:min(300px,84vw);max-height:none;overflow:auto;transition:transform .25s ease;z-index:14}
@@ -209,8 +212,36 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border:none;border-ra
 .card{animation:cardIn .25s ease}
 @keyframes cardIn{from{transform:translateY(10px) scale(.99);opacity:0}to{transform:none;opacity:1}}
 
+/* ---------- deduction UI: analysis panel, assays, identify ---------- */
+.th{font-size:12px;font-weight:600;border-radius:9px;padding:7px 9px;margin-bottom:2px;border:1px solid var(--line);line-height:1.4}
+.th.bad{color:var(--coral);background:rgba(255,120,90,.08);border-color:rgba(255,120,90,.3)}
+.th.good{color:var(--mint);background:rgba(94,242,214,.06);border-color:rgba(94,242,214,.25)}
+.th.muted{color:var(--dim);background:rgba(255,255,255,.02)}
+.ev-list{display:flex;flex-direction:column;gap:4px;margin-top:2px}
+.ev-row{font-size:11.5px;color:var(--ink);line-height:1.45;background:rgba(255,255,255,.03);border-left:2px solid rgba(94,242,214,.45);padding:4px 8px;border-radius:0 6px 6px 0}
+.abtn.assay b{color:var(--aqua)}
+.abtn.assay.used{border-color:rgba(94,242,214,.4);background:rgba(94,242,214,.06)}
+.abtn.assay.used b::after{content:' ✓';color:var(--mint)}
+.abtn.assay.dis{opacity:.4;filter:grayscale(.5)}
+.abtn.identify{border-color:var(--warn);min-width:118px}
+.abtn.identify b{color:var(--warn)}
+.idgroup{max-width:150px}
+.dx-done{color:var(--mint);font-weight:700;font-size:12px;border:1px solid rgba(94,242,214,.4);border-radius:10px;padding:9px 10px;background:rgba(94,242,214,.07);text-align:center}
+.idgrid{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.idopt{flex:1;min-width:108px;padding:11px 10px;border:1px solid var(--line2);border-radius:11px;background:rgba(255,255,255,.03);color:var(--ink);cursor:pointer;font-size:13px;font-weight:600;transition:.14s}
+.idopt:hover{border-color:var(--aqua);background:rgba(94,242,214,.07)}
+.idopt.wrong{border-color:var(--coral);animation:shake .3s;opacity:.55}
+.idnote{color:var(--coral);font-size:12px;min-height:16px;margin-top:2px}
+.card .ev-list{max-height:150px;overflow:auto}
+.th.sym{color:var(--warn);background:rgba(255,196,107,.08);border-color:rgba(255,196,107,.32)}
+.cmp{border:1px solid rgba(255,196,107,.28);background:rgba(255,196,107,.05);border-radius:10px;padding:7px 9px;margin-top:6px}
+.cmp b{font-size:11.5px;color:var(--warn);display:block}
+.cmp small{display:block;font-size:10.5px;color:var(--dim);margin-top:2px;line-height:1.4}
+.cmp-tags{display:flex;flex-wrap:wrap;gap:5px;margin:6px 0 2px}
+.cmp-tag{font-size:10px;font-weight:600;color:var(--warn);border:1px solid rgba(255,196,107,.35);background:rgba(255,196,107,.08);border-radius:20px;padding:2px 8px;white-space:nowrap}
+
 /* ---------- compact assignment dock (stops covering the cell) ---------- */
-.dock-treat{padding:9px 13px;gap:12px;max-height:150px}
+.dock-treat{padding:9px 13px;gap:12px;max-height:220px;overflow:auto}
 .dock-treat .abtn{padding:5px 9px;min-width:88px;font-size:10.5px}
 .dock-treat .abtn small{font-size:8.5px;margin-top:0}
 .dock-treat .sldwrap{width:150px}

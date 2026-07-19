@@ -11,6 +11,15 @@ function el(tag,cls,html){const e=document.createElement(tag);if(cls)e.className
 const UI={}; XS.ui=UI;
 let readoutHTML='';
 function learn(url){ return url?` <a class="learn" href="${url}" target="_blank" rel="noopener">Learn more ↗</a>`:''; }
+/* inspecting these structures adds a diagnostic clue to the region's evidence */
+const STRUCT_CLUE={
+  wall_cellulose:'Rigid cellulose cell wall seen.', wall_chitin:'Chitin cell wall seen.',
+  wall_pepti:'Peptidoglycan cell wall seen.', wall_slayer:'Protein S-layer wall — no peptidoglycan.',
+  nucleus:'A true nucleus is present (eukaryote).', nucleoid:'DNA loose as a nucleoid (prokaryote).',
+  chloroplast:'Chloroplasts present (photo-autotroph).', thylakoid:'Photosynthetic membranes present.',
+  flagellum:'A flagellum for swimming.', cilia:'Cilia for movement.', pseudopod:'Pseudopodia — crawls & engulfs.',
+  contractile:'A contractile vacuole — a wall-less freshwater cell.', capsid:'A viral capsid — not a cell at all.', envelope:'A lipid envelope (soap-sensitive).',
+};
 function sfx(n){ if(XS.sfx) XS.sfx.play(n); }
 function readoutBlock(){
   return `<div class="cap notes-cap">🔎 Notes</div>`+
@@ -55,10 +64,12 @@ function onDown(e){
 UI.tick=function(dt){
   const app=XS.app;
   if(app.scan && app.scan.active && app.time-app.scan.start>=app.scan.dur){
-    const info=XS.inspect(app.scan.part); app.scan=null;
+    const part=app.scan.part, info=XS.inspect(part); app.scan=null;
     if(info){ sfx('blip'); readoutHTML=`<div class="ro-name">${info.name}</div><div class="ro-fn">${info.fn}</div>`+
-      (info.more?`<div class="ro-more">${info.more}</div>`:'')+`<div class="ro-fact">💡 ${info.fact}${learn(info.wiki)}</div>`; }
-    UI.renderTop(); UI.renderLeft();
+      (info.more?`<div class="ro-more">${info.more}</div>`:'')+`<div class="ro-fact">💡 ${info.fact}${learn(info.wiki)}</div>`;
+      const clue=STRUCT_CLUE[part.id], reg=app.zoomRegion;
+      if(clue && reg && reg.evidence.indexOf(clue)<0){ reg.evidence.push(clue); reg.recon=true; } }
+    UI.renderTop(); UI.renderLeft(); if(app.phase==='zoom'){ UI.renderRight(); UI.renderDock(); }
   }
   if(app.phase==='survey'||app.phase==='zoom') UI.updateVitals();
   if(app.toasts && app.toasts.length) UI.showToast(app.toasts.shift());
@@ -76,12 +87,12 @@ UI.renderPhase=function(){ UI.top.style.display='flex'; UI.renderTop(); UI.rende
 UI.renderTop=function(){
   const app=XS.app, sc=app.sc; if(!sc){ UI.top.innerHTML=''; return; }
   const O=XS.OBJECTIVE_INFO[sc.objective], rank=XS.rankFor(XS.progress.xp);
-  const where = app.phase==='zoom'&&app.zoomRegion ? `<span class="obj2">${app.zoomRegion.name}</span>` : `<span class="obj2">${sc.A.label} · ${sc.planet.name}</span>`;
+  const loc = app.phase==='zoom'&&app.zoomRegion ? app.zoomRegion.name : `${sc.A.label} · ${sc.planet.name}`;
   UI.top.innerHTML=
-    `<span class="sid">${sc.objective==='preserve'?'RES':'NTR'}-${(sc.name.length*7)%900+100}</span>`+
-    `<span class="name">${sc.name}</span>`+
-    `<span class="sep"></span><span class="chip ${O.tone}">${O.label}</span>${where}`+
-    `<span class="sep"></span><span class="rankwrap"><span class="rk">${rank.name}</span><span class="xp">${XS.progress.xp} XP</span></span>`+
+    `<span class="chip ${O.tone}">${O.label}</span>`+
+    `<span class="titlewrap"><span class="name">${sc.name}</span><span class="obj2">${loc}</span></span>`+
+    `<span class="topgap"></span>`+
+    `<span class="rankpill"><span class="rk">${rank.name}</span><span class="xp">${XS.progress.xp}</span></span>`+
     `<button class="ibtn only-mobile" id="tgLeft">📋</button><button class="ibtn only-mobile" id="tgRight">📄</button>`+
     `<button class="ibtn" id="muteBtn">${XS.sfx&&XS.sfx.enabled?'🔊':'🔇'}</button>`+
     `<button class="ibtn" id="codexBtn">📖</button><button class="ibtn" id="menuBtn">☰</button>`;
@@ -119,21 +130,43 @@ UI.updateVitals=function(){
 UI.renderRight=function(){
   const app=XS.app, sc=app.sc; if(!sc) return;
   if(app.phase==='survey'){
-    const O=XS.OBJECTIVE_INFO[sc.objective];
-    const regions=sc.regions.map(r=>`<div class="dl-row"><span>${r.scanned?(r.id===sc.keyId?'⚠':'✓'):'◦'} ${r.name}</span><b>${r.scanned?(r.id===sc.keyId?(sc.objective==='preserve'?'afflicted':'target'):'clear'):'—'}</b></div>`).join('');
+    const regions=sc.regions.map(r=>{ const st=r.recon?(r.id===sc.keyId?'target':'clear'):(r.scanned?'seen':'—');
+      const ico=r.recon?(r.id===sc.keyId?'⚠':'✓'):'◦';
+      return `<div class="dl-row"><span>${ico} ${r.name}</span><b>${st}</b></div>`; }).join('');
+    const cmp=(sc.traits&&sc.traits.length)?`<div class="cap" style="margin-top:12px">⚠ Complications</div>`+
+      sc.traits.map(tr=>`<div class="cmp"><b>${tr.tag} ${tr.label}</b><small>${tr.hint}</small></div>`).join(''):'';
     UI.right.innerHTML=`<div class="cap">Briefing</div>`+
       `<div class="brief">${sc.brief}</div>`+
-      `<div class="brief-sub">${sc.A.blurb}</div>`+
-      `<div class="cap" style="margin-top:12px">Regions ${sc.regions.filter(r=>r.scanned).length}/${sc.regions.length}</div>`+
+      `<div class="brief-sub">${sc.A.blurb}</div>`+ cmp +
+      `<div class="cap" style="margin-top:12px">Tissues analysed ${sc.regions.filter(r=>r.recon).length}/${sc.regions.length}</div>`+
       `<div class="dossier">${regions}</div>`+
-      `<div class="hintbox">💡 Click the glowing markers on the organism to zoom into each tissue and diagnose it.</div>`;
-  } else { // zoom
-    const d=XS.diagnosis(); const hint=(XS.TIERS[app.tier]||{}).hint;
-    UI.right.innerHTML=`<div class="cap">Diagnosis · ${app.zoomRegion.name}</div>`+
-      `<div class="diag ${d.bad?'bad':'good'}"><div class="diag-t">${d.title}</div><div class="diag-b">${d.body}</div>`+
-      (d.why?`<div class="diag-why">${d.why}</div>`:'')+
-      (d.bad&&hint&&d.agentLabel?`<div class="diag-rx">→ Treat with <b>${d.agentLabel}</b></div>`:'')+`</div>`+
-      `<div class="hintbox" style="margin-top:10px">Inspect the cells to learn their biology, then apply a treatment below. ${app.zoomRegion.tissue?'<span class="muted">Tissue: '+app.zoomRegion.tissue+'</span>':''}</div>`;
+      `<div class="hintbox">💡 Click the glowing markers to zoom into each tissue, then run <b>lab assays</b> to work out what you’re dealing with.</div>`;
+  } else { // zoom — Field Analysis (deduction, no free answer)
+    const r=app.zoomRegion, isKey=r.id===sc.keyId, preserve=sc.objective==='preserve';
+    const internHint=(XS.TIERS[app.tier]||{}).hint && app.tier==='intern';
+    let threat;
+    if(r.symbiont && r.recon){ threat='<div class="th sym">🤝 A beneficial symbiont lives here — treating this tissue would harm the host. Leave it alone.</div>'; }
+    else if(r.decoy && r.recon){ threat='<div class="th sym">✖ Necrotic decoy — already-dead debris that only looks infected. This is NOT the active focus.</div>'; }
+    else if(r.recon){ threat = isKey
+        ? (preserve?('<div class="th bad">⚠ An invader is multiplying in this tissue.</div>'
+                    + (sc.cures?'<div class="th sym">✚ Mixed infection — a SECOND invader is also present. You will need two cures.</div>':''))
+                   :'<div class="th bad">⚠ Exposed tissue — the organism can’t defend it here. A viable target.</div>')
+                   + (sc.shielded?'<div class="th sym">🛡 A biofilm shields these cells — strip it with detergent before the real agent will land.</div>':'')
+        : '<div class="th good">✓ This tissue is clear — the cause is elsewhere.</div>'; }
+    else threat='<div class="th muted">Run a lab assay to survey this tissue.</div>';
+    const ev = r.evidence.length? r.evidence.map(e=>`<div class="ev-row">• ${e}</div>`).join('')
+      : '<div class="muted" style="font-size:11.5px;line-height:1.5">No findings yet. Run the lab assays below, and click the cell’s structures to inspect them.</div>';
+    let concl='';
+    if(r.diagnosed){ const why=preserve?XS.PATHOGENS[sc.pathType].why:XS.WEAKNESS_WHY[sc.agent];
+      concl=`<div class="diag good"><div class="diag-t">✓ DIAGNOSIS · ${sc.dxAnswer}</div><div class="diag-why">${why}</div><div class="diag-rx">Now apply the matching treatment.</div></div>`;
+    } else if(internHint && r.recon && isKey){
+      concl=`<div class="diag bad"><div class="diag-t">Intern hint</div><div class="diag-b">${preserve?XS.PATHOGENS[sc.pathType].tell:'Its wall material and metabolism point to a single weakness — read the evidence.'}</div></div>`;
+    }
+    const tagRow=(sc.traits&&sc.traits.length)?`<div class="cmp-tags">${sc.traits.map(tr=>`<span class="cmp-tag">${tr.tag}</span>`).join('')}</div>`:'';
+    UI.right.innerHTML=`<div class="cap">Field Analysis · ${r.name}</div>`+ tagRow + threat +
+      `<div class="cap" style="margin-top:12px">Evidence · ${r.evidence.length}</div>`+
+      `<div class="ev-list">${ev}</div>`+ concl +
+      `<div class="hintbox" style="margin-top:10px">${sc.diagnosed?'Apply the one agent its biology can’t withstand. Wrong agents are punished.':'Gather evidence, then <b>⌖ Identify</b> the cause to unlock treatments.'}</div>`;
   }
 };
 
@@ -145,14 +178,35 @@ UI.renderDock=function(){
     UI.dock.innerHTML=`<div class="survey-hint">🛰 <b>${XS.OBJECTIVE_INFO[sc.objective].verb} this organism.</b> ${XS.OBJECTIVE_INFO[sc.objective].goal} — click the markers to investigate its tissues.</div>`;
     return;
   }
-  // zoom: treatment dock
+  // zoom: assays → identify → (gated) treatments
+  const r=app.zoomRegion;
   UI.dock.className='panel dock-treat';
-  const opts=XS.treatmentOptions(sc);
-  const btn=id=>{const t=XS.TREATMENTS.find(x=>x.id===id)||{label:id,desc:''};return `<button class="abtn treat" data-a="${id}"><b>${t.label}</b><small>${t.desc.split('.')[0]}</small></button>`;};
+  const assays=XS.zoomAssays(sc,r);
+  const out0=sc.assayBudget!=null && sc.assayBudget<=0;
+  const abtn=a=>{ const used=r.tests[a.id], dis=out0&&!used;
+    return `<button class="abtn assay ${used?'used':''} ${dis?'dis':''}" data-assay="${a.id}"><b>${a.label}</b><small>${a.short}</small></button>`; };
+  const assayLab=`Lab assays${sc.assayBudget!=null?' · <b>'+sc.assayBudget+'</b> charges left':''}`;
+  const dxDone=r.diagnosed, canTreat=XS.canTreat(sc,r);
+  const idGroup = dxDone
+    ? `<div class="dock-group idgroup"><div class="dock-lab">Diagnosis</div><div class="dx-done">✓ ${sc.dxAnswer}</div></div>`
+    : `<div class="dock-group idgroup"><div class="dock-lab">Diagnosis</div><button class="abtn identify" id="idBtn"><b>⌖ Identify</b><small>commit a call</small></button></div>`;
+  let treatGroup='';
+  if(canTreat){ const opts=XS.treatmentOptions(sc);
+    const tb=id=>{const t=XS.TREATMENTS.find(x=>x.id===id)||{label:id,desc:''};return `<button class="abtn treat" data-a="${id}"><b>${t.label}</b><small>${t.desc.split('.')[0]}</small></button>`;};
+    treatGroup=`<div class="dsep"></div><div class="dock-group"><div class="dock-lab">Apply treatment to ${r.name}</div><div class="btn-row treat-row">${opts.map(tb).join('')}</div></div>`;
+  }
   UI.dock.innerHTML=`<button class="abtn back" id="backBtn"><b>← Organism</b><small>zoom out</small></button>`+
     `<div class="dsep"></div>`+
-    `<div class="dock-group"><div class="dock-lab">APPLY TREATMENT to ${app.zoomRegion.name}</div><div class="btn-row treat-row">${opts.map(btn).join('')}</div></div>`;
+    `<div class="dock-group"><div class="dock-lab">${assayLab}</div><div class="btn-row assay-row">${assays.map(abtn).join('')}</div></div>`+
+    `<div class="dsep"></div>`+ idGroup + treatGroup;
   $('backBtn').onclick=()=>{ sfx('click'); XS.exitRegion(); UI.renderPhase(); };
+  const idb=$('idBtn'); if(idb) idb.onclick=()=>{ sfx('click'); UI.showIdentify(); };
+  UI.dock.querySelectorAll('[data-assay]').forEach(b=>{
+    b.onclick=()=>{ const out=XS.doAssay(b.dataset.assay); if(!out)return; sfx('blip');
+      readoutHTML=`<div class="ro-name">${out.label}</div><div class="ro-fn">${out.text}</div>`;
+      b.animate([{transform:'scale(.95)'},{transform:'scale(1)'}],{duration:150});
+      UI.renderRight(); UI.renderLeft(); UI.renderDock(); };
+  });
   UI.dock.querySelectorAll('[data-a]').forEach(b=>{
     b.onmouseenter=()=>{ const t=XS.TREATMENTS.find(x=>x.id===b.dataset.a); readoutHTML=`<div class="ro-fn">${t?t.desc:''}</div>`; const ro=$('roLeft'); if(ro)ro.innerHTML=readoutHTML; };
     b.onclick=()=>{ const res=XS.treatRegion(b.dataset.a); if(!res)return;
@@ -160,10 +214,32 @@ UI.renderDock=function(){
       readoutHTML=`<div class="ro-name" style="color:${res.ok?'var(--mint)':'var(--coral)'}">${res.ok?'✓ '+res.msg:'✗ '+res.msg}</div>`;
       const ro=$('roLeft'); if(ro)ro.innerHTML=readoutHTML;
       b.animate([{transform:'scale(.95)'},{transform:'scale(1)'}],{duration:150});
-      UI.updateVitals();
+      UI.renderRight(); UI.updateVitals();
       if(XS.app.result) UI.showResult();
     };
   });
+};
+
+/* diagnosis (classify) overlay */
+UI.showIdentify=function(){
+  const sc=XS.app.sc, r=XS.app.zoomRegion; if(!sc||!r) return;
+  const opt=XS.identifyOptions(sc);
+  const btns=opt.options.map(o=>`<button class="idopt" data-o="${o}">${o}</button>`).join('');
+  const evList=r.evidence.length?r.evidence.map(e=>`<div class="ev-row">• ${e}</div>`).join(''):'<div class="muted">You have gathered no evidence yet — this is a guess.</div>';
+  card(`<div class="sub">Diagnosis · ${r.name}</div><h2>${opt.prompt}</h2>`+
+    `<div class="cap" style="margin:8px 0 6px">Your evidence</div><div class="ev-list">${evList}</div>`+
+    `<p class="muted" style="margin-top:8px">A wrong call raises the ${sc.objective==='preserve'?'host’s risk':'organism’s adaptation'} — so read the evidence before you commit.</p>`+
+    `<div class="idgrid">${btns}</div><div class="idnote" id="idNote"></div>`+
+    `<div class="cta"><button class="btn" id="idCancel">Back to analysis</button></div>`);
+  UI.overlay.querySelectorAll('.idopt').forEach(b=>b.onclick=()=>{
+    const res=XS.doDiagnose(b.dataset.o); if(!res)return; sfx(res.ok?'ok':'err');
+    if(res.ok){ UI.hideOverlay(); readoutHTML=`<div class="ro-name" style="color:var(--mint)">✓ ${res.msg}</div>`;
+      UI.renderLeft(); UI.renderRight(); UI.renderDock(); UI.updateVitals();
+      if(XS.app.result) UI.showResult();
+    } else { b.classList.add('wrong'); const n=$('idNote'); if(n) n.textContent='✗ '+res.msg; UI.updateVitals();
+      if(XS.app.result){ UI.showResult(); } }
+  });
+  $('idCancel').onclick=()=>{ UI.hideOverlay(); };
 };
 
 /* ---------------- overlays ---------------- */
@@ -180,11 +256,11 @@ UI.showMenu=function(){
   card(
     `<div class="sub">Xenobiology Division · Field Expedition</div>`+
     `<h1><span class="x">XENO</span><span class="o">SCOPE</span></h1>`+
-    `<div class="tagline">Study a whole alien organism on its exoplanet. <b>Zoom into its tissues</b>, diagnose the problem, then <span class="gd">preserve</span> it or <span class="rk">neutralise</span> it.</div>`+
+    `<div class="tagline">Study a whole alien organism on its exoplanet. <b>Zoom into its tissues</b>, run lab assays to work out what it is, then <span class="gd">preserve</span> it or <span class="rk">neutralise</span> it.</div>`+
     `<div class="how">`+
-      `<div class="how-step"><div class="how-ico">🪐</div><div><b>Survey</b><small>See the creature on its world &amp; read your orders</small></div></div>`+
-      `<div class="how-step"><div class="how-ico">🔬</div><div><b>Zoom in</b><small>Enter a tissue, inspect cells, find the cause</small></div></div>`+
-      `<div class="how-step"><div class="how-ico">⚗️</div><div><b>Treat</b><small>Cure the infection, or exploit the weakness</small></div></div>`+
+      `<div class="how-step"><div class="how-ico">🪐</div><div><b>Survey</b><small>Meet the creature on its world &amp; read your orders</small></div></div>`+
+      `<div class="how-step"><div class="how-ico">🔬</div><div><b>Analyse</b><small>Zoom in, run assays, inspect cells, gather evidence</small></div></div>`+
+      `<div class="how-step"><div class="how-ico">⚗️</div><div><b>Diagnose &amp; treat</b><small>Identify the cause, then apply the one right agent</small></div></div>`+
     `</div>`+
     `<div class="rankcard"><div class="rk-left"><div class="rk-big">${rank.name}</div><div class="muted">${p.xp} XP${next?` · ${next.xp-p.xp} to ${next.name}`:' · max rank'}</div><div class="xpbar"><i style="width:${pct}%"></i></div></div>`+
       `<div class="rk-stats"><span>💚 ${p.saves} saved</span><span>☠️ ${p.kills} neutralised</span><span>🧬 ${cx.organelles.length}/${cx.totalOrganelles} organelles</span></div></div>`+

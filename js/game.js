@@ -13,8 +13,8 @@ XS.app={ phase:'menu', tier:'field', time:0, daily:false, toasts:[],
   hoverRegion:null, hoverPart:null, scan:null, result:null,
   lastXP:[], rankUp:null, missionWrong:0, demo:null };
 
-function fresh(){ return { xp:0, organelles:[], organisms:[], subs:[], badges:[], archetypes:[],
-  runs:0, wins:0, saves:0, kills:0, flawless:0, scans:0, dirWins:0 }; }
+function fresh(){ return { xp:0, organelles:[], organisms:[], subs:[], badges:[], archetypes:[], species:[],
+  runs:0, wins:0, saves:0, kills:0, flawless:0, scans:0, dirWins:0, assays:0, sharpWins:0, hardWins:0 }; }
 XS.progress=null;
 XS.loadProgress=function(){
   try{ XS.progress=JSON.parse(localStorage.getItem(KEY)); }catch(e){ XS.progress=null; }
@@ -41,8 +41,25 @@ XS.startMission=function(objective, tier){
   const sc=XS.buildScenario(objective||(Math.random()<0.5?'preserve':'neutralize'), XS.app.tier);
   XS.app.sc=sc; XS.app.phase='survey'; XS.app.spec=null; XS.app.zoomRegion=null; XS.app.zoomPathogen=null;
   XS.app.hoverRegion=null; XS.app.hoverPart=null; XS.app.scan=null; XS.app.result=null; XS.app.rankUp=null; XS.app.missionWrong=0;
-  if(!XS.progress.archetypes.includes(sc.archKey)){ XS.progress.archetypes.push(sc.archKey); XS.award(12,'New life-form: '+sc.A.label); }
+  if(!XS.progress.archetypes.includes(sc.archKey)){ XS.progress.archetypes.push(sc.archKey); XS.award(12,'New kingdom: '+(XS.KINGDOMS[sc.archKey]?XS.KINGDOMS[sc.archKey].label:sc.archKey)); }
+  if(!XS.progress.species.includes(sc.A.id)){ XS.progress.species.push(sc.A.id); XS.award(8,'Catalogued a new '+sc.A.kingdom); }
   XS.checkAchievements();
+};
+
+/* run a lab assay on the current region (records evidence, awards study XP) */
+XS.doAssay=function(id){
+  const sc=XS.app.sc, r=XS.app.zoomRegion; if(!sc||!r) return null;
+  const out=XS.runAssay(sc,r,id);
+  if(out&&out.first){ XS.progress.assays=(XS.progress.assays||0)+1; XS.award(3,'Assay: '+out.label); XS.saveProgress(); XS.checkAchievements(); }
+  return out;
+};
+/* commit a diagnosis for the current region */
+XS.doDiagnose=function(choice){
+  const sc=XS.app.sc, r=XS.app.zoomRegion; if(!sc||!r) return null;
+  const res=XS.submitDiagnosis(sc,r,choice);
+  if(res){ if(res.ok){ if(r.dxWrong===0) sc.dxClean=(sc.dxClean!==false); XS.award(10,'Correct diagnosis'); }
+    else { XS.app.missionWrong++; sc.dxClean=false; } }
+  return res;
 };
 
 XS.enterRegion=function(region){
@@ -84,6 +101,7 @@ XS.inspect=function(part){
 /* apply a treatment to the current zoom region */
 XS.treatRegion=function(agent){
   const sc=XS.app.sc, r=XS.app.zoomRegion; if(!sc||!r||sc.done) return null;
+  if(!XS.canTreat(sc,r)) return {ok:false, blocked:true, msg:'Diagnose the cause first — run assays, then identify it.'};
   const res=XS.applyTreatment(sc, r.id, agent);
   if(res && !res.ok) XS.app.missionWrong++;
   if(!XS.progress.subs.includes(agent)){ XS.progress.subs.push(agent); XS.saveProgress(); }
@@ -98,8 +116,10 @@ XS.finishMission=function(res){
   XS.progress.runs++;
   if(win){ XS.progress.wins++;
     if(sc.objective==='preserve') XS.progress.saves++; else XS.progress.kills++;
-    if(XS.app.missionWrong===0) XS.progress.flawless++;
+    if(XS.app.missionWrong===0){ XS.progress.flawless++; XS.progress.sharpWins=(XS.progress.sharpWins||0)+1;
+      XS.award(15,'Flawless — clean diagnosis'); }
     if(XS.app.tier==='director') XS.progress.dirWins++;
+    if(sc.traits && sc.traits.length>=2){ XS.progress.hardWins=(XS.progress.hardWins||0)+1; XS.award(12,'Handled '+sc.traits.length+' complications'); }
     XS.award(30, sc.objective==='preserve'?'Organism preserved':'Threat neutralised');
   }
   XS.app.result={win, why:res.why}; XS.app.phase='result'; XS.saveProgress(); XS.checkAchievements();
@@ -112,7 +132,12 @@ XS.ACHIEVEMENTS=[
   {id:'exterminator',icon:'☠️',name:'Exterminator',    desc:'Neutralise a threat', check:p=>p.kills>=1},
   {id:'clean',      icon:'🎯', name:'Clean Diagnosis', desc:'Win with no wrong treatments', check:p=>p.flawless>=1},
   {id:'bookworm',   icon:'📖', name:'Bookworm',        desc:'Learn 10 organelles', check:p=>p.organelles.length>=10},
-  {id:'explorer',   icon:'🧭', name:'Explorer',        desc:'Study all 3 organism forms', check:p=>p.archetypes.length>=3},
+  {id:'explorer',   icon:'🧭', name:'Explorer',        desc:'Study 3 different kingdoms', check:p=>p.archetypes.length>=3},
+  {id:'kingdoms',   icon:'🌍', name:'Six Kingdoms',    desc:'Encounter all six kingdoms', check:p=>p.archetypes.length>=6},
+  {id:'taxonomist', icon:'🧬', name:'Taxonomist',      desc:'Catalogue 12 different species', check:p=>(p.species||[]).length>=12},
+  {id:'analyst',    icon:'🔬', name:'Lab Analyst',     desc:'Run 20 lab assays', check:p=>(p.assays||0)>=20},
+  {id:'sharp',      icon:'🎯', name:'Sharp Eye',       desc:'Win 5 assignments with no mistakes', check:p=>(p.sharpWins||0)>=5},
+  {id:'trouble',    icon:'🧩', name:'Troubleshooter',  desc:'Win 3 runs with 2+ complications', check:p=>(p.hardWins||0)>=3},
   {id:'surgeon',    icon:'🩺', name:'Field Surgeon',   desc:'Scan 15 tissues', check:p=>(p.scans||0)>=15},
   {id:'director',   icon:'⚡', name:'Top Brass',       desc:'Win a Director-difficulty run', check:p=>p.dirWins>=1},
   {id:'veteran',    icon:'🏅', name:'Veteran',         desc:'Complete 15 assignments', check:p=>p.wins>=15},
