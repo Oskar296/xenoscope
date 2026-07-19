@@ -171,11 +171,17 @@ UI.renderRight=function(){
 };
 
 /* ---------------- dock ---------------- */
+/* a 4-step progress tracker so it's always clear what to do next */
+function stepBar(active){ const steps=['Survey','Analyse','Diagnose','Treat'];
+  return `<div class="stepbar">`+steps.map((s,i)=>`<span class="stepchip ${i===active?'on':''} ${i<active?'done':''}">${i<active?'✓':(i+1)} ${s}</span>`).join('<span class="steparr">→</span>')+`</div>`; }
 UI.renderDock=function(){
   const app=XS.app, sc=app.sc; if(!sc) return;
   if(app.phase==='survey'){
     UI.dock.className='panel dock-survey';
-    UI.dock.innerHTML=`<div class="survey-hint">🛰 <b>${XS.OBJECTIVE_INFO[sc.objective].verb} this organism.</b> ${XS.OBJECTIVE_INFO[sc.objective].goal} — click the markers to investigate its tissues.</div>`;
+    const O=XS.OBJECTIVE_INFO[sc.objective];
+    UI.dock.innerHTML=stepBar(0)+
+      `<div class="survey-hint">🛰 <b>${O.verb} this organism.</b> ${O.goal}<br>`+
+      `<span class="muted">👉 Click a glowing marker on the organism to zoom into a tissue and start investigating.</span></div>`;
     return;
   }
   // zoom: assays → identify → (gated) treatments
@@ -187,17 +193,19 @@ UI.renderDock=function(){
     return `<button class="abtn assay ${used?'used':''} ${dis?'dis':''}" data-assay="${a.id}"><b>${a.label}</b><small>${a.short}</small></button>`; };
   const assayLab=`Lab assays${sc.assayBudget!=null?' · <b>'+sc.assayBudget+'</b> charges left':''}`;
   const dxDone=r.diagnosed, canTreat=XS.canTreat(sc,r);
+  const active = dxDone?3:(r.recon?2:1);
   const idGroup = dxDone
-    ? `<div class="dock-group idgroup"><div class="dock-lab">Diagnosis</div><div class="dx-done">✓ ${sc.dxAnswer}</div></div>`
-    : `<div class="dock-group idgroup"><div class="dock-lab">Diagnosis</div><button class="abtn identify" id="idBtn"><b>⌖ Identify</b><small>commit a call</small></button></div>`;
+    ? `<div class="dock-group idgroup"><div class="dock-lab">② Diagnose</div><div class="dx-done">✓ ${sc.dxAnswer}</div></div>`
+    : `<div class="dock-group idgroup ${active===2?'active':''}"><div class="dock-lab">② Diagnose</div><button class="abtn identify" id="idBtn"><b>⌖ Identify</b><small>${active===2?'ready — name the cause':'gather evidence first'}</small></button></div>`;
   let treatGroup='';
   if(canTreat){ const opts=XS.treatmentOptions(sc);
     const tb=id=>{const t=XS.TREATMENTS.find(x=>x.id===id)||{label:id,desc:''};return `<button class="abtn treat" data-a="${id}"><b>${t.label}</b><small>${t.desc.split('.')[0]}</small></button>`;};
-    treatGroup=`<div class="dsep"></div><div class="dock-group"><div class="dock-lab">Apply treatment to ${r.name}</div><div class="btn-row treat-row">${opts.map(tb).join('')}</div></div>`;
+    treatGroup=`<div class="dsep"></div><div class="dock-group ${active===3?'active':''}"><div class="dock-lab">③ Treat · ${r.name}</div><div class="btn-row treat-row">${opts.map(tb).join('')}</div></div>`;
   }
-  UI.dock.innerHTML=`<button class="abtn back" id="backBtn"><b>← Organism</b><small>zoom out</small></button>`+
+  UI.dock.innerHTML=stepBar(active)+
+    `<button class="abtn back" id="backBtn"><b>← Organism</b><small>zoom out</small></button>`+
     `<div class="dsep"></div>`+
-    `<div class="dock-group"><div class="dock-lab">${assayLab}</div><div class="btn-row assay-row">${assays.map(abtn).join('')}</div></div>`+
+    `<div class="dock-group ${active===1?'active':''}"><div class="dock-lab">① ${assayLab}</div><div class="btn-row assay-row">${assays.map(abtn).join('')}</div></div>`+
     `<div class="dsep"></div>`+ idGroup + treatGroup;
   $('backBtn').onclick=()=>{ sfx('click'); XS.exitRegion(); UI.renderPhase(); };
   const idb=$('idBtn'); if(idb) idb.onclick=()=>{ sfx('click'); UI.showIdentify(); };

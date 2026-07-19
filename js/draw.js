@@ -301,34 +301,53 @@ XS.partAt=function(app,px,py){ let best=null,bd=1e9;
    MACRO WORLD — exoplanet + whole organism + zoomable region hotspots
 ================================================================== */
 function skyBg(sc,t){
-  const P=sc.planet, g=ctx.createLinearGradient(0,0,0,H);
-  g.addColorStop(0,P.sky[0]); g.addColorStop(1,P.sky[1]); ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
-  // sun / moons
+  const P=sc.planet, a=P.accent.join(','), gy=H*0.72, mn=Math.min(W,H);
+  // deep sky gradient (space at top → planet sky → glow toward the horizon)
+  const g=ctx.createLinearGradient(0,0,0,gy+H*0.05);
+  g.addColorStop(0,P.sky[1]); g.addColorStop(0.5,P.sky[0]); g.addColorStop(1,P.sky[0]);
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  // soft drifting nebulae
   ctx.save(); ctx.globalCompositeOperation='lighter';
-  const sx=W*0.8, sy=H*0.22, sr=Math.min(W,H)*0.09;
-  const sg=ctx.createRadialGradient(sx,sy,0,sx,sy,sr*3);
-  sg.addColorStop(0,P.sun); sg.addColorStop(0.25,P.sun+'88'); sg.addColorStop(1,P.sun+'00');
-  ctx.fillStyle=sg; ctx.beginPath(); ctx.arc(sx,sy,sr*3,0,6.3); ctx.fill();
-  ctx.fillStyle=P.sun; ctx.beginPath(); ctx.arc(sx,sy,sr*0.6,0,6.3); ctx.fill();
-  // a moon
-  ctx.globalCompositeOperation='source-over'; ctx.fillStyle='rgba(255,255,255,.06)';
-  ctx.beginPath(); ctx.arc(W*0.2,H*0.16,Math.min(W,H)*0.05,0,6.3); ctx.fill();
+  const neb=(x,y,r,col,al)=>{ const ng=ctx.createRadialGradient(x,y,0,x,y,r); ng.addColorStop(0,`rgba(${col},${al})`); ng.addColorStop(1,`rgba(${col},0)`); ctx.fillStyle=ng; ctx.beginPath(); ctx.arc(x,y,r,0,6.3); ctx.fill(); };
+  neb(W*0.28+Math.sin(t*0.05)*20, H*0.32, mn*0.55, a, 0.055);
+  neb(W*0.74, H*0.46+Math.cos(t*0.04)*16, mn*0.6, a, 0.04);
   ctx.restore();
-  // stars
-  ctx.save(); ctx.fillStyle='rgba(255,255,255,.5)';
-  for(const b of bokeh){ ctx.globalAlpha=b.a*8; ctx.fillRect((b.x*1.7)%W,(b.y*0.9)%(H*0.6),1.2,1.2); }
-  ctx.globalAlpha=1; ctx.restore();
-  // ground
-  const gy=H*0.72; const gg=ctx.createLinearGradient(0,gy,0,H);
-  gg.addColorStop(0,P.ground); gg.addColorStop(1,'#05070c'); ctx.fillStyle=gg;
-  ctx.beginPath(); ctx.moveTo(0,gy);
-  for(let x=0;x<=W;x+=40){ ctx.lineTo(x, gy + Math.sin(x*0.01+2)*10 + Math.sin(x*0.023)*6); }
+  // stars — varied sizes, gentle twinkle
+  ctx.save();
+  for(let i=0;i<bokeh.length;i++){ const b=bokeh[i], x=(b.x*1.7)%W, y=(b.y*0.9)%(H*0.68), tw=0.45+0.55*Math.sin(t*1.4+i*1.3), s=(i%7===0)?1.9:1.0;
+    ctx.fillStyle=`rgba(255,255,255,${(0.22+b.a*4)*tw})`; ctx.fillRect(x,y,s,s); }
+  ctx.restore();
+  // sun with corona
+  ctx.save(); ctx.globalCompositeOperation='lighter';
+  const sx=W*0.8, sy=H*0.2, sr=mn*0.08;
+  const sg=ctx.createRadialGradient(sx,sy,0,sx,sy,sr*4.2);
+  sg.addColorStop(0,P.sun); sg.addColorStop(0.16,P.sun+'aa'); sg.addColorStop(0.5,P.sun+'2e'); sg.addColorStop(1,P.sun+'00');
+  ctx.fillStyle=sg; ctx.beginPath(); ctx.arc(sx,sy,sr*4.2,0,6.3); ctx.fill();
+  ctx.globalAlpha=0.92; ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(sx,sy,sr*0.5,0,6.3); ctx.fill(); ctx.globalAlpha=1;
+  ctx.restore();
+  // a crescent moon
+  ctx.save(); const mx=W*0.17, my=H*0.19, mr=mn*0.055;
+  ctx.fillStyle=`rgba(${a},0.10)`; ctx.beginPath(); ctx.arc(mx,my,mr,0,6.3); ctx.fill();
+  ctx.fillStyle=P.sky[1]; ctx.beginPath(); ctx.arc(mx-mr*0.35,my-mr*0.3,mr*0.95,0,6.3); ctx.fill();
+  ctx.restore();
+  // horizon atmosphere
+  ctx.save(); ctx.globalCompositeOperation='lighter';
+  const hz=ctx.createLinearGradient(0,gy-H*0.24,0,gy+H*0.04); hz.addColorStop(0,`rgba(${a},0)`); hz.addColorStop(1,`rgba(${a},0.18)`);
+  ctx.fillStyle=hz; ctx.fillRect(0,gy-H*0.24,W,H*0.28); ctx.restore();
+  // parallax terrain ridges (far → near)
+  const ridge=(baseY,amp,fill,seed)=>{ ctx.fillStyle=fill; ctx.beginPath(); ctx.moveTo(0,baseY);
+    for(let x=0;x<=W;x+=22){ ctx.lineTo(x, baseY - Math.abs(Math.sin(x*0.0055+seed))*amp - Math.sin(x*0.019+seed)*amp*0.28); }
+    ctx.lineTo(W,H); ctx.lineTo(0,H); ctx.closePath(); ctx.fill(); };
+  ridge(gy+H*0.02, H*0.11, `rgba(${a},0.07)`, 1.4);
+  ridge(gy+H*0.05, H*0.08, 'rgba(8,11,17,0.6)', 3.1);
+  // main ground
+  const gg=ctx.createLinearGradient(0,gy+H*0.08,0,H); gg.addColorStop(0,P.ground); gg.addColorStop(1,'#05070c'); ctx.fillStyle=gg;
+  ctx.beginPath(); ctx.moveTo(0,gy+H*0.08);
+  for(let x=0;x<=W;x+=40){ ctx.lineTo(x, gy+H*0.08 + Math.sin(x*0.01+2)*10 + Math.sin(x*0.023)*6); }
   ctx.lineTo(W,H); ctx.lineTo(0,H); ctx.closePath(); ctx.fill();
-  // haze
-  ctx.save(); ctx.globalCompositeOperation='lighter';
-  const hz=ctx.createLinearGradient(0,gy-60,0,gy+40); const a=P.accent.join(',');
-  hz.addColorStop(0,`rgba(${a},0)`); hz.addColorStop(1,`rgba(${a},0.10)`); ctx.fillStyle=hz; ctx.fillRect(0,gy-60,W,120);
-  ctx.restore();
+  // vignette to focus the specimen
+  ctx.save(); const vg=ctx.createRadialGradient(cx,cy,mn*0.34,cx,cy,Math.max(W,H)*0.72);
+  vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(2,4,8,0.5)'); ctx.fillStyle=vg; ctx.fillRect(0,0,W,H); ctx.restore();
 }
 function drawWorld(app,t){
   const sc=app.sc; skyBg(sc,t);
