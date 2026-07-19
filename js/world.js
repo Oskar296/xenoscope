@@ -351,7 +351,7 @@ XS.buildScenario=function(objective, tier){
     sc.pathType=ptype; sc.agent=XS.PATHOGENS[ptype].cure; sc.dxAnswer=XS.PATHOGENS[ptype].dx;
     key.problem={kind:'pathogen', pathType:ptype};
     sc.brief=`${nm} is failing — something is spreading inside it. Zoom into its tissues, run assays to identify the invader, then apply the one correct cure before the organism dies.`;
-    sc.hostDrain=3.4/(T.margin||1);
+    sc.hostDrain=2.2/(T.margin||1);
   } else {
     sc.agent=XS.killAgentsFor(A.cell)[0]; sc.dxAnswer=XS.KINGDOM_ANSWER[A.cell];
     key.problem={kind:'vital'};
@@ -371,7 +371,7 @@ XS.buildScenario=function(objective, tier){
 XS.TRAITS=[
   {id:'virulent', label:'Virulent strain', tag:'⏱ fast', when:sc=>sc.objective==='preserve',
     hint:'Aggressive and fast-spreading — the host is failing quicker than usual, so diagnose fast.',
-    apply:sc=>{ sc.hostDrain*=1.7; }},
+    apply:sc=>{ sc.hostDrain*=1.4; }},
   {id:'resistant', label:'Drug-resistant', tag:'🧬 resistant', when:sc=>true,
     hint:'It carries resistance genes (plasmids) — the correct agent still works, but you must hit it harder.',
     apply:sc=>{ sc.resistantStrain=true; }},
@@ -521,10 +521,11 @@ XS.applyTreatment=function(sc, regionId, agent){
 /* per-frame macro tick */
 XS.worldTick=function(sc, dt){
   if(sc.done) return null;
-  if(sc.mutating){ const m=(XS.TIERS[sc.tier]||{}).margin||1; sc.resist=Math.min(100, sc.resist + 1.2*dt/m); }
+  // the clock only runs once the player actually starts investigating a tissue
+  if(sc.started && sc.mutating){ const m=(XS.TIERS[sc.tier]||{}).margin||1; sc.resist=Math.min(100, sc.resist + 0.8*dt/m); }
   if(sc.objective==='preserve'){
-    if(!sc.cured) sc.host=Math.max(0, sc.host - sc.hostDrain*(1-sc.P/100)*dt);
-    else sc.host=Math.min(100, sc.host + 16*dt);
+    if(sc.cured) sc.host=Math.min(100, sc.host + 18*dt);
+    else if(sc.started) sc.host=Math.max(0, sc.host - sc.hostDrain*(1-sc.P/100)*dt);
     if(sc.cured && sc.host>=90){ sc.done=true; return {win:true}; }
     if(sc.host<=0){ sc.done=true; return {win:false, why:'The organism succumbed before you cured it.'}; }
     if(sc.resist>=100){ sc.done=true; return {win:false, why:'Repeated wrong calls overwhelmed the host.'}; }

@@ -64,6 +64,7 @@ XS.doDiagnose=function(choice){
 
 XS.enterRegion=function(region){
   const sc=XS.app.sc; if(!sc) return;
+  sc.started=true;                       // the fail-clock starts on the first tissue you open
   const isNew=!region.scanned; region.scanned=true;
   XS.app.zoomRegion=region;
   XS.app.zoomPathogen=(sc.objective==='preserve'&&region.id===sc.keyId)?sc.pathType:null;
