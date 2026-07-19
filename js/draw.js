@@ -893,6 +893,69 @@ XS.PLANS={
       ctx.strokeStyle=rC(gcol,0.45); ctx.lineWidth=1.4; ctx.beginPath(); ctx.moveTo(tx,top); ctx.lineTo(ex,ey); ctx.stroke(); ctx.restore(); }
     auraGlow(tx,top,S*0.2,gcol,0.4+0.3*health);
     floaters(ccx,ccy-S*0.2,S,t,acc); },
+
+  /* --- more distinct forms: sponge, starfish, pitcher, slime mould, lichen --- */
+  sponge(ccx,ccy,S,t,sc,health){ const col=sc.A.col, acc=sc.planet.accent, gcol=mix(col,acc,0.5);
+    softShadow(ccx,ccy+S*0.6,S*0.55,S*0.11); auraGlow(ccx,ccy,S*1.25,gcol,0.07+0.08*health);
+    const P=(x,y)=>[ccx+x*S,ccy+y*S];
+    const sil=[P(-0.28,0.6),P(-0.4,0.15),P(-0.42,-0.36),P(-0.32,-0.54),P(-0.14,-0.44),P(0,-0.5),P(0.14,-0.44),P(0.32,-0.54),P(0.42,-0.36),P(0.4,0.15),P(0.28,0.6)];
+    fillGlow(sil,bodyGrad(ccx-S*0.1,ccy-S*0.2,S*0.9,col,acc,health),gcol,2);
+    ctx.save(); smoothClosed(sil); ctx.clip(); paintPattern(sc,ccx,ccy,S*0.5,col,acc);
+    ctx.fillStyle=rC(mix(col,[8,8,14],0.5),0.4);
+    for(let i=0;i<22;i++){ const a=i*2.4, rr=S*0.5*Math.sqrt((i+1)/22); ctx.beginPath(); ctx.arc(ccx+Math.cos(a)*rr,ccy+Math.sin(a)*rr*1.1,S*0.03,0,6.3); ctx.fill(); }
+    ctx.restore();
+    ctx.save(); ctx.fillStyle=rC(mix(col,[6,8,12],0.65),0.75); ctx.beginPath(); ctx.ellipse(ccx,ccy-S*0.46,S*0.13,S*0.055,0,0,6.3); ctx.fill();
+    ctx.globalCompositeOperation='lighter'; ctx.strokeStyle=rC(acc,0.4); ctx.lineWidth=2; ctx.beginPath(); ctx.ellipse(ccx,ccy-S*0.46,S*0.13,S*0.055,0,0,6.3); ctx.stroke(); ctx.restore();
+    floaters(ccx,ccy,S,t,acc); },
+
+  starfish(ccx,ccy,S,t,sc,health){ const col=sc.A.col, acc=sc.planet.accent, gcol=mix(col,acc,0.5), n=5;
+    softShadow(ccx,ccy+S*0.5,S*0.6,S*0.1); auraGlow(ccx,ccy,S*1.3,gcol,0.08+0.08*health);
+    const pts=[]; for(let i=0;i<n*2;i++){ const a=i/(n*2)*6.283-Math.PI/2, r=(i%2?S*0.3:S*0.66)*(1+0.03*Math.sin(t+i)); pts.push([ccx+Math.cos(a)*r,ccy+Math.sin(a)*r]); }
+    fillGlow(pts,bodyGrad(ccx-S*0.1,ccy-S*0.1,S*0.9,col,acc,health),gcol,2);
+    ctx.save(); smoothClosed(pts); ctx.clip(); paintPattern(sc,ccx,ccy,S*0.5,col,acc); ctx.globalCompositeOperation='lighter';
+    nucleusGlow(ccx,ccy,S*0.24,acc); ctx.fillStyle=rC(mix(acc,[255,255,255],0.3),0.5);
+    for(let k=0;k<n;k++){ const a=k/n*6.283-Math.PI/2; for(let j=1;j<=4;j++){ const rr=S*0.14*j; ctx.beginPath(); ctx.arc(ccx+Math.cos(a)*rr,ccy+Math.sin(a)*rr,S*0.02,0,6.3); ctx.fill(); } }
+    ctx.restore();
+    ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.fillStyle=rC(mix(acc,[255,255,255],0.4),0.7); ctx.beginPath(); ctx.arc(ccx+S*0.1,ccy-S*0.1,S*0.03,0,6.3); ctx.fill(); ctx.restore();
+    floaters(ccx,ccy,S,t,acc); },
+
+  pitcher(ccx,ccy,S,t,sc,health){ const col=sc.A.col, acc=sc.planet.accent, gcol=mix(col,acc,0.5);
+    const gy=ccy+S*0.9; softShadow(ccx,gy,S*0.6,S*0.12); auraGlow(ccx,ccy,S*1.3,gcol,0.07+0.07*health);
+    for(let i=-1;i<=1;i++) limb(ccx+i*S*0.04,gy-S*0.02,Math.PI*0.5+i*0.4,S*0.35,S*0.045,mix(col,[8,12,10],0.5),acc,t,i*3);
+    const stem=[]; for(let k=0;k<=8;k++){ const f=k/8; stem.push([ccx+Math.sin(t*0.5)*f*S*0.08, gy+(ccy-S*0.5-gy)*f, f]); }
+    ribbon(stem,f=>S*0.05*(1-0.4*f), bodyGrad(ccx,ccy,S*0.7,col,acc,health), gcol);
+    const traps=[[-0.34,-0.05,0.9],[0.32,-0.2,1.0],[0.02,0.12,0.8]];
+    for(let i=0;i<traps.length;i++){ const tx=ccx+traps[i][0]*S, ty=ccy+traps[i][1]*S, z=traps[i][2];
+      const jug=[[tx-S*0.12*z,ty],[tx-S*0.14*z,ty+S*0.22*z],[tx-S*0.05*z,ty+S*0.34*z],[tx+S*0.05*z,ty+S*0.34*z],[tx+S*0.14*z,ty+S*0.22*z],[tx+S*0.12*z,ty]];
+      fillGlow(jug,bodyGrad(tx,ty,S*0.3,col,acc,health),gcol,1.5);
+      ctx.save(); ctx.strokeStyle=rC(mix(acc,[255,255,255],0.3),0.6); ctx.lineWidth=2; ctx.beginPath(); ctx.ellipse(tx,ty,S*0.12*z,S*0.04*z,0,0,6.3); ctx.stroke();
+      ctx.fillStyle=rC(mix(col,acc,0.4),0.85); ctx.beginPath(); ctx.ellipse(tx,ty-S*0.08*z,S*0.1*z,S*0.05*z,-0.3,0,6.3); ctx.fill();
+      ctx.globalCompositeOperation='lighter'; ctx.fillStyle=rC(acc,0.35); ctx.beginPath(); ctx.ellipse(tx,ty+S*0.02,S*0.08*z,S*0.03*z,0,0,6.3); ctx.fill(); ctx.restore(); }
+    floaters(ccx,ccy-S*0.1,S,t,acc); },
+
+  slimemold(ccx,ccy,S,t,sc,health){ const col=sc.A.col, acc=sc.planet.accent, gcol=mix(col,acc,0.5);
+    const gy=ccy+S*0.4; softShadow(ccx,gy+S*0.05,S*0.9,S*0.1); auraGlow(ccx,ccy,S*1.3,gcol,0.06+0.07*health);
+    ctx.save(); ctx.strokeStyle=rC(mix(col,acc,0.4),0.6); ctx.lineCap='round';
+    (function(){ const stack=[]; function vein(x,y,ang,len,w,d){ if(d<=0||len<S*0.05)return; const nx=x+Math.cos(ang)*len, ny=y+Math.sin(ang)*len;
+      ctx.lineWidth=w; ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(nx,ny); ctx.stroke();
+      const wob=Math.sin(t*0.8+d)*0.2; vein(nx,ny,ang-0.5+wob,len*0.7,w*0.7,d-1); vein(nx,ny,ang+0.4+wob,len*0.7,w*0.7,d-1); }
+      for(let k=0;k<5;k++){ const a=Math.PI*(0.15+0.7*(k/4)); vein(ccx,gy,a-Math.PI,S*0.32,S*0.055,3); } })();
+    ctx.restore();
+    ctx.save(); ctx.globalCompositeOperation='lighter';
+    for(let i=0;i<10;i++){ const a=i*2.4, rr=S*(0.2+0.4*((i*0.31)%1)); orb(ccx+Math.cos(a)*rr, gy-Math.abs(Math.sin(a))*S*0.2, S*0.04, mix(col,acc,0.3),acc,health); }
+    ctx.restore();
+    orb(ccx,gy,S*0.1,col,acc,health);
+    floaters(ccx,ccy,S,t,acc); },
+
+  lichen(ccx,ccy,S,t,sc,health){ const col=sc.A.col, acc=sc.planet.accent, gcol=mix(col,acc,0.5), n=9;
+    softShadow(ccx,ccy+S*0.5,S*0.7,S*0.12); auraGlow(ccx,ccy,S*1.2,gcol,0.06+0.06*health);
+    for(let k=0;k<n;k++){ const a=k/n*6.283, x=ccx+Math.cos(a)*S*0.24, y=ccy+Math.sin(a)*S*0.16;
+      const lobe=[]; for(let i=0;i<8;i++){ const aa=i/8*6.283, rr=S*0.22*(1+0.2*Math.sin(aa*3+k)); lobe.push([x+Math.cos(a)*S*0.14+Math.cos(aa)*rr, y+Math.sin(a)*S*0.1+Math.sin(aa)*rr*0.7]); }
+      fillGlow(lobe,bodyGrad(x,y-S*0.1,S*0.3,mix(col,[20,30,20],(k%2)*0.15),acc,health),gcol,1.2); }
+    orb(ccx,ccy-S*0.02,S*0.18,mix(col,acc,0.2),acc,health);
+    ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.fillStyle=rC(mix(acc,[255,255,255],0.3),0.5);
+    for(let i=0;i<12;i++){ const a=i*2.1, rr=S*(0.15+0.3*((i*0.27)%1)); ctx.beginPath(); ctx.arc(ccx+Math.cos(a)*rr,ccy+Math.sin(a)*rr*0.7,S*0.03,0,6.3); ctx.fill(); } ctx.restore();
+    floaters(ccx,ccy,S,t,acc); },
 };
 
 /* ---- pathogen particles overlaid on a zoomed infected cell ---- */

@@ -2,7 +2,7 @@
 
 An **educational** biology game with a **macro → micro** loop. You're a field
 xenobiologist studying a whole alien organism on its exoplanet — drawn from a
-catalogue of **31 species across the six kingdoms of life** (animals, plants,
+catalogue of **36 species across the six kingdoms of life** (animals, plants,
 fungi, protists, bacteria and archaea) — and **every individual is unique**: its
 colour, size, proportions, limb/spine counts and skin pattern are rolled fresh,
 so no two look alike. You get **one of two orders**:
@@ -53,7 +53,7 @@ Or just open `index.html` (some browsers disable saved progress on `file://`).
 
 ## Depth & replayability
 
-- **31 species across six kingdoms** on **six exoplanets** — 26 distinct body‑plans
+- **36 species across six kingdoms** on **six exoplanets** — 31 distinct body‑plans
   (medusa, arthropod, cephalopod, worm, anemone, crinoid, urchin, diatom,
   radiolarian, coral & bracket fungus, puffball, biofilm, stromatolite, archaeal
   vent colony…) × **per‑individual procedural morphology**, so the bestiary is

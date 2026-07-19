@@ -55,10 +55,10 @@ const R_MICROBE=[
 ];
 const R_BY_PLAN={
   beast:R_ANIMAL, medusa:R_ANIMAL, arthropod:R_ANIMAL, tentacled:R_ANIMAL, worm:R_ANIMAL,
-  anemone:R_ANIMAL, crinoid:R_ANIMAL,
-  tree:R_PLANT, fern:R_PLANT, vine:R_PLANT, bulb:R_PLANT, reed:R_PLANT, canopy:R_PLANT,
-  mushroom:R_FUNGI, bracket:R_FUNGI, coral:R_FUNGI, puffball:R_FUNGI, mold:R_FUNGI,
-  amoeba:R_PROTIST, ciliate:R_PROTIST, diatom:R_PROTIST, radiolarian:R_PROTIST, urchin:R_PROTIST,
+  anemone:R_ANIMAL, crinoid:R_ANIMAL, sponge:R_ANIMAL, starfish:R_ANIMAL,
+  tree:R_PLANT, fern:R_PLANT, vine:R_PLANT, bulb:R_PLANT, reed:R_PLANT, canopy:R_PLANT, pitcher:R_PLANT,
+  mushroom:R_FUNGI, bracket:R_FUNGI, coral:R_FUNGI, puffball:R_FUNGI, mold:R_FUNGI, lichen:R_FUNGI,
+  amoeba:R_PROTIST, ciliate:R_PROTIST, diatom:R_PROTIST, radiolarian:R_PROTIST, urchin:R_PROTIST, slimemold:R_PROTIST,
   colony:R_MICROBE,
 };
 
@@ -144,6 +144,18 @@ XS.SPECIES=[
     blurb:'A single-celled protist that props itself on a bristling ball of mineral spines to catch drifting prey.'},
   {id:'canopy', name:['Canopo','Umbra','Palma'], epi:[' parasol',' canopy',' crown'], kingdom:'Plant', body:'a broad-canopy tree-form plant', plan:'canopy', cell:'Plantae', col:[128,232,160], size:1.05, form:{fronds:6}, minXP:40,
     blurb:'A rooted autotroph that spreads a wide umbrella of leaf-blades to soak up a dim red sun.'},
+
+  // — extra distinct body-plans, batch 2 —
+  {id:'sponge', name:['Spongi','Poro','Cala'], epi:[' barrel',' vase',' cup'], kingdom:'Animal', body:'a sessile filter-feeding animal', plan:'sponge', cell:'Animalia', col:[255,160,140], size:1.0, form:{}, minXP:60,
+    blurb:'A sessile animal that pumps water through a porous body to strain out food — no true tissues, but its cells are wall-less.'},
+  {id:'starfish', name:['Astro','Stella','Pento'], epi:[' star',' radial',' fivearm'], kingdom:'Animal', body:'a five-armed radial animal', plan:'starfish', cell:'Animalia', col:[255,138,120], size:1.0, form:{}, minXP:60,
+    blurb:'A five-rayed animal that walks on hundreds of tiny water-powered tube feet.'},
+  {id:'pitcher', name:['Nepen','Sarra','Utri'], epi:[' pitcher',' trap',' urn'], kingdom:'Plant', body:'a carnivorous pitcher plant', plan:'pitcher', cell:'Plantae', col:[150,220,120], size:1.0, form:{}, minXP:60,
+    blurb:'A rooted autotroph that also traps prey — cellulose-walled cells line pitfall pitchers full of digestive fluid.'},
+  {id:'slimemold', name:['Physar','Myxo','Plasmo'], epi:[' web',' net',' creep'], kingdom:'Protist', body:'a plasmodial slime mould', plan:'slimemold', cell:'Protista', col:[255,214,120], size:1.0, form:{}, minXP:150,
+    blurb:'A single giant multinucleate protist cell that creeps as a living network, solving mazes without a brain.'},
+  {id:'lichen', name:['Licha','Crusto','Foli'], epi:[' crust',' rosette',' patch'], kingdom:'Fungus', body:'a lichenised fungus', plan:'lichen', cell:'Fungi', col:[180,220,180], size:1.0, form:{}, minXP:60,
+    blurb:'A fungus living in partnership with an alga — a tough, chitin-walled crust that colonises bare rock.'},
 ];
 
 /* ---------------- neutralise weakness by cell kingdom (real biology) ---------------- */
