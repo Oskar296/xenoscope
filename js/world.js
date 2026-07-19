@@ -62,6 +62,48 @@ const R_BY_PLAN={
   colony:R_MICROBE,
 };
 
+/* per-plan hotspot positions — each body-plan is drawn differently, so the
+   tissue markers need coordinates that actually sit on THAT silhouette.
+   Only plans that differ from their group default are listed. */
+const PLAN_POS={
+  // animals
+  arthropod:{hide:[-0.05,-0.05],gut:[0.05,0.12],core:[-0.5,0.0],nerve:[0.55,-0.05]},
+  worm:{hide:[-0.45,0.0],gut:[0.15,0.05],core:[-0.8,0.0],nerve:[0.75,0.0]},
+  tentacled:{hide:[0.0,-0.32],gut:[0.0,0.15],core:[-0.3,-0.15],nerve:[0.28,-0.4]},
+  medusa:{hide:[0.0,-0.28],gut:[0.0,0.28],core:[-0.3,-0.18],nerve:[0.3,-0.28]},
+  anemone:{hide:[0.0,0.18],gut:[0.0,-0.05],core:[-0.18,0.05],nerve:[0.0,-0.32]},
+  crinoid:{hide:[0.0,-0.05],gut:[0.22,-0.28],core:[0.0,0.4],nerve:[-0.22,-0.3]},
+  sponge:{hide:[0.0,-0.3],gut:[0.0,0.2],core:[-0.32,0.0],nerve:[0.28,-0.28]},
+  starfish:{hide:[0.0,-0.42],gut:[0.34,0.22],core:[0.0,0.0],nerve:[-0.34,0.22]},
+  // plants
+  fern:{leaf:[0.25,-0.05],stem:[0.0,0.45],root:[0.0,0.62]},
+  vine:{leaf:[0.35,-0.05],stem:[0.0,0.2],root:[0.0,0.5]},
+  bulb:{leaf:[0.0,0.05],stem:[0.22,0.35],root:[0.0,0.55]},
+  reed:{leaf:[0.12,-0.2],stem:[0.0,0.4],root:[0.0,0.6]},
+  canopy:{leaf:[0.2,-0.3],stem:[0.0,0.25],root:[0.0,0.7]},
+  pitcher:{leaf:[0.3,0.1],stem:[0.0,-0.1],root:[0.0,0.7]},
+  // fungi
+  bracket:{cap:[0.15,-0.35],gills:[0.2,0.0],myc:[-0.3,0.4]},
+  coral:{cap:[0.0,-0.4],gills:[0.25,-0.1],myc:[0.0,0.55]},
+  puffball:{cap:[0.0,-0.2],gills:[0.0,0.05],myc:[0.0,0.5]},
+  mold:{cap:[0.0,0.05],gills:[0.3,0.2],myc:[-0.35,0.3]},
+  lichen:{cap:[0.0,-0.15],gills:[0.28,0.1],myc:[-0.25,0.22]},
+  // protists
+  ciliate:{cortex:[0.0,-0.28],endo:[0.12,0.05],organ:[-0.3,0.18]},
+  diatom:{cortex:[0.0,-0.28],endo:[0.1,0.0],organ:[-0.35,0.05]},
+  radiolarian:{cortex:[0.0,-0.28],endo:[0.1,0.05],organ:[-0.28,0.15]},
+  urchin:{cortex:[0.0,-0.25],endo:[0.08,0.05],organ:[-0.25,0.12]},
+  slimemold:{cortex:[0.2,-0.05],endo:[0.0,0.28],organ:[-0.25,0.08]},
+};
+const COLONY_POS={
+  filament:{crown:[0.0,-0.35],matrix:[0.06,0.06],base:[-0.06,0.5]},
+  crystal:{crown:[0.0,0.1],matrix:[0.0,0.35],base:[0.0,0.55]},
+  vent:{crown:[0.0,-0.4],matrix:[0.0,0.1],base:[0.0,0.55]},
+  dome:{crown:[0.0,0.15],matrix:[0.05,0.35],base:[0.0,0.55]},
+  strom:{crown:[0.0,-0.1],matrix:[0.0,0.25],base:[0.0,0.55]},
+  crust:{crown:[0.0,0.5],matrix:[0.25,0.62],base:[-0.25,0.62]},
+};
+
 /* ---------------- SPECIES CATALOGUE (27 across 6 kingdoms) ----------------
    plan  = body-plan renderer (draw.js)  ·  cell = kingdomKey you meet on zoom
    col   = base flesh colour             ·  size = scale multiplier
@@ -293,9 +335,11 @@ XS.buildScenario=function(objective, tier){
   const A=Object.assign({}, base, {label:base.kingdom, col:morph.col, form:morph.form, size:(base.size||1)*morph.size});
   const planet=pick(XS.PLANETS);
   const tmpl=R_BY_PLAN[base.plan]||R_ANIMAL;
-  const regions=tmpl.map(r=>Object.assign({}, r, {
+  const pos = base.plan==='colony' ? (COLONY_POS[(base.form&&base.form.style)]||null) : (PLAN_POS[base.plan]||null);
+  const regions=tmpl.map(r=>{ const o=pos&&pos[r.id]; return Object.assign({}, r, {
+    x:o?o[0]:r.x, y:o?o[1]:r.y,
     cell:r.cell||A.cell, scanned:false, cellSpec:null,
-    evidence:[], clues:{}, tests:{}, diagnosed:false, dxWrong:0, assaysSince:0, recon:false }));
+    evidence:[], clues:{}, tests:{}, diagnosed:false, dxWrong:0, assaysSince:0, recon:false }); });
   const key=pick(regions);
   const nm=pick(A.name)+pick(A.epi);
   const sc={ objective, archKey:base.cell, A, morph, planet, name:nm,
