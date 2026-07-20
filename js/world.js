@@ -281,25 +281,31 @@ XS.ASSAYS=[
   {id:'extremo', label:'Environment probe', short:'temp / pH', group:'host',
     run:(sp)=>{ const hot=sp.optT>=60, ac=sp.optPH<=3.5, al=sp.optPH>=9.5;
       return {clue:'extremo', text: (hot||ac||al)?('Thrives at '+sp.optT+'°C / pH '+sp.optPH+' — an EXTREMOPHILE (a hallmark of archaea).'):('Comfortable near '+sp.optT+'°C / pH '+sp.optPH+' — a mesophile.')}; }},
-  // pathogen assays (PRESERVE key region only)
+  // pathogen assays (PRESERVE key region only) — reveal BOTH invaders on a co-infection
   {id:'morph', label:'Particle morphology', short:'invader shape', group:'path',
-    run:(sp,pt)=>({clue:'pmorph', text: XS.PATHOGENS[pt].tell})},
+    run:(sp,pt,sc)=>{ const f=k=>XS.PATHOGENS[k].tell;
+      const text=(sc&&sc.cures&&sc.pathType2)?('TWO invaders here — ① '+f(pt)+'  ② '+f(sc.pathType2)):f(pt);
+      return {clue:'pmorph', text}; }},
   {id:'pnucleic', label:'Invader nucleic-acid', short:'DNA / RNA / none', group:'path',
-    run:(sp,pt)=>{ const m={virus:'The invader is little more than nucleic acid in a shell — no ribosomes of its own.',
-      bacterium:'The invader carries its own 70S ribosomes and a circular chromosome.',
-      fungus:'The invader has chitin walls and eukaryotic nuclei.',
-      parasite:'The invader is a nucleated, motile eukaryote.',
-      prion:'NO nucleic acid whatsoever — the agent is pure protein. It cannot be an organism.',
-      toxin_load:'No pathogen nucleic acid anywhere — there is no organism here at all.'};
-      return {clue:'pna', text:m[pt]||m.parasite}; }},
+    run:(sp,pt,sc)=>{ const m={virus:'little more than nucleic acid in a shell — no ribosomes of its own',
+      bacterium:'carries its own 70S ribosomes and a circular chromosome',
+      fungus:'has chitin walls and eukaryotic nuclei',
+      parasite:'a nucleated, motile eukaryote',
+      prion:'NO nucleic acid whatsoever — pure protein, not an organism',
+      toxin_load:'no pathogen nucleic acid at all — no organism here'};
+      const f=k=>m[k]||m.parasite;
+      const text=(sc&&sc.cures&&sc.pathType2)?('Two invaders: ① '+f(pt)+'; ② '+f(sc.pathType2)+'.'):('The invader '+f(pt)+'.');
+      return {clue:'pna', text}; }},
   {id:'penvelope', label:'Invader coat assay', short:'wall / envelope', group:'path',
-    run:(sp,pt)=>{ const m={virus:'Some particles wear a lipid envelope stolen from the host — soap could also break those.',
-      bacterium:'A peptidoglycan wall surrounds each invader — a classic antibiotic target.',
-      fungus:'A tough chitin wall sheaths every thread.',
-      parasite:'A flexible pellicle, no wall — a naked eukaryotic membrane.',
-      prion:'No membrane, no wall — only aggregated, misfolded protein. Only denaturation breaks it.',
-      toxin_load:'Nothing to sheath — the assay finds only diffusing toxin molecules, not a cell.'};
-      return {clue:'pcoat', text:m[pt]||m.parasite}; }},
+    run:(sp,pt,sc)=>{ const m={virus:'some particles wear a lipid envelope (soap-sensitive)',
+      bacterium:'a peptidoglycan wall — a classic antibiotic target',
+      fungus:'a tough chitin wall sheaths every thread',
+      parasite:'a flexible pellicle, no wall — a naked eukaryotic membrane',
+      prion:'no membrane or wall — only aggregated misfolded protein',
+      toxin_load:'nothing to sheath — only diffusing toxin molecules'};
+      const f=k=>m[k]||m.parasite;
+      const text=(sc&&sc.cures&&sc.pathType2)?('Two coats: ① '+f(pt)+'; ② '+f(sc.pathType2)+'.'):('The invader shows '+f(pt)+'.');
+      return {clue:'pcoat', text}; }},
 ];
 XS.assayById=id=>XS.ASSAYS.find(a=>a.id===id);
 
@@ -327,10 +333,11 @@ XS.genMorph=function(base){ const R=Math.random, cl=XS.cl||((v,a,b)=>v<a?a:v>b?b
 };
 
 /* ---------------- scenario generation ---------------- */
-XS.buildScenario=function(objective, tier){
+XS.buildScenario=function(objective, tier, forceCell){
   const T=(XS.TIERS&&XS.TIERS[tier])||{margin:1};
   const xp=(XS.progress&&XS.progress.xp)||0;
-  const pool=XS.SPECIES.filter(s=>xp>=(s.minXP||0)); const base=pick(pool.length?pool:XS.SPECIES);
+  const pool = forceCell ? XS.SPECIES.filter(s=>s.cell===forceCell) : XS.SPECIES.filter(s=>xp>=(s.minXP||0));
+  const base=pick(pool.length?pool:XS.SPECIES);
   const morph=XS.genMorph(base);
   const A=Object.assign({}, base, {label:base.kingdom, col:morph.col, form:morph.form, size:(base.size||1)*morph.size});
   const planet=pick(XS.PLANETS);
@@ -430,7 +437,7 @@ XS.runAssay=function(sc, region, id){
   const first=!region.tests[id];
   if(first && sc.assayBudget!=null && sc.assayBudget<=0)
     return {blocked:true, text:'Out of reagents — no assay charges left. Diagnose from the evidence you have.', label:a.label};
-  const out=a.run(spec, sc.pathType);
+  const out=a.run(spec, sc.pathType, sc);
   region.tests[id]=true; region.clues[out.clue]=out.text;
   if(first){ region.evidence.push(out.text); region.assaysSince++; region.recon=true; if(sc.assayBudget!=null) sc.assayBudget--; }
   return {text:out.text, first, label:a.label};
@@ -446,7 +453,8 @@ XS.identifyOptions=function(sc){
 /* submit a diagnosis for the current region */
 XS.submitDiagnosis=function(sc, region, choice){
   if(sc.done) return null;
-  const correct = choice===sc.dxAnswer;
+  // on a co-infection, naming EITHER invader is a valid diagnosis
+  const correct = choice===sc.dxAnswer || (sc.cures && sc.pathType2 && choice===XS.PATHOGENS[sc.pathType2].dx);
   const T=XS.TIERS[sc.tier]||XS.TIERS.field;
   if(correct){ region.diagnosed=true; sc.diagnosed=true;
     return {ok:true, msg:'Diagnosis confirmed: '+choice+'. Treatment options unlocked.'};
@@ -490,11 +498,14 @@ XS.applyTreatment=function(sc, regionId, agent){
 
   if(correctRegion && correctAgent){
     if(sc.cures){                                        // TRAIT · co-infection — every invader needs its own cure
-      sc.curesApplied=sc.curesApplied||{}; sc.curesApplied[agent]=true;
+      sc.curesApplied=sc.curesApplied||{}; const already=sc.curesApplied[agent]; sc.curesApplied[agent]=true;
       const done=sc.cures.filter(c=>sc.curesApplied[c]).length;
       sc.P=Math.round(done/sc.cures.length*100);
       if(sc.P>=100) sc.cured=true;
-      return {ok:true, sev:0, msg: done<sc.cures.length?'One invader cleared — but a second is still present. Apply its cure too.':'Both invaders cleared — the tissue is recovering.'};
+      const msg = sc.P>=100 ? 'Both invaders cleared — the tissue is recovering.'
+        : already ? 'That invader is already handled — the OTHER one needs a DIFFERENT cure (check the morphology assay).'
+        : 'One invader cleared — a second invader remains. Apply ITS cure too.';
+      return {ok:true, sev:0, msg};
     }
     let gain = sc.objective==='preserve'?26:100;
     if(sc.resistantStrain) gain = sc.objective==='preserve'?18:50;   // resistant strain needs extra hits

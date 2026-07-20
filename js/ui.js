@@ -177,7 +177,9 @@ UI.renderRight=function(){
       : '<div class="muted" style="font-size:11.5px;line-height:1.5">No findings yet. Run the lab assays below, and click the cell’s structures to inspect them.</div>';
     let concl='';
     if(r.diagnosed){ const why=preserve?XS.PATHOGENS[sc.pathType].why:XS.WEAKNESS_WHY[sc.agent];
-      concl=`<div class="diag good"><div class="diag-t">✓ DIAGNOSIS · ${sc.dxAnswer}</div><div class="diag-why">${why}</div><div class="diag-rx">Now apply the matching treatment.</div></div>`;
+      const mixed=!!sc.cures, title=mixed?'MIXED INFECTION · two invaders':sc.dxAnswer;
+      const rx=mixed?`Apply the cure for <b>both</b> invaders — run <b>Particle morphology</b> to see both.`:'Now apply the matching treatment.';
+      concl=`<div class="diag good"><div class="diag-t">✓ DIAGNOSIS · ${title}</div><div class="diag-why">${why}</div><div class="diag-rx">${rx}</div></div>`;
     } else if(internHint && r.recon && isKey){
       concl=`<div class="diag bad"><div class="diag-t">Intern hint</div><div class="diag-b">${preserve?XS.PATHOGENS[sc.pathType].tell:'Its wall material and metabolism point to a single weakness — read the evidence.'}</div></div>`;
     }
