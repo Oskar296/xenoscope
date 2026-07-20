@@ -252,8 +252,8 @@ UI.renderDock=function(){
 /* diagnosis (classify) overlay */
 UI.showIdentify=function(){
   const sc=XS.app.sc, r=XS.app.zoomRegion; if(!sc||!r) return;
-  const opt=XS.identifyOptions(sc);
-  const btns=opt.options.map(o=>`<button class="idopt" data-o="${o}">${o}</button>`).join('');
+  const opt=XS.identifyOptions(sc), hall=XS.DX_HALLMARK||{};
+  const btns=opt.options.map(o=>`<button class="idopt" data-o="${o}"><b>${o}</b><small>${hall[o]||''}</small></button>`).join('');
   const evList=r.evidence.length?r.evidence.map(e=>`<div class="ev-row">• ${e}</div>`).join(''):'<div class="muted">You have gathered no evidence yet — this is a guess.</div>';
   card(`<div class="sub">Diagnosis · ${r.name}</div><h2>${opt.prompt}</h2>`+
     `<div class="cap" style="margin:8px 0 6px">Your evidence</div><div class="ev-list">${evList}</div>`+

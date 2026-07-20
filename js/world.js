@@ -449,6 +449,20 @@ XS.identifyOptions=function(sc){
     ? {kind:'pathogen', prompt:'What is the cause?', options:['Virus','Bacterium','Fungus','Parasite','Prion','Toxin']}
     : {kind:'class',    prompt:'What kind of organism is this?', options:XS.CLASSIFY.slice()};
 };
+/* the give-away feature of each option — you match this to the evidence you gathered
+   (structure from the assays), NOT the particle colour. */
+XS.DX_HALLMARK={
+  Virus:'Not a cell — a protein capsid around nucleic acid; no ribosomes of its own.',
+  Bacterium:'Walled rod/sphere; peptidoglycan wall + its own 70S ribosomes; no nucleus.',
+  Fungus:'Chitin cell wall, growing as branching threads (hyphae); eukaryotic nucleus.',
+  Parasite:'A nucleated, motile eukaryotic cell — no wall, and not one of the host’s.',
+  Prion:'Misfolded-protein clumps — NO nucleic acid at all. Not alive.',
+  Toxin:'No invading organism — a chemical poison diffusing through the tissue.',
+  Animal:'No cell wall; a true nucleus and mitochondria.',
+  Plant:'Rigid cellulose wall + chloroplasts (photosynthetic).',
+  Archaeon:'Prokaryote with NO peptidoglycan; ether-linked membrane; often an extremophile.',
+  Protist:'A single wall-less eukaryotic cell (nucleus present).',
+};
 
 /* submit a diagnosis for the current region */
 XS.submitDiagnosis=function(sc, region, choice){

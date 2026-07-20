@@ -248,8 +248,11 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border:none;border-ra
 .idgroup{max-width:150px}
 .dx-done{color:var(--mint);font-weight:700;font-size:12px;border:1px solid rgba(94,242,214,.4);border-radius:10px;padding:9px 10px;background:rgba(94,242,214,.07);text-align:center}
 .idgrid{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
-.idopt{flex:1;min-width:108px;padding:11px 10px;border:1px solid var(--line2);border-radius:11px;background:rgba(255,255,255,.03);color:var(--ink);cursor:pointer;font-size:13px;font-weight:600;transition:.14s}
+.idopt{flex:1 1 46%;min-width:200px;padding:10px 12px;border:1px solid var(--line2);border-radius:11px;background:rgba(255,255,255,.03);color:var(--ink);cursor:pointer;text-align:left;transition:.14s}
+.idopt b{display:block;font-size:13px;font-weight:700}
+.idopt small{display:block;font-size:10.5px;font-weight:400;color:var(--dim);margin-top:3px;line-height:1.4}
 .idopt:hover{border-color:var(--aqua);background:rgba(94,242,214,.07)}
+.idopt:hover small{color:var(--ink)}
 .idopt.wrong{border-color:var(--coral);animation:shake .3s;opacity:.55}
 .idnote{color:var(--coral);font-size:12px;min-height:16px;margin-top:2px}
 .card .ev-list{max-height:150px;overflow:auto}
