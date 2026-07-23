@@ -55,10 +55,10 @@ const R_MICROBE=[
 ];
 const R_BY_PLAN={
   beast:R_ANIMAL, medusa:R_ANIMAL, arthropod:R_ANIMAL, tentacled:R_ANIMAL, worm:R_ANIMAL,
-  anemone:R_ANIMAL, crinoid:R_ANIMAL, sponge:R_ANIMAL, starfish:R_ANIMAL,
-  tree:R_PLANT, fern:R_PLANT, vine:R_PLANT, bulb:R_PLANT, reed:R_PLANT, canopy:R_PLANT, pitcher:R_PLANT,
+  anemone:R_ANIMAL, crinoid:R_ANIMAL, sponge:R_ANIMAL, starfish:R_ANIMAL, combjelly:R_ANIMAL, winged:R_ANIMAL, snail:R_ANIMAL,
+  tree:R_PLANT, fern:R_PLANT, vine:R_PLANT, bulb:R_PLANT, reed:R_PLANT, canopy:R_PLANT, pitcher:R_PLANT, cactus:R_PLANT,
   mushroom:R_FUNGI, bracket:R_FUNGI, coral:R_FUNGI, puffball:R_FUNGI, mold:R_FUNGI, lichen:R_FUNGI,
-  amoeba:R_PROTIST, ciliate:R_PROTIST, diatom:R_PROTIST, radiolarian:R_PROTIST, urchin:R_PROTIST, slimemold:R_PROTIST,
+  amoeba:R_PROTIST, ciliate:R_PROTIST, diatom:R_PROTIST, radiolarian:R_PROTIST, urchin:R_PROTIST, slimemold:R_PROTIST, dino:R_PROTIST, foram:R_PROTIST,
   colony:R_MICROBE,
 };
 
@@ -94,6 +94,12 @@ const PLAN_POS={
   radiolarian:{cortex:[0.0,-0.28],endo:[0.1,0.05],organ:[-0.28,0.15]},
   urchin:{cortex:[0.0,-0.25],endo:[0.08,0.05],organ:[-0.25,0.12]},
   slimemold:{cortex:[0.2,-0.05],endo:[0.0,0.28],organ:[-0.25,0.08]},
+  combjelly:{hide:[0.0,-0.1],gut:[0.0,0.28],core:[-0.25,-0.05],nerve:[0.25,-0.2]},
+  winged:{hide:[0.0,-0.12],gut:[0.0,0.18],core:[-0.4,-0.1],nerve:[0.4,-0.1]},
+  snail:{hide:[-0.06,-0.05],gut:[0.2,0.42],core:[-0.22,-0.05],nerve:[0.5,0.28]},
+  cactus:{leaf:[0.3,-0.05],stem:[0.0,0.35],root:[0.0,0.7]},
+  dino:{cortex:[0.0,-0.3],endo:[0.0,0.0],organ:[-0.22,0.15]},
+  foram:{cortex:[0.1,-0.15],endo:[0.0,0.05],organ:[-0.2,0.1]},
 };
 const COLONY_POS={
   filament:{crown:[0.0,-0.35],matrix:[0.06,0.06],base:[-0.06,0.5]},
@@ -198,6 +204,20 @@ XS.SPECIES=[
     blurb:'A single giant multinucleate protist cell that creeps as a living network, solving mazes without a brain.'},
   {id:'lichen', name:['Licha','Crusto','Foli'], epi:[' crust',' rosette',' patch'], kingdom:'Fungus', body:'a lichenised fungus', plan:'lichen', cell:'Fungi', col:[180,220,180], size:1.0, form:{}, minXP:60,
     blurb:'A fungus living in partnership with an alga — a tough, chitin-walled crust that colonises bare rock.'},
+
+  // — extra distinct body-plans, batch 3 —
+  {id:'combjelly', name:['Cteno','Beroe','Lumi'], epi:[' comb',' drift',' glow'], kingdom:'Animal', body:'a comb-jelly animal', plan:'combjelly', cell:'Animalia', col:[150,220,255], size:1.0, form:{}, minXP:40,
+    blurb:'A translucent drifting animal that swims on eight iridescent rows of fused cilia (comb rows).'},
+  {id:'winged', name:['Ptero','Alato','Vola'], epi:[' flyer',' wing',' moth'], kingdom:'Animal', body:'a winged flying animal', plan:'winged', cell:'Animalia', col:[255,170,120], size:1.0, form:{}, minXP:60,
+    blurb:'A winged animal that beats membranous wings to fly — soft, wall-less tissue throughout.'},
+  {id:'snail', name:['Gastro','Helico','Coch'], epi:[' shell',' spiral',' crawler'], kingdom:'Animal', body:'a shelled gastropod animal', plan:'snail', cell:'Animalia', col:[255,190,150], size:1.0, form:{}, minXP:60,
+    blurb:'A soft-bodied animal that hauls a coiled mineral shell and glides on a muscular foot.'},
+  {id:'cactus', name:['Cacto','Ferox','Sereus'], epi:[' column',' spire',' succulent'], kingdom:'Plant', body:'a ribbed succulent plant', plan:'cactus', cell:'Plantae', col:[120,220,150], size:1.0, form:{}, minXP:60,
+    blurb:'A drought-proof autotroph — a ribbed, spine-armoured column of water-storing cellulose-walled cells.'},
+  {id:'dino', name:['Dino','Perido','Ceratia'], epi:[' whirl',' plate',' spinner'], kingdom:'Protist', body:'an armoured dinoflagellate protist', plan:'dino', cell:'Protista', col:[200,180,120], size:0.95, form:{}, minXP:150,
+    blurb:'A single-celled protist in cellulose armour plates, spun through the water by two flagella.'},
+  {id:'foram', name:['Fora','Globi','Nummu'], epi:[' chamber',' coil',' test'], kingdom:'Protist', body:'a chambered foraminiferan protist', plan:'foram', cell:'Protista', col:[230,215,180], size:1.0, form:{}, minXP:150,
+    blurb:'A single-celled protist that builds a many-chambered mineral shell and feeds through a net of fine threads.'},
 ];
 
 /* ---------------- neutralise weakness by cell kingdom (real biology) ---------------- */

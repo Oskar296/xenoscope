@@ -10,6 +10,24 @@ const rnd=(a,b)=>a+Math.random()*(b-a), ri=(a,b)=>Math.floor(rnd(a,b+1));
 const cl=(v,a,b)=>v<a?a:v>b?b:v, pick=a=>a[Math.floor(Math.random()*a.length)];
 XS.rnd=rnd; XS.ri=ri; XS.cl=cl; XS.pick=pick;
 
+/* per-cell cosmetic uniqueness — never changes the biology used to identify a cell */
+const COUNT_JITTER=['mitochondrion','lysosome','chloroplast','ribosome','vacuole','spore','plasmid','food_vacuole','thylakoid','er_rough','golgi'];
+function rgb2hsl(c){ let r=c[0]/255,g=c[1]/255,b=c[2]/255; const mx=Math.max(r,g,b),mn=Math.min(r,g,b); let h,s,l=(mx+mn)/2;
+  if(mx===mn){h=s=0;} else { const d=mx-mn; s=l>0.5?d/(2-mx-mn):d/(mx+mn);
+    h=mx===r?(g-b)/d+(g<b?6:0):mx===g?(b-r)/d+2:(r-g)/d+4; h/=6; } return [h,s,l]; }
+function hsl2rgb(a){ const H=a[0],S=a[1],L=a[2]; const f=(p,q,t)=>{ if(t<0)t+=1; if(t>1)t-=1;
+  if(t<1/6)return p+(q-p)*6*t; if(t<1/2)return q; if(t<2/3)return p+(q-p)*(2/3-t)*6; return p; };
+  let r,g,b; if(S===0){r=g=b=L;} else { const q=L<0.5?L*(1+S):L+S-L*S, p=2*L-q; r=f(p,q,H+1/3); g=f(p,q,H); b=f(p,q,H-1/3); }
+  return [Math.round(r*255),Math.round(g*255),Math.round(b*255)]; }
+function shiftHue(col,dh,ds,dl){ const h=rgb2hsl(col); return hsl2rgb([(h[0]+dh+1)%1, cl(h[1]*ds,0.18,1), cl(h[2]*dl,0.28,0.86)]); }
+function cellMorph(spec,K){
+  spec.tint=shiftHue(K.col, rnd(-0.08,0.08), rnd(0.8,1.18), rnd(0.85,1.16));
+  spec.wob=K.wobble*rnd(0.65,1.5);
+  spec.asp=K.aspect*rnd(0.82,1.2);
+  spec.scale=rnd(0.88,1.14);
+  spec.grain=Math.random()<0.55;
+}
+
 /* which treatments actually work on which organism (educational core) */
 function killAgents(k, spec){
   switch(k){
@@ -36,8 +54,9 @@ XS.genSpecimen=function(kingdomKey, tier){
   if(autotroph===null) autotroph = (kingdomKey==='Monera'||kingdomKey==='Archaea')? Math.random()<0.4 : Math.random()<0.45;
   const chemo = (kingdomKey==='Archaea') && autotroph;    // archaeal autotrophs are chemoautotrophs
 
-  // clone parts; add photosynthetic gear for photo-autotrophs; envelope for some viruses
+  // clone parts; jitter repeatable organelle counts so every interior is unique
   const parts = K.parts.map(p=>p.slice());
+  parts.forEach(p=>{ if(COUNT_JITTER.includes(p[0])) p[1]=Math.max(1,Math.round(p[1]*rnd(0.65,1.5))); });
   if(autotroph && !chemo){
     if(kingdomKey==='Monera') parts.push(['thylakoid',ri(2,3)]);
     else if(kingdomKey==='Protista'){ parts.push(['chloroplast',ri(3,4)]); parts.push(['eyespot',1]); }
@@ -65,6 +84,7 @@ XS.genSpecimen=function(kingdomKey, tier){
   spec.kill = killAgents(kingdomKey, spec);
   if(spec.isVirus) spec.kill = enveloped ? ['antiviral','detergent'] : ['antiviral'];
   spec.food = spec.isVirus ? 'host' : (chemo ? 'minerals' : (autotroph ? 'light' : 'glucose'));
+  cellMorph(spec, K);
 
   buildInstances(spec, parts);
   return spec;

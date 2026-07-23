@@ -79,8 +79,8 @@ function cellPath(spec,rad,wob,asp,seed,t){
 
 /* ---------------- CELL ---------------- */
 function drawCell(app,t){
-  const spec=app.spec,S=app.S,kc=spec.K.col;
-  const health=(S?S.vitality:70)/100, wob=spec.K.wobble+0.05*(1-health), asp=spec.K.aspect, rad=R*(0.86+0.16*health), seed=spec.optPH;
+  const spec=app.spec,S=app.S,kc=spec.tint||spec.K.col;
+  const health=(S?S.vitality:70)/100, wob=(spec.wob!=null?spec.wob:spec.K.wobble)+0.05*(1-health), asp=spec.asp||spec.K.aspect, rad=R*(0.86+0.16*health)*(spec.scale||1), seed=spec.optPH;
   // aura
   ctx.save();ctx.globalCompositeOperation='lighter';
   const a=ctx.createRadialGradient(cx,cy,rad*.3,cx,cy,rad*2.1);
@@ -112,6 +112,8 @@ function drawCell(app,t){
   for(const p of spec.parts){ if(p.shape==='flagellum') drawFlagellum(p,rad,asp,t); if(p.shape==='cilia') drawCilia(rad,asp,wob,seed,t,p); if(p.shape==='pili') drawPili(rad,asp,t,p); }
   // clip and draw organelles
   ctx.save(); cellPath(spec,rad,wob,asp,seed,t); ctx.clip();
+  if(spec.grain){ ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.fillStyle=`rgba(${kc.join(',')},.05)`;
+    for(let i=0;i<44;i++){ const a=i*2.399+seed, rr=rad*0.92*Math.sqrt((i%22+1)/22); ctx.beginPath(); ctx.arc(cx+Math.cos(a)*rr,cy+Math.sin(a)*rr,rad*0.02,0,6.3); ctx.fill(); } ctx.restore(); }
   for(const p of spec.parts){ if(['flagellum','cilia','pili','spike','tail'].includes(p.shape)) {markPos(p,rad,asp);continue;} drawPart(app,p,rad,asp,t); }
   ctx.restore();
   inspectRings(app,rad);
@@ -974,6 +976,106 @@ XS.PLANS={
     orb(ccx,ccy-S*0.02,S*0.18,mix(col,acc,0.2),acc,health);
     ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.fillStyle=rC(mix(acc,[255,255,255],0.3),0.5);
     for(let i=0;i<12;i++){ const a=i*2.1, rr=S*(0.15+0.3*((i*0.27)%1)); ctx.beginPath(); ctx.arc(ccx+Math.cos(a)*rr,ccy+Math.sin(a)*rr*0.7,S*0.03,0,6.3); ctx.fill(); } ctx.restore();
+    floaters(ccx,ccy,S,t,acc); },
+
+  /* --- batch 3: comb jelly, winged flyer, spiral snail, ribbed cactus, dinoflagellate, foram --- */
+  combjelly(ccx,ccy,S,t,sc,health){ const col=sc.A.col, acc=sc.planet.accent, gcol=mix(col,acc,0.5);
+    softShadow(ccx,ccy+S*0.7,S*0.5,S*0.09); auraGlow(ccx,ccy-S*0.1,S*1.3,gcol,0.1+0.09*health);
+    for(let s=-1;s<=1;s+=2) limb(ccx+s*S*0.06,ccy+S*0.42,Math.PI*0.5+s*0.15,S*0.7,S*0.03,mix(col,[10,10,20],0.35),acc,t,s+3);
+    const bell=[]; for(let a=0;a<6.283;a+=0.42){ const r=1+0.05*Math.sin(a*2); bell.push([ccx+Math.cos(a)*S*0.4*r, ccy-S*0.05+Math.sin(a)*S*0.55*r]); }
+    smoothClosed(bell); const g=ctx.createRadialGradient(ccx-S*0.1,ccy-S*0.2,0,ccx,ccy,S*0.6);
+    g.addColorStop(0,rC(mix(col,[255,255,255],0.5),0.4)); g.addColorStop(0.7,rC(col,0.24)); g.addColorStop(1,rC(mix(col,acc,0.5),0.32)); ctx.fillStyle=g; ctx.fill();
+    ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.lineWidth=2; ctx.strokeStyle=rC(gcol,0.35); smoothClosed(bell); ctx.stroke();
+    // 8 iridescent comb rows shimmering
+    for(let c=0;c<8;c++){ const a=c/8*6.283; ctx.strokeStyle=rC(mix(acc,[255,255,255],0.4),0.5); ctx.lineWidth=1.6;
+      for(let k=0;k<7;k++){ const f=k/7, x=ccx+Math.cos(a)*S*0.4*(1-f*0.1), y=ccy-S*0.05+(f-0.5)*S*1.0;
+        const beat=0.5+0.5*Math.sin(t*5-k*0.8+c); ctx.globalAlpha=0.3+0.5*beat; ctx.beginPath(); ctx.moveTo(x-Math.cos(a)*S*0.04,y); ctx.lineTo(x+Math.cos(a)*S*0.04,y); ctx.stroke(); } }
+    ctx.globalAlpha=1; ctx.restore(); floaters(ccx,ccy,S,t,acc); },
+
+  winged(ccx,ccy,S,t,sc,health){ const col=sc.A.col, acc=sc.planet.accent, gcol=mix(col,acc,0.5);
+    softShadow(ccx,ccy+S*0.7,S*0.7,S*0.1); auraGlow(ccx,ccy,S*1.4,gcol,0.08+0.08*health);
+    const flap=Math.sin(t*3)*0.4;
+    for(const s of [-1,1]){ ctx.save();
+      const wing=[[ccx,ccy-S*0.1],[ccx+s*S*0.5,ccy-S*0.5-Math.abs(flap)*S*0.2],[ccx+s*S*0.9,ccy-S*0.2],[ccx+s*S*0.8,ccy+S*0.25],[ccx+s*S*0.4,ccy+S*0.15]];
+      smoothClosed(wing); const g=ctx.createLinearGradient(ccx,ccy,ccx+s*S*0.9,ccy);
+      g.addColorStop(0,rC(mix(col,[255,255,255],0.3),0.85)); g.addColorStop(1,rC(mix(col,acc,0.5),0.4)); ctx.fillStyle=g; ctx.fill();
+      ctx.strokeStyle=rC(gcol,0.4); ctx.lineWidth=1.4; ctx.beginPath(); ctx.moveTo(ccx,ccy-S*0.1); ctx.lineTo(ccx+s*S*0.75,ccy-S*0.15); ctx.stroke(); ctx.restore(); }
+    for(let i=-1;i<=1;i++) limb(ccx+i*S*0.06,ccy+S*0.15,Math.PI*0.5,S*0.35,S*0.04,mix(col,[10,10,16],0.4),acc,t,i*2);
+    const body=[[ccx-S*0.1,ccy-S*0.28],[ccx+S*0.1,ccy-S*0.28],[ccx+S*0.14,ccy+S*0.1],[ccx,ccy+S*0.34],[ccx-S*0.14,ccy+S*0.1]];
+    fillGlow(body,bodyGrad(ccx,ccy-S*0.15,S*0.5,col,acc,health),gcol,2);
+    ctx.save(); smoothClosed(body); ctx.clip(); paintPattern(sc,ccx,ccy,S*0.3,col,acc); ctx.restore();
+    eyeAt(ccx-S*0.05,ccy-S*0.22,S*0.04,gcol); eyeAt(ccx+S*0.05,ccy-S*0.22,S*0.04,gcol);
+    floaters(ccx,ccy,S,t,acc); },
+
+  snail(ccx,ccy,S,t,sc,health){ const col=sc.A.col, acc=sc.planet.accent, gcol=mix(col,acc,0.5);
+    const gy=ccy+S*0.45; softShadow(ccx,gy+S*0.08,S*0.7,S*0.1); auraGlow(ccx,ccy,S*1.3,gcol,0.07+0.08*health);
+    // soft foot + head
+    const foot=[[ccx-S*0.5,gy],[ccx-S*0.2,gy-S*0.12],[ccx+S*0.45,gy-S*0.1],[ccx+S*0.6,gy-S*0.24],[ccx+S*0.5,gy+S*0.02],[ccx-S*0.4,gy+S*0.06]];
+    fillGlow(foot,bodyGrad(ccx,gy-S*0.1,S*0.6,mix(col,acc,0.3),acc,health),gcol,1.6);
+    // eye stalks
+    ctx.save(); ctx.strokeStyle=rC(mix(col,acc,0.4),0.8); ctx.lineWidth=S*0.03; ctx.lineCap='round';
+    for(const s of [0.5,0.62]){ ctx.beginPath(); ctx.moveTo(ccx+S*0.5,gy-S*0.18); ctx.lineTo(ccx+S*0.55+s*0.1*S,gy-S*0.38); ctx.stroke(); }
+    ctx.restore(); eyeAt(ccx+S*0.6,gy-S*0.4,S*0.03,gcol);
+    // coiled spiral shell
+    ctx.save(); const shx=ccx-S*0.06, shy=ccy-S*0.1;
+    const spr=[]; for(let k=0;k<40;k++){ const a=k/40*6.283*2.6, r=S*0.05+ (k/40)*S*0.42; spr.push([shx+Math.cos(a)*r, shy+Math.sin(a)*r]); }
+    ctx.beginPath(); ctx.arc(shx,shy,S*0.5,0,6.3); ctx.fillStyle=bodyGrad(shx-S*0.15,shy-S*0.15,S*0.5,col,acc,health); ctx.fill();
+    ctx.globalCompositeOperation='lighter'; ctx.strokeStyle=rC(gcol,0.5); ctx.lineWidth=2; ctx.beginPath(); ctx.arc(shx,shy,S*0.5,0,6.3); ctx.stroke();
+    ctx.strokeStyle=rC(mix(col,[20,16,24],0.5),0.7); ctx.lineWidth=S*0.03; ctx.beginPath(); spr.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1])); ctx.stroke(); ctx.restore();
+    floaters(ccx,ccy,S,t,acc); },
+
+  cactus(ccx,ccy,S,t,sc,health){ const col=sc.A.col, acc=sc.planet.accent, gcol=mix(col,acc,0.5);
+    const gy=ccy+S*0.85; softShadow(ccx,gy,S*0.5,S*0.1); auraGlow(ccx,ccy,S*1.3,gcol,0.07+0.07*health);
+    for(let i=-1;i<=1;i++) limb(ccx+i*S*0.03,gy-S*0.02,Math.PI*0.5+i*0.35,S*0.3,S*0.04,mix(col,[8,14,10],0.5),acc,t,i*3);
+    // ribbed column + two arms
+    const column=(bx,by,h,w)=>{ const L=[],Rr=[]; for(let k=0;k<=10;k++){ const f=k/10, y=by-h*f, ww=w*(1-0.15*f); L.push([bx-ww,y]); Rr.push([bx+ww,y]); }
+      ctx.beginPath(); ctx.moveTo(L[0][0],L[0][1]); for(const p of L)ctx.lineTo(p[0],p[1]); ctx.arc(bx,by-h,w*0.85,Math.PI,0,true); for(let i=Rr.length-1;i>=0;i--)ctx.lineTo(Rr[i][0],Rr[i][1]); ctx.closePath();
+      ctx.fillStyle=bodyGrad(bx-w*0.3,by-h,w*2,col,acc,health); ctx.fill();
+      ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.lineWidth=1.6; ctx.strokeStyle=rC(gcol,0.35); ctx.stroke();
+      // ribs
+      ctx.strokeStyle=rC(mix(col,[10,20,12],0.5),0.4); ctx.lineWidth=1.4;
+      for(let r=-2;r<=2;r++){ ctx.beginPath(); ctx.moveTo(bx+r*w*0.35,by); ctx.lineTo(bx+r*w*0.3,by-h); ctx.stroke(); }
+      // spines
+      ctx.strokeStyle=rC(mix(acc,[255,255,255],0.4),0.5); ctx.lineWidth=1;
+      for(let k=1;k<10;k++){ const y=by-h*(k/10); for(const s of [-1,1]){ ctx.beginPath(); ctx.moveTo(bx+s*w*(1-0.15*(k/10)),y); ctx.lineTo(bx+s*(w+S*0.06),y-S*0.02); ctx.stroke(); } } ctx.restore(); };
+    column(ccx,gy,S*1.0,S*0.18);
+    column(ccx-S*0.36,gy-S*0.2,S*0.45,S*0.1);
+    column(ccx+S*0.36,gy-S*0.3,S*0.5,S*0.1);
+    // crown flower
+    auraGlow(ccx,gy-S*1.0,S*0.22,gcol,0.5+0.3*health);
+    ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.fillStyle=rC(mix(acc,[255,255,255],0.4),0.8);
+    for(let i=0;i<6;i++){ const a=i/6*6.283+t*0.3; ctx.beginPath(); ctx.ellipse(ccx+Math.cos(a)*S*0.08,gy-S*1.0+Math.sin(a)*S*0.08,S*0.05,S*0.02,a,0,6.3); ctx.fill(); } ctx.restore();
+    floaters(ccx,ccy,S,t,acc); },
+
+  dino(ccx,ccy,S,t,sc,health){ const col=sc.A.col, acc=sc.planet.accent, gcol=mix(col,acc,0.5);
+    softShadow(ccx,ccy+S*0.5,S*0.5,S*0.09); auraGlow(ccx,ccy,S*1.3,gcol,0.08+0.08*health);
+    // longitudinal flagellum trailing + transverse groove
+    ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.strokeStyle=rC(acc,0.55); ctx.lineWidth=2; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(ccx,ccy+S*0.4); for(let k=0;k<=16;k++){ const f=k/16; ctx.lineTo(ccx+Math.sin(f*10+t*5)*S*0.1, ccy+S*0.4+f*S*0.5); } ctx.stroke(); ctx.restore();
+    // armored body (two thecal halves)
+    const body=[[ccx-S*0.34,ccy-S*0.1],[ccx-S*0.28,ccy-S*0.42],[ccx,ccy-S*0.5],[ccx+S*0.28,ccy-S*0.42],[ccx+S*0.34,ccy-S*0.1],[ccx+S*0.24,ccy+S*0.34],[ccx,ccy+S*0.44],[ccx-S*0.24,ccy+S*0.34]];
+    fillGlow(body,bodyGrad(ccx-S*0.1,ccy-S*0.2,S*0.55,col,acc,health),gcol,2);
+    ctx.save(); smoothClosed(body); ctx.clip();
+    // transverse groove (a belt) + plate seams
+    ctx.strokeStyle=rC(mix(col,[10,10,16],0.5),0.6); ctx.lineWidth=S*0.05; ctx.beginPath(); ctx.moveTo(ccx-S*0.4,ccy); ctx.quadraticCurveTo(ccx,ccy+S*0.05,ccx+S*0.4,ccy); ctx.stroke();
+    ctx.strokeStyle=rC(gcol,0.3); ctx.lineWidth=1;
+    for(let i=-2;i<=2;i++){ ctx.beginPath(); ctx.moveTo(ccx+i*S*0.13,ccy-S*0.5); ctx.lineTo(ccx+i*S*0.1,ccy); ctx.stroke(); }
+    nucleusGlow(ccx,ccy-S*0.14,S*0.16,acc); ctx.restore();
+    // transverse flagellum in the groove
+    ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.strokeStyle=rC(acc,0.4); ctx.lineWidth=1.4;
+    ctx.beginPath(); for(let k=0;k<=20;k++){ const a=k/20*6.283; ctx.lineTo(ccx+Math.cos(a)*S*0.34, ccy+S*0.02+Math.sin(a+t*4)*S*0.03); } ctx.stroke(); ctx.restore();
+    floaters(ccx,ccy,S,t,acc); },
+
+  foram(ccx,ccy,S,t,sc,health){ const col=sc.A.col, acc=sc.planet.accent, gcol=mix(col,acc,0.5);
+    softShadow(ccx,ccy+S*0.5,S*0.5,S*0.09); auraGlow(ccx,ccy,S*1.3,gcol,0.08+0.08*health);
+    // reticulopodia (fine radiating threads)
+    ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.strokeStyle=rC(mix(acc,[255,255,255],0.3),0.28); ctx.lineWidth=1;
+    for(let i=0;i<20;i++){ const a=i/20*6.283+Math.sin(t*0.5)*0.05; ctx.beginPath(); ctx.moveTo(ccx+Math.cos(a)*S*0.3,ccy+Math.sin(a)*S*0.3); ctx.lineTo(ccx+Math.cos(a)*S*0.85,ccy+Math.sin(a)*S*0.85); ctx.stroke(); } ctx.restore();
+    // chambered spiral shell — overlapping orbs of decreasing size
+    const N=7; for(let k=N;k>=1;k--){ const a=k*0.9, r=S*0.34*(k/N), x=ccx+Math.cos(a)*S*0.16*(1-k/N/2), y=ccy+Math.sin(a)*S*0.16*(1-k/N/2);
+      orb(x,y,r,mix(col,[255,255,255],(N-k)*0.03),acc,health); }
+    ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.strokeStyle=rC(gcol,0.3); ctx.lineWidth=1;
+    for(let k=N;k>=1;k--){ const a=k*0.9, r=S*0.34*(k/N), x=ccx+Math.cos(a)*S*0.16*(1-k/N/2), y=ccy+Math.sin(a)*S*0.16*(1-k/N/2); ctx.beginPath(); ctx.arc(x,y,r,0,6.3); ctx.stroke(); } ctx.restore();
     floaters(ccx,ccy,S,t,acc); },
 };
 
