@@ -79,19 +79,28 @@ UI.tick=function(dt){
 /* interactive tutorial coach banner */
 UI.startTutorial=function(){ XS.startTutorial(); UI.renderPhase(); UI.updateCoach(); };
 UI.updateCoach=function(){ const T=XS.app.tutorial; if(!T){ UI.coach.style.display='none'; return; }
-  const msgs=[
-    {t:'Step 1 · Survey', d:'This is a whole alien organism on its exoplanet. Its tissues are marked with glowing rings. <b>Click a ring</b> on the organism to zoom into that tissue.'},
-    {t:'Step 2 · Analyse', d:'In the dock below, run a couple of <b>Lab assays</b>. Since something is <i>infecting</i> this tissue, the <b>Particle morphology</b> and <b>Invader coat assay</b> examine the invader itself. Each result lands in the <b>Evidence</b> panel on the right.'},
-    {t:'Step 3 · Diagnose', d:'Read the Evidence: the invader is <b>rod-shaped with a peptidoglycan wall</b> and its own ribosomes — that means a <b>Bacterium</b>. Hit <b>⌖ Identify</b> and pick it.'},
-    {t:'Step 4 · Treat', d:'Treatments just unlocked. A bacterium is destroyed by an <b>Antibiotic</b> — click it, and keep applying until the infection clears.'},
-    {t:'✓ You’ve got it!', d:'That’s the whole loop: <b>Survey → Analyse → Diagnose → Treat</b>. Match the right treatment to the evidence and you win. On harder tiers you’ll juggle more clues and complications — but it’s always these four steps.'},
+  const L=XS.TUT_LESSONS[T.lesson]||XS.TUT_LESSONS[0], n=XS.TUT_LESSONS.length, agentLabel=XS.agentName(L.agent), verb=L.obj==='preserve'?'Preserve':'Neutralize';
+  const art='a'+(/^[AEIOU]/i.test(L.name)?'n':'');
+  const idHint = L.obj==='preserve'
+    ? 'Since something is <i>infecting</i> it, use <b>Particle morphology</b> and <b>Invader coat</b> to examine the invader.'
+    : 'Use <b>Wall analysis</b>, <b>Gram stain</b> and <b>Nuclear stain</b> to work out what kind of cell it is.';
+  const steps=[
+    {t:`Lesson ${T.lesson+1} of ${n} · ${L.name}`, d:`<b>${verb} this organism.</b> Its tissues are the glowing rings — <b>click one</b> to zoom into a tissue.`},
+    {t:`Analyse`, d:`Run a couple of <b>Lab assays</b> from the dock (① group). ${idHint} <span class="muted">${L.assayHint||''}</span> Each clue appears in the <b>Evidence</b> panel on the right.`},
+    {t:`Diagnose`, d:`Open <b>⌖ Identify</b> (② group). Match your evidence to the options — each lists its give-away feature. This one is ${art} <b>${L.name}</b>; pick it.`},
+    {t:`Treat`, d:`${art.charAt(0).toUpperCase()+art.slice(1)} <b>${L.name}</b> is beaten by <b>${agentLabel}</b>. ${L.why} Apply it (③ group).`},
+    {t:`✓ Learned: ${L.name} → ${agentLabel}`, d:`${L.why}`},
   ];
-  const m=msgs[T.step]||msgs[0], done=T.step>=4;
-  UI.coach.innerHTML=`<div class="coach-h">🎓 ${m.t}</div><div class="coach-d">${m.d}</div>`+
-    `<div class="coach-btns">${done?'<button class="btn pri" id="coachDone">▶ Start playing</button>':'<button class="chipbtn" id="coachSkip">Skip tutorial</button>'}</div>`;
+  const m=steps[T.step]||steps[0], last=T.lesson>=n-1, done=T.step>=4;
+  const dots=XS.TUT_LESSONS.map((_,i)=>`<span class="cp ${i<T.lesson?'done':''} ${i===T.lesson?'on':''}"></span>`).join('');
+  let btns;
+  if(done) btns=(last?'<button class="btn pri" id="coachDone">▶ Finish &amp; play</button>':'<button class="btn pri" id="coachNext">Next type ▶</button>')+'<button class="chipbtn" id="coachSkip">Skip</button>';
+  else btns='<button class="chipbtn" id="coachSkip">Skip tutorial</button>';
+  UI.coach.innerHTML=`<div class="coach-h">🎓 ${m.t}</div><div class="coach-d">${m.d}</div><div class="coach-prog">${dots}</div><div class="coach-btns">${btns}</div>`;
   UI.coach.style.display='block';
   const sk=$('coachSkip'); if(sk) sk.onclick=()=>{ XS.endTutorial(); UI.coach.style.display='none'; UI.showMenu(); };
   const dn=$('coachDone'); if(dn) dn.onclick=()=>{ XS.endTutorial(); UI.coach.style.display='none'; UI.showMenu(); };
+  const nx=$('coachNext'); if(nx) nx.onclick=()=>{ sfx('click'); XS.loadLesson(T.lesson+1); UI.renderPhase(); UI.updateCoach(); };
 };
 UI.showToast=function(t){ sfx('rank');
   const d=el('div','toast',`<div class="t-ico">${t.icon}</div><div><div class="t-t">🏆 Achievement — ${t.title}</div><div class="t-d">${t.desc}</div></div>`);

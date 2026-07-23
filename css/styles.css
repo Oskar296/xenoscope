@@ -239,6 +239,10 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border:none;border-ra
 .coach-h{font-size:13px;font-weight:800;color:var(--aqua);letter-spacing:.3px;margin-bottom:5px}
 .coach-d{font-size:12.5px;line-height:1.55;color:var(--ink)}
 .coach-d b{color:var(--mint)}
+.coach-prog{display:flex;gap:4px;margin-top:9px;flex-wrap:wrap}
+.coach-prog .cp{width:14px;height:4px;border-radius:3px;background:rgba(255,255,255,.14)}
+.coach-prog .cp.done{background:var(--mint)}
+.coach-prog .cp.on{background:var(--aqua);box-shadow:0 0 8px rgba(94,242,214,.5)}
 .coach-btns{margin-top:10px;display:flex;justify-content:flex-end;gap:8px}
 @media (max-width:900px){ .coach{top:62px;width:94vw;padding:11px 13px} .coach-d{font-size:12px} }
 .btn.pulse{border-color:var(--aqua);animation:btnpulse 1.7s ease-in-out infinite}

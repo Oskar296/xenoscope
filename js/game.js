@@ -62,29 +62,50 @@ XS.doDiagnose=function(choice){
   return res;
 };
 
-/* guided tutorial: a clean, fixed scenario (bacterial infection of an animal) */
-XS.startTutorial=function(){
+/* ---------------- guided tutorial: a full course over every type ----------------
+   Neutralize lessons teach kingdom → weakness; Preserve lessons teach
+   affliction → cure. Each lesson is a clean, complication-free case.
+------------------------------------------------------------ */
+XS.TUT_LESSONS=[
+  {obj:'neutralize', cell:'Animalia', name:'Animal',    agent:'hypotonic',  assayHint:'Wall analysis + Nuclear stain show a wall-less cell with a nucleus.', why:'No cell wall — a hypotonic (low-salt) shock floods it until it bursts.'},
+  {obj:'neutralize', cell:'Plantae',  name:'Plant',     agent:'hypertonic', assayHint:'Wall analysis + Pigment scan: a cellulose wall and chloroplasts.', why:'A rigid cellulose wall resists bursting — draw water OUT with a hypertonic shock (herbicide).'},
+  {obj:'neutralize', cell:'Fungi',    name:'Fungus',    agent:'antifungal', assayHint:'Wall analysis shows the wall is chitin.', why:'A chitin wall dissolves under an antifungal.'},
+  {obj:'neutralize', cell:'Monera',   name:'Bacterium', agent:'antibiotic', assayHint:'Gram stain + Nuclear stain: a prokaryote with a peptidoglycan wall.', why:'A peptidoglycan wall + 70S ribosomes are exactly what an antibiotic attacks.'},
+  {obj:'neutralize', cell:'Archaea',  name:'Archaeon',  agent:'detergent',  assayHint:'Run the MEMBRANE-LIPID assay — it is the ONLY way to tell an archaeon from a bacterium.', why:'Antibiotics FAIL (no peptidoglycan); its ether-lipid membrane dissolves in detergent.'},
+  {obj:'neutralize', cell:'Protista', name:'Protist',   agent:'hypotonic',  assayHint:'Wall analysis + Nuclear stain: a wall-less single-celled eukaryote.', why:'Like an animal, no wall — osmotic shock bursts it.'},
+  {obj:'preserve', path:'virus',      name:'Virus',     agent:'antiviral',    assayHint:'Particle morphology + nucleic-acid: a bare capsid with no ribosomes.', why:'Only an antiviral halts viral replication; antibiotics do nothing.'},
+  {obj:'preserve', path:'bacterium',  name:'Bacterium', agent:'antibiotic',   assayHint:'Particle morphology + coat: rod-shaped, peptidoglycan wall, own ribosomes.', why:'An antibiotic attacks the bacterial wall / 70S ribosome.'},
+  {obj:'preserve', path:'fungus',     name:'Fungus',    agent:'antifungal',   assayHint:'Particle morphology: branching chitin threads (hyphae).', why:'An antifungal disrupts the chitin wall / fungal membrane.'},
+  {obj:'preserve', path:'parasite',   name:'Parasite',  agent:'antiparasitic',assayHint:'Particle morphology: a motile, nucleated eukaryotic cell.', why:'A eukaryotic parasite shrugs off antibiotics — it needs a targeted antiparasitic.'},
+  {obj:'preserve', path:'prion',      name:'Prion',     agent:'denaturant',   assayHint:'Nucleic-acid assay: NONE at all — it is pure misfolded protein.', why:'A prion is not alive; only a protein denaturant destroys it.'},
+  {obj:'preserve', path:'toxin_load', name:'Toxin',     agent:'antitoxin',    assayHint:'The assays find NO organism — just a diffusing poison.', why:'Nothing to kill — only an antitoxin neutralises the poison.'},
+];
+XS.loadLesson=function(i){ const L=XS.TUT_LESSONS[i]; if(!L) return false;
   XS.app.tier='field';
-  const sc=XS.buildScenario('preserve','field');
-  sc.pathType='bacterium'; sc.agent='antibiotic'; sc.dxAnswer='Bacterium';
-  sc.traits=[]; sc.shielded=false; sc.resistantStrain=false; sc.harsh=false; sc.mutating=false; sc.cures=null; sc.symbiontId=null; sc.assayBudget=null;
+  const sc = L.obj==='neutralize' ? XS.buildScenario('neutralize','field',L.cell) : XS.buildScenario('preserve','field');
+  sc.traits=[]; sc.shielded=false; sc.resistantStrain=false; sc.harsh=false; sc.mutating=false; sc.cures=null; sc.pathType2=null; sc.symbiontId=null; sc.assayBudget=null; sc.hostDrain=0;
   sc.regions.forEach(r=>{ r.symbiont=false; r.decoy=false; });
+  if(L.obj==='preserve'){ sc.pathType=L.path; sc.agent=XS.PATHOGENS[L.path].cure; sc.dxAnswer=XS.PATHOGENS[L.path].dx; }
+  else { sc.agent=XS.killAgentsFor(sc.A.cell)[0]; sc.dxAnswer=XS.KINGDOM_ANSWER[sc.A.cell]; }
+  sc.tutPassed=false;
   XS.app.sc=sc; XS.app.phase='survey'; XS.app.spec=null; XS.app.zoomRegion=null; XS.app.zoomPathogen=null;
   XS.app.hoverRegion=null; XS.app.hoverPart=null; XS.app.scan=null; XS.app.result=null; XS.app.rankUp=null; XS.app.missionWrong=0; XS.app.daily=false;
-  XS.app.tutorial={step:0};
+  XS.app.tutorial={lesson:i, step:0};
+  return true;
 };
+XS.startTutorial=function(){ XS.loadLesson(0); };
 XS.tutorialStep=function(){ const app=XS.app, sc=app.sc; if(!sc) return 0;
-  if(app.result) return 4;
+  if(sc.tutPassed || app.result) return 4;
   if(app.phase==='survey') return 0;
-  const r=app.zoomRegion;
   if(sc.diagnosed) return 3;
-  if(r && r.evidence.length>=2) return 2;
+  const r=app.zoomRegion; if(r && r.evidence.length>=2) return 2;
   return 1;
 };
 XS.endTutorial=function(){ XS.app.tutorial=null; XS.progress.tutorialSeen=1; XS.saveProgress(); };
 
 XS.enterRegion=function(region){
   const sc=XS.app.sc; if(!sc) return;
+  if(XS.app.tutorial) sc.keyId=region.id;   // in the tutorial, whichever tissue you open is the target
   sc.started=true;                       // the fail-clock starts on the first tissue you open
   const isNew=!region.scanned; region.scanned=true;
   XS.app.zoomRegion=region;
@@ -126,6 +147,7 @@ XS.treatRegion=function(agent){
   if(!XS.canTreat(sc,r)) return {ok:false, blocked:true, msg:'Diagnose the cause first — run assays, then identify it.'};
   const res=XS.applyTreatment(sc, r.id, agent);
   if(res && !res.ok) XS.app.missionWrong++;
+  if(XS.app.tutorial && res && res.ok) sc.tutPassed=true;   // one correct treatment passes the lesson
   if(!XS.progress.subs.includes(agent)){ XS.progress.subs.push(agent); XS.saveProgress(); }
   // neutralise resolves immediately when takedown completes
   if(sc.objective==='neutralize' && sc.P>=100){ sc.done=true; XS.finishMission({win:true}); }
@@ -134,6 +156,7 @@ XS.treatRegion=function(agent){
 
 XS.finishMission=function(res){
   if(XS.app.result) return;
+  if(XS.app.tutorial){ XS.app.result={win:res.win}; return; }   // tutorial doesn't touch real stats
   const sc=XS.app.sc, win=res.win;
   XS.progress.runs++;
   if(win){ XS.progress.wins++;
