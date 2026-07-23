@@ -400,13 +400,30 @@ UI.showCodex=function(){
   const orgz=XS.KLIST.map(k=>{const known=XS.progress.organisms.includes(k);const K=XS.KINGDOMS[k];
     return `<div class="cx ${known?'':'locked'}"><div class="cx-h"><span class="cx-dot" style="color:rgb(${K.col.join(',')});background:${known?`rgb(${K.col.join(',')})`:'#2a3a44'}"></span>${known?K.label:'???'}</div>`+
       (known?`<div class="cx-fn">${K.blurb}</div><div class="cx-fact">${learn((XS.KWIKI||{})[k])}</div>`:'<div class="cx-fn muted">Encounter these cells to unlock.</div>')+`</div>`;}).join('');
-  card(`<div class="sub">Xeno-Codex · ${cx.organelles.length+cx.organisms.length} entries</div>`+
-    `<div class="cx-tabs"><button class="cx-tab sel" data-tab="org">Organelles ${cx.organelles.length}/${cx.totalOrganelles}</button>`+
-    `<button class="cx-tab" data-tab="orgz">Cell types ${cx.organisms.length}/${cx.totalOrganisms}</button></div>`+
-    `<div class="cx-list" id="cxOrg">${org}</div><div class="cx-list" id="cxOrgz" style="display:none">${orgz}</div>`+
+  // field-guide references (always visible)
+  const craftOf={}; Object.entries(XS.CRAFT_RECIPE||{}).forEach(([k,v])=>craftOf[v]=k.split('+'));
+  const bL=id=>{const x=(XS.CRAFT_BASES||[]).find(b=>b.id===id);return x?x.label:id;};
+  const tL=id=>{const x=(XS.CRAFT_TARGETS||[]).find(b=>b.id===id);return x?x.label:id;};
+  const recipeOf=a=>{const pr=craftOf[a];return pr?`${bL(pr[0])} + ${tL(pr[1])}`:null;};
+  const affCol={virus:'#ff5ec7',bacterium:'#9fd0ff',fungus:'#ffd27a',parasite:'#b878ff',prion:'#e6e696',toxin_load:'#b4ff8c'};
+  const aff=Object.keys(XS.PATHOGENS).map(k=>{const P=XS.PATHOGENS[k], rec=recipeOf(P.cure), c=affCol[k]||'#8fe9ff';
+    return `<div class="cx"><div class="cx-h"><span class="cx-dot" style="color:${c};background:${c}"></span>${P.dx}</div>`+
+      `<div class="cx-fn"><b>Spot it:</b> ${P.tell}</div>`+
+      `<div class="cx-fact">💊 Cure: <b>${XS.agentName(P.cure)}</b>${rec?` <span class="muted">· craft: ${rec}</span>`:''}</div>`+
+      `<div class="cx-fn muted">${P.why}</div></div>`;}).join('');
+  const tx=XS.TREATMENTS.map(t=>{const rec=recipeOf(t.id);
+    return `<div class="cx"><div class="cx-h"><span class="cx-dot" style="color:var(--aqua);background:var(--aqua)"></span>${t.label}</div>`+
+      `<div class="cx-fn">${t.desc}</div>`+(rec?`<div class="cx-fact">⚗ Synthesise: <b>${rec}</b></div>`:'')+`</div>`;}).join('');
+  const cmp=(XS.TRAITS||[]).map(tr=>`<div class="cx"><div class="cx-h"><span class="cx-dot" style="color:var(--warn);background:var(--warn)"></span>${tr.tag} · ${tr.label}</div><div class="cx-fn">${tr.hint}</div></div>`).join('');
+  const tabs=[['org',`Organelles ${cx.organelles.length}/${cx.totalOrganelles}`,org],
+    ['orgz',`Cell types ${cx.organisms.length}/${cx.totalOrganisms}`,orgz],
+    ['aff','Afflictions',aff],['tx','Treatments',tx],['cmp','Complications',cmp]];
+  card(`<div class="sub">Xeno-Codex · field guide</div>`+
+    `<div class="cx-tabs">${tabs.map((t,i)=>`<button class="cx-tab ${i===0?'sel':''}" data-tab="${t[0]}">${t[1]}</button>`).join('')}</div>`+
+    tabs.map((t,i)=>`<div class="cx-list" id="cx_${t[0]}"${i===0?'':' style="display:none"'}>${t[2]}</div>`).join('')+
     `<div class="cta"><button class="btn pri" id="cxClose">Close</button></div>`);
   UI.overlay.querySelectorAll('.cx-tab').forEach(b=>b.onclick=()=>{ UI.overlay.querySelectorAll('.cx-tab').forEach(x=>x.classList.remove('sel')); b.classList.add('sel');
-    $('cxOrg').style.display=b.dataset.tab==='org'?'':'none'; $('cxOrgz').style.display=b.dataset.tab==='orgz'?'':'none'; });
+    tabs.forEach(t=>{ const el=$('cx_'+t[0]); if(el) el.style.display = t[0]===b.dataset.tab?'':'none'; }); });
   $('cxClose').onclick=()=>{ UI.hideOverlay(); if(XS.app.phase==='menu')UI.showMenu(); };
 };
 
