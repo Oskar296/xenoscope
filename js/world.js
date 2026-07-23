@@ -369,26 +369,56 @@ XS.buildScenario=function(objective, tier, forceCell){
     evidence:[], clues:{}, tests:{}, diagnosed:false, dxWrong:0, assaysSince:0, recon:false }); });
   const key=pick(regions);
   const nm=pick(A.name)+pick(A.epi);
+  const mode=(XS.app&&XS.app.mode)||'quick', craft=mode==='advanced';
   const sc={ objective, archKey:base.cell, A, morph, planet, name:nm,
     regions, keyId:key.id,
     P:0, host:100, resist:0, cured:false, done:false,
-    tier, sway:Math.random()*Math.PI*2 };
+    tier, mode, craft, sway:Math.random()*Math.PI*2 };
   if(objective==='preserve'){
     const ptype=pick(Object.keys(XS.PATHOGENS));
     sc.pathType=ptype; sc.agent=XS.PATHOGENS[ptype].cure; sc.dxAnswer=XS.PATHOGENS[ptype].dx;
     key.problem={kind:'pathogen', pathType:ptype};
-    sc.brief=`${nm} is failing — something is spreading inside it. Zoom into its tissues, run assays to identify the invader, then apply the one correct cure before the organism dies.`;
-    sc.hostDrain=2.2/(T.margin||1);
+    sc.brief=`${nm} is failing — something is spreading inside it. Zoom into its tissues, run assays to identify the invader, then ${craft?'synthesise the right cure':'apply the one correct cure'} before the organism dies.`;
+    sc.hostDrain=(2.2/(T.margin||1))*(craft?0.3:1);   // Advanced mode: much more time to think & craft
   } else {
     sc.agent=XS.killAgentsFor(A.cell)[0]; sc.dxAnswer=XS.KINGDOM_ANSWER[A.cell];
     key.problem={kind:'vital'};
     sc.brief=`${nm} is an invasive threat. Identify what kind of organism it is, find the tissue it can’t defend, and hit it with the one agent its biology can’t withstand.`;
     sc.hostDrain=0;
   }
-  sc.assayBudget = (tier==='director')?6:null;   // Director: limited reagents — choose your assays
+  sc.assayBudget = (tier==='director' && !craft)?6:null;   // Director quick-mode: limited reagents
   rollTraits(sc, tier);
   return sc;
 };
+
+/* ---------------- ADVANCED MODE · synthesise the cure yourself ----------------
+   You build a treatment from a BASE (what it does) + a TARGET (what it hits).
+   Only the correct pair yields the agent the biology can’t withstand — so you
+   learn the *mechanism* of each cure, not just its name.
+------------------------------------------------------------ */
+XS.CRAFT_BASES=[
+  {id:'disruptor', label:'Structural disruptor', desc:'Breaks down a specific cell structure.'},
+  {id:'osmoticum', label:'Osmotic agent',        desc:'Shifts the water balance across the membrane.'},
+  {id:'binder',    label:'Neutraliser',          desc:'Binds and inactivates a molecule or misfolded protein.'},
+];
+XS.CRAFT_TARGETS=[
+  {id:'pgn',        label:'Peptidoglycan wall',   desc:'the bacterial wall'},
+  {id:'chitin',     label:'Chitin wall',          desc:'the fungal wall'},
+  {id:'genome',     label:'Viral genome',         desc:'blocks viral replication'},
+  {id:'lipid',      label:'Lipid membrane',       desc:'envelopes & ether-lipids'},
+  {id:'euk',        label:'Eukaryote metabolism', desc:'a parasite’s own biochemistry'},
+  {id:'protein',    label:'Misfolded protein',    desc:'unfolds a prion'},
+  {id:'toxin',      label:'Toxin molecule',       desc:'mops up a poison'},
+  {id:'dilute',     label:'Flood with water',     desc:'burst a wall-less cell'},
+  {id:'concentrate',label:'Draw water out',       desc:'plasmolyse a walled cell'},
+];
+XS.CRAFT_RECIPE={
+  'disruptor+pgn':'antibiotic', 'disruptor+chitin':'antifungal', 'disruptor+genome':'antiviral',
+  'disruptor+lipid':'detergent', 'disruptor+euk':'antiparasitic',
+  'binder+protein':'denaturant', 'binder+toxin':'antitoxin',
+  'osmoticum+dilute':'hypotonic', 'osmoticum+concentrate':'hypertonic',
+};
+XS.craftAgent=function(base,target){ return (base&&target)?(XS.CRAFT_RECIPE[base+'+'+target]||null):null; };
 
 /* ---------------- TRAITS / COMPLICATIONS ----------------
    The solution to "running out of content": a small library of biology-driven
@@ -567,7 +597,7 @@ XS.applyTreatment=function(sc, regionId, agent){
 XS.worldTick=function(sc, dt){
   if(sc.done) return null;
   // the clock only runs once the player actually starts investigating a tissue
-  if(sc.started && sc.mutating){ const m=(XS.TIERS[sc.tier]||{}).margin||1; sc.resist=Math.min(100, sc.resist + 0.8*dt/m); }
+  if(sc.started && sc.mutating){ const m=(XS.TIERS[sc.tier]||{}).margin||1; sc.resist=Math.min(100, sc.resist + (sc.craft?0.4:0.8)*dt/m); }
   if(sc.objective==='preserve'){
     if(sc.cured) sc.host=Math.min(100, sc.host + 18*dt);
     else if(sc.started) sc.host=Math.max(0, sc.host - sc.hostDrain*(1-sc.P/100)*dt);

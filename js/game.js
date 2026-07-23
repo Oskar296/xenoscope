@@ -8,9 +8,9 @@
 "use strict";
 const KEY='xenoscope.save.v2';
 
-XS.app={ phase:'menu', tier:'field', time:0, daily:false, toasts:[],
+XS.app={ phase:'menu', tier:'field', mode:'quick', time:0, daily:false, toasts:[],
   sc:null, spec:null, zoomRegion:null, zoomAt:0, zoomPathogen:null,
-  hoverRegion:null, hoverPart:null, scan:null, result:null,
+  hoverRegion:null, hoverPart:null, scan:null, result:null, craft:null,
   lastXP:[], rankUp:null, missionWrong:0, demo:null };
 
 function fresh(){ return { xp:0, organelles:[], organisms:[], subs:[], badges:[], archetypes:[], species:[],
@@ -87,7 +87,7 @@ XS.loadLesson=function(i){ const L=XS.TUT_LESSONS[i]; if(!L) return false;
   sc.regions.forEach(r=>{ r.symbiont=false; r.decoy=false; });
   if(L.obj==='preserve'){ sc.pathType=L.path; sc.agent=XS.PATHOGENS[L.path].cure; sc.dxAnswer=XS.PATHOGENS[L.path].dx; }
   else { sc.agent=XS.killAgentsFor(sc.A.cell)[0]; sc.dxAnswer=XS.KINGDOM_ANSWER[sc.A.cell]; }
-  sc.tutPassed=false;
+  sc.tutPassed=false; sc.craft=false; sc.mode='quick';   // the tutorial always uses simple treatments
   XS.app.sc=sc; XS.app.phase='survey'; XS.app.spec=null; XS.app.zoomRegion=null; XS.app.zoomPathogen=null;
   XS.app.hoverRegion=null; XS.app.hoverPart=null; XS.app.scan=null; XS.app.result=null; XS.app.rankUp=null; XS.app.missionWrong=0; XS.app.daily=false;
   XS.app.tutorial={lesson:i, step:0};
@@ -111,7 +111,7 @@ XS.enterRegion=function(region){
   XS.app.zoomRegion=region;
   XS.app.zoomPathogen=(sc.objective==='preserve'&&region.id===sc.keyId)?sc.pathType:null;
   const spec=XS.regionCell(sc,region); if(!spec.inspected) spec.inspected=new Set();
-  XS.app.spec=spec; XS.app.phase='zoom'; XS.app.zoomAt=XS.app.time; XS.app.scan=null; XS.app.hoverPart=null;
+  XS.app.spec=spec; XS.app.phase='zoom'; XS.app.zoomAt=XS.app.time; XS.app.scan=null; XS.app.hoverPart=null; XS.app.craft={base:null,target:null};
   const kk=region.cell;
   if(!XS.progress.organisms.includes(kk)){ XS.progress.organisms.push(kk); XS.award(8,'Cell type: '+(XS.KINGDOMS[kk]?XS.KINGDOMS[kk].label:kk)); }
   if(isNew){ XS.progress.scans=(XS.progress.scans||0)+1; XS.award(4,'Scanned '+region.name); XS.checkAchievements(); }

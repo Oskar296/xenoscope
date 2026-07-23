@@ -228,7 +228,10 @@ UI.renderDock=function(){
     ? `<div class="dock-group idgroup"><div class="dock-lab">② Diagnose</div><div class="dx-done">✓ ${sc.dxAnswer}</div></div>`
     : `<div class="dock-group idgroup ${active===2?'active':''}"><div class="dock-lab">② Diagnose</div><button class="abtn identify" id="idBtn"><b>⌖ Identify</b><small>${active===2?'ready — name the cause':'gather evidence first'}</small></button></div>`;
   let treatGroup='';
-  if(canTreat){ const opts=XS.treatmentOptions(sc);
+  if(canTreat && sc.craft){                     // ADVANCED · open the synthesis lab
+    treatGroup=`<div class="dsep"></div><div class="dock-group ${active===3?'active':''}"><div class="dock-lab">③ Treat · ${r.name}</div>`+
+      `<button class="abtn synthopen" id="synthOpen"><b>⚗ Synthesise cure</b><small>build it from base + target</small></button></div>`;
+  } else if(canTreat){ const opts=XS.treatmentOptions(sc);
     const tb=id=>{const t=XS.TREATMENTS.find(x=>x.id===id)||{label:id,desc:''};return `<button class="abtn treat" data-a="${id}"><b>${t.label}</b><small>${t.desc.split('.')[0]}</small></button>`;};
     treatGroup=`<div class="dsep"></div><div class="dock-group ${active===3?'active':''}"><div class="dock-lab">③ Treat · ${r.name}</div><div class="btn-row treat-row">${opts.map(tb).join('')}</div></div>`;
   }
@@ -256,6 +259,34 @@ UI.renderDock=function(){
       if(XS.app.result) UI.showResult();
     };
   });
+  const so=$('synthOpen'); if(so) so.onclick=()=>{ sfx('click'); UI.showSynthesis(); };
+};
+
+/* ADVANCED · cure-synthesis lab (modal) */
+UI.showSynthesis=function(){ const sc=XS.app.sc, r=XS.app.zoomRegion; if(!sc||!r) return;
+  const cr=XS.app.craft||(XS.app.craft={base:null,target:null});
+  const render=()=>{ const agent=XS.craftAgent(cr.base,cr.target);
+    const opt=(x,attr,sel)=>`<button class="synthopt ${sel?'sel':''}" ${attr}="${x.id}"><b>${x.label}</b><small>${x.desc}</small></button>`;
+    const bases=XS.CRAFT_BASES.map(x=>opt(x,'data-cb',cr.base===x.id)).join('');
+    const tgts=XS.CRAFT_TARGETS.map(x=>opt(x,'data-ct',cr.target===x.id)).join('');
+    const prev=(cr.base&&cr.target)?(agent?`✔ This formulation yields <b>${XS.agentName(agent)}</b>.`:'✗ Those don’t combine into a usable agent — try another pairing.')
+      :'Pick a base and a target to formulate a treatment.';
+    card(`<div class="sub">Synthesis lab · ${r.name}</div><h2>Develop the cure</h2>`+
+      `<p class="muted">Build a treatment from a <b>base</b> (what it does) + a <b>target</b> (what it hits). Only the pairing that matches your diagnosis will cure it — wrong agents are punished.</p>`+
+      `<div class="synthwrap"><div class="synthcol"><div class="cap">Base — mechanism</div><div class="synthlist">${bases}</div></div>`+
+      `<div class="synthcol"><div class="cap">Target — what it hits</div><div class="synthlist">${tgts}</div></div></div>`+
+      `<div class="synthprev ${agent?'ok':(cr.base&&cr.target?'bad':'')}">${prev}</div>`+
+      `<div class="cta"><button class="btn pri" id="doSynth"${agent?'':' disabled'}>⚗ Synthesise &amp; apply</button><button class="btn" id="synthCancel">Back</button></div>`);
+    UI.overlay.querySelectorAll('[data-cb]').forEach(b=>b.onclick=()=>{ sfx('click'); cr.base=b.dataset.cb; render(); });
+    UI.overlay.querySelectorAll('[data-ct]').forEach(b=>b.onclick=()=>{ sfx('click'); cr.target=b.dataset.ct; render(); });
+    $('synthCancel').onclick=()=>{ UI.hideOverlay(); };
+    const ds=$('doSynth'); if(ds) ds.onclick=()=>{ const ag=XS.craftAgent(cr.base,cr.target); if(!ag) return;
+      const res=XS.treatRegion(ag); UI.hideOverlay(); if(!res) return; sfx(res.ok?'ok':'err');
+      readoutHTML=`<div class="ro-name" style="color:${res.ok?'var(--mint)':'var(--coral)'}">${res.ok?'✓':'✗'} Synthesised <b>${XS.agentName(ag)}</b> — ${res.msg}</div>`;
+      UI.renderLeft(); UI.renderRight(); UI.renderDock(); UI.updateVitals();
+      if(XS.app.result) UI.showResult(); };
+  };
+  render();
 };
 
 /* diagnosis (classify) overlay */
@@ -302,6 +333,10 @@ UI.showMenu=function(){
     `</div>`+
     `<div class="rankcard"><div class="rk-left"><div class="rk-big">${rank.name}</div><div class="muted">${p.xp} XP${next?` · ${next.xp-p.xp} to ${next.name}`:' · max rank'}</div><div class="xpbar"><i style="width:${pct}%"></i></div></div>`+
       `<div class="rk-stats"><span>💚 ${p.saves} saved</span><span>☠️ ${p.kills} neutralised</span><span>🧬 ${cx.organelles.length}/${cx.totalOrganelles} organelles</span></div></div>`+
+    `<div class="muted lbl">MODE</div><div class="tiers">`+
+      `<button class="tierbtn ${XS.app.mode==='quick'?'sel':''}" data-mode="quick"><b>⚡ Quick</b><small>Pick a ready-made treatment. Fast, punchy runs.</small></button>`+
+      `<button class="tierbtn ${XS.app.mode==='advanced'?'sel':''}" data-mode="advanced"><b>⚗ Advanced</b><small>Much more time — and you <b>synthesise the cure yourself</b> from a base + a target.</small></button>`+
+    `</div>`+
     `<div class="muted lbl">DIFFICULTY</div><div class="tiers">${tiers}</div>`+
     `<div class="cta"><button class="btn pri" id="startBtn">▶ Receive Assignment</button>`+
       `<button class="btn ${!p.tutorialSeen?'pulse':''}" id="tutBtn">🎓 Tutorial</button>`+
@@ -313,7 +348,8 @@ UI.showMenu=function(){
       `<button class="chipbtn ${XS.sfx&&XS.sfx.ambient?'on':''}" id="ambBtn">Ambient</button>`+
       (p.xp>0?`<button class="chipbtn" id="resetBtn">Reset</button>`:'')+`</div>`
   );
-  UI.overlay.querySelectorAll('.tierbtn').forEach(b=>b.onclick=()=>{sfx('click');XS.app.tier=b.dataset.tier;UI.overlay.querySelectorAll('.tierbtn').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');});
+  UI.overlay.querySelectorAll('[data-tier]').forEach(b=>b.onclick=()=>{sfx('click');XS.app.tier=b.dataset.tier;UI.overlay.querySelectorAll('[data-tier]').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');});
+  UI.overlay.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{sfx('click');XS.app.mode=b.dataset.mode;UI.overlay.querySelectorAll('[data-mode]').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');});
   $('startBtn').onclick=()=>{ sfx('click'); UI.hideOverlay(); XS.startMission(null,XS.app.tier); UI.renderPhase(); };
   $('tutBtn').onclick=()=>{ sfx('click'); UI.hideOverlay(); UI.startTutorial(); };
   $('dailyBtn').onclick=()=>{ sfx('click'); UI.hideOverlay(); XS.startDaily(); UI.renderPhase(); };

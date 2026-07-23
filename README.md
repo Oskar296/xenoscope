@@ -65,6 +65,7 @@ Or just open `index.html` (some browsers disable saved progress on `file://`).
 - **8 complications** that recombine onto any specimen — drug‑resistant, biofilm
   shield, mutualistic symbiont, virulent, extreme habitat, **co‑infection** (two
   cures), **necrotic decoy** (a false target) and **rapidly‑mutating**.
+- **Two modes** — ⚡ **Quick** (pick a ready-made treatment; fast, punchy runs) and ⚗ **Advanced** (much more time, and you **synthesise the cure yourself** from a *base* (mechanism) + a *target* — so you learn how each drug actually works).
 - **Difficulty tiers** (Intern / Field / Director). Field & Director require a correct
   diagnosis and punish wrong calls; **Director adds up to two complications and a
   limited assay budget**, so you must choose which tests to spend.
