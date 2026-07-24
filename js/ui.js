@@ -272,9 +272,9 @@ UI.showSynthesis=function(){ const sc=XS.app.sc, r=XS.app.zoomRegion; if(!sc||!r
     const prev=(cr.base&&cr.target)?(agent?`✔ This formulation yields <b>${XS.agentName(agent)}</b>.`:'✗ Those don’t combine into a usable agent — try another pairing.')
       :'Pick a base and a target to formulate a treatment.';
     card(`<div class="sub">Synthesis lab · ${r.name}</div><h2>Develop the cure</h2>`+
-      `<p class="muted">Build a treatment from a <b>base</b> (what it does) + a <b>target</b> (what it hits). Only the pairing that matches your diagnosis will cure it — wrong agents are punished.</p>`+
-      `<div class="synthwrap"><div class="synthcol"><div class="cap">Base — mechanism</div><div class="synthlist">${bases}</div></div>`+
-      `<div class="synthcol"><div class="cap">Target — what it hits</div><div class="synthlist">${tgts}</div></div></div>`+
+      `<p class="muted">Formulate a treatment from an <b>active compound</b> (the mechanism) + a <b>targeting vector</b> (the structure it hits). Many compounds and vectors are on the bench — only a pairing that matches your diagnosis yields a working agent, and wrong agents are punished.</p>`+
+      `<div class="synthwrap"><div class="synthcol"><div class="cap">Active compound — mechanism</div><div class="synthlist">${bases}</div></div>`+
+      `<div class="synthcol"><div class="cap">Targeting vector — what it hits</div><div class="synthlist">${tgts}</div></div></div>`+
       `<div class="synthprev ${agent?'ok':(cr.base&&cr.target?'bad':'')}">${prev}</div>`+
       `<div class="cta"><button class="btn pri" id="doSynth"${agent?'':' disabled'}>⚗ Synthesise &amp; apply</button><button class="btn" id="synthCancel">Back</button></div>`);
     UI.overlay.querySelectorAll('[data-cb]').forEach(b=>b.onclick=()=>{ sfx('click'); cr.base=b.dataset.cb; render(); });
@@ -401,10 +401,10 @@ UI.showCodex=function(){
     return `<div class="cx ${known?'':'locked'}"><div class="cx-h"><span class="cx-dot" style="color:rgb(${K.col.join(',')});background:${known?`rgb(${K.col.join(',')})`:'#2a3a44'}"></span>${known?K.label:'???'}</div>`+
       (known?`<div class="cx-fn">${K.blurb}</div><div class="cx-fact">${learn((XS.KWIKI||{})[k])}</div>`:'<div class="cx-fn muted">Encounter these cells to unlock.</div>')+`</div>`;}).join('');
   // field-guide references (always visible)
-  const craftOf={}; Object.entries(XS.CRAFT_RECIPE||{}).forEach(([k,v])=>craftOf[v]=k.split('+'));
+  const craftOf={}; Object.entries(XS.CRAFT_RECIPE||{}).forEach(([k,v])=>{(craftOf[v]||(craftOf[v]=[])).push(k.split('+'));});
   const bL=id=>{const x=(XS.CRAFT_BASES||[]).find(b=>b.id===id);return x?x.label:id;};
   const tL=id=>{const x=(XS.CRAFT_TARGETS||[]).find(b=>b.id===id);return x?x.label:id;};
-  const recipeOf=a=>{const pr=craftOf[a];return pr?`${bL(pr[0])} + ${tL(pr[1])}`:null;};
+  const recipeOf=a=>{const rs=craftOf[a];return (rs&&rs.length)?rs.map(pr=>`${bL(pr[0])} + ${tL(pr[1])}`).join(' &nbsp;·&nbsp; '):null;};
   const affCol={virus:'#ff5ec7',bacterium:'#9fd0ff',fungus:'#ffd27a',parasite:'#b878ff',prion:'#e6e696',toxin_load:'#b4ff8c'};
   const aff=Object.keys(XS.PATHOGENS).map(k=>{const P=XS.PATHOGENS[k], rec=recipeOf(P.cure), c=affCol[k]||'#8fe9ff';
     return `<div class="cx"><div class="cx-h"><span class="cx-dot" style="color:${c};background:${c}"></span>${P.dx}</div>`+

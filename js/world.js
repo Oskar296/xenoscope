@@ -396,27 +396,52 @@ XS.buildScenario=function(objective, tier, forceCell){
    Only the correct pair yields the agent the biology can’t withstand — so you
    learn the *mechanism* of each cure, not just its name.
 ------------------------------------------------------------ */
+/* ACTIVE COMPOUNDS — a shelf of real drug-class reagents (the mechanism). */
 XS.CRAFT_BASES=[
-  {id:'disruptor', label:'Structural disruptor', desc:'Breaks down a specific cell structure.'},
-  {id:'osmoticum', label:'Osmotic agent',        desc:'Shifts the water balance across the membrane.'},
-  {id:'binder',    label:'Neutraliser',          desc:'Binds and inactivates a molecule or misfolded protein.'},
+  {id:'betalactam',    label:'β-lactam',        desc:'Penicillin-class — blocks cell-wall building.'},
+  {id:'glycopeptide',  label:'Glycopeptide',    desc:'Vancomycin-class — binds wall precursors.'},
+  {id:'aminoglycoside',label:'Aminoglycoside',  desc:'Jams the bacterial 70S ribosome.'},
+  {id:'lysozyme_enz',  label:'Lysozyme enzyme', desc:'Enzymatically cracks a peptidoglycan wall.'},
+  {id:'azole',         label:'Azole',           desc:'Blocks ergosterol — the fungal membrane sterol.'},
+  {id:'polyene',       label:'Polyene',         desc:'Amphotericin-class — punches the fungal membrane.'},
+  {id:'echinocandin',  label:'Echinocandin',    desc:'Blocks fungal wall (chitin / β-glucan) synthesis.'},
+  {id:'nucleoside',    label:'Nucleoside analogue',desc:'Chain-terminates genome copying.'},
+  {id:'protease_inh',  label:'Protease inhibitor',desc:'Blocks viral protein maturation.'},
+  {id:'antiparasitic_c',label:'Antiparasitic core',desc:'Disrupts a eukaryotic parasite’s metabolism.'},
+  {id:'surfactant',    label:'Surfactant / soap',desc:'Dissolves any lipid membrane or envelope.'},
+  {id:'chaotrope',     label:'Chaotrope (urea)',desc:'Unfolds proteins.'},
+  {id:'heat',          label:'Denaturing heat', desc:'Melts protein structure apart.'},
+  {id:'antibody',      label:'Antibody',        desc:'Binds and neutralises a specific molecule.'},
+  {id:'chelator',      label:'Chelator',        desc:'Sequesters a toxin or metal ion.'},
+  {id:'hypertonic_sol',label:'Concentrated solute',desc:'Osmotically draws water OUT of cells.'},
+  {id:'hypotonic_sol', label:'Pure solvent',    desc:'Osmotically floods water IN.'},
 ];
+/* TARGETING VECTORS — what the compound is aimed at. */
 XS.CRAFT_TARGETS=[
-  {id:'pgn',        label:'Peptidoglycan wall',   desc:'the bacterial wall'},
-  {id:'chitin',     label:'Chitin wall',          desc:'the fungal wall'},
-  {id:'genome',     label:'Viral genome',         desc:'blocks viral replication'},
-  {id:'lipid',      label:'Lipid membrane',       desc:'envelopes & ether-lipids'},
-  {id:'euk',        label:'Eukaryote metabolism', desc:'a parasite’s own biochemistry'},
-  {id:'protein',    label:'Misfolded protein',    desc:'unfolds a prion'},
-  {id:'toxin',      label:'Toxin molecule',       desc:'mops up a poison'},
-  {id:'dilute',     label:'Flood with water',     desc:'burst a wall-less cell'},
-  {id:'concentrate',label:'Draw water out',       desc:'plasmolyse a walled cell'},
+  {id:'pgn',        label:'Peptidoglycan wall',  desc:'the bacterial wall'},
+  {id:'ribosome70', label:'70S ribosome',        desc:'the bacterial ribosome'},
+  {id:'ergosterol', label:'Ergosterol membrane', desc:'the fungal membrane'},
+  {id:'chitin',     label:'Chitin wall',         desc:'the fungal wall'},
+  {id:'genome',     label:'Viral genome',        desc:'the replicating genome'},
+  {id:'capsid',     label:'Viral proteins',      desc:'capsid / maturation'},
+  {id:'euk',        label:'Parasite metabolism', desc:'eukaryotic biochemistry'},
+  {id:'lipid',      label:'Lipid membrane',      desc:'envelope / ether-lipids'},
+  {id:'protein',    label:'Misfolded protein',   desc:'a prion aggregate'},
+  {id:'toxin',      label:'Toxin molecule',      desc:'the free poison'},
+  {id:'osmo_in',    label:'Flood water in',      desc:'burst a wall-less cell'},
+  {id:'osmo_out',   label:'Draw water out',      desc:'plasmolyse a walled cell'},
 ];
+/* Many recipes → many drug classes; several valid cures per pathogen. */
 XS.CRAFT_RECIPE={
-  'disruptor+pgn':'antibiotic', 'disruptor+chitin':'antifungal', 'disruptor+genome':'antiviral',
-  'disruptor+lipid':'detergent', 'disruptor+euk':'antiparasitic',
-  'binder+protein':'denaturant', 'binder+toxin':'antitoxin',
-  'osmoticum+dilute':'hypotonic', 'osmoticum+concentrate':'hypertonic',
+  'betalactam+pgn':'antibiotic', 'glycopeptide+pgn':'antibiotic', 'aminoglycoside+ribosome70':'antibiotic',
+  'lysozyme_enz+pgn':'lysozyme',
+  'azole+ergosterol':'antifungal', 'polyene+ergosterol':'antifungal', 'echinocandin+chitin':'antifungal',
+  'nucleoside+genome':'antiviral', 'protease_inh+capsid':'antiviral',
+  'antiparasitic_c+euk':'antiparasitic',
+  'surfactant+lipid':'detergent',
+  'chaotrope+protein':'denaturant', 'heat+protein':'denaturant',
+  'antibody+toxin':'antitoxin', 'chelator+toxin':'antitoxin',
+  'hypotonic_sol+osmo_in':'hypotonic', 'hypertonic_sol+osmo_out':'hypertonic',
 };
 XS.craftAgent=function(base,target){ return (base&&target)?(XS.CRAFT_RECIPE[base+'+'+target]||null):null; };
 

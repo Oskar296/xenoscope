@@ -65,7 +65,7 @@ Or just open `index.html` (some browsers disable saved progress on `file://`).
 - **8 complications** that recombine onto any specimen — drug‑resistant, biofilm
   shield, mutualistic symbiont, virulent, extreme habitat, **co‑infection** (two
   cures), **necrotic decoy** (a false target) and **rapidly‑mutating**.
-- **Two modes** — ⚡ **Quick** (pick a ready-made treatment; fast, punchy runs) and ⚗ **Advanced** (much more time, and you **synthesise the cure yourself** from a *base* (mechanism) + a *target* — so you learn how each drug actually works).
+- **Two modes** — ⚡ **Quick** (pick a ready-made treatment; fast, punchy runs) and ⚗ **Advanced** (much more time, and you **synthesise the cure yourself** on a bench of **17 active compounds** — β-lactams, glycopeptides, aminoglycosides, azoles, polyenes, echinocandins, nucleoside analogues, protease inhibitors, surfactants, chaotropes, chelators, antibodies… — paired with **12 targeting vectors** (peptidoglycan wall, 70S ribosome, ergosterol membrane, viral genome/capsid, prion aggregate, toxin molecule…). Most cures have **several real drug-class routes** (e.g. an antibiotic via a β-lactam→wall, a glycopeptide→wall precursor, *or* an aminoglycoside→ribosome), so you learn how each drug actually works — not just its name.
 - **Difficulty tiers** (Intern / Field / Director). Field & Director require a correct
   diagnosis and punish wrong calls; **Director adds up to two complications and a
   limited assay budget**, so you must choose which tests to spend.
