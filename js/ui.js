@@ -230,7 +230,7 @@ UI.renderDock=function(){
   let treatGroup='';
   if(canTreat && sc.craft){                     // ADVANCED · open the synthesis lab
     treatGroup=`<div class="dsep"></div><div class="dock-group ${active===3?'active':''}"><div class="dock-lab">③ Treat · ${r.name}</div>`+
-      `<button class="abtn synthopen" id="synthOpen"><b>⚗ Synthesise cure</b><small>build it from base + target</small></button></div>`;
+      `<button class="abtn synthopen" id="synthOpen"><b>⚗ Open the bench</b><small>make the cure from raw materials</small></button></div>`;
   } else if(canTreat){ const opts=XS.treatmentOptions(sc);
     const tb=id=>{const t=XS.TREATMENTS.find(x=>x.id===id)||{label:id,desc:''};return `<button class="abtn treat" data-a="${id}"><b>${t.label}</b><small>${t.desc.split('.')[0]}</small></button>`;};
     treatGroup=`<div class="dsep"></div><div class="dock-group ${active===3?'active':''}"><div class="dock-lab">③ Treat · ${r.name}</div><div class="btn-row treat-row">${opts.map(tb).join('')}</div></div>`;
@@ -262,31 +262,167 @@ UI.renderDock=function(){
   const so=$('synthOpen'); if(so) so.onclick=()=>{ sfx('click'); UI.showSynthesis(); };
 };
 
-/* ADVANCED · cure-synthesis lab (modal) */
+/* ADVANCED · the synthesis bench — MAKE a cure from raw materials (modal) */
+function hexRGB(h){ h=h.replace('#',''); if(h.length===3) h=h.split('').map(c=>c+c).join('');
+  return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)]; }
+function blendCols(cols){ if(!cols.length) return [70,120,120];
+  const s=cols.reduce((a,c)=>{const r=hexRGB(c);return [a[0]+r[0],a[1]+r[1],a[2]+r[2]];},[0,0,0]);
+  return s.map(v=>Math.round(v/cols.length)); }
+/* would this made agent actually work on the diagnosed target? (preview only) */
+function benchEffective(agent){ const sc=XS.app.sc, r=XS.app.zoomRegion; if(!sc||!r||!agent) return false;
+  if(sc.objective==='neutralize') return XS.killAgentsFor(r.cell).includes(agent);
+  if(sc.cures) return sc.cures.includes(agent);
+  return agent===sc.agent; }
+
 UI.showSynthesis=function(){ const sc=XS.app.sc, r=XS.app.zoomRegion; if(!sc||!r) return;
-  const cr=XS.app.craft||(XS.app.craft={base:null,target:null});
-  const render=()=>{ const agent=XS.craftAgent(cr.base,cr.target);
-    const opt=(x,attr,sel)=>`<button class="synthopt ${sel?'sel':''}" ${attr}="${x.id}"><b>${x.label}</b><small>${x.desc}</small></button>`;
-    const bases=XS.CRAFT_BASES.map(x=>opt(x,'data-cb',cr.base===x.id)).join('');
-    const tgts=XS.CRAFT_TARGETS.map(x=>opt(x,'data-ct',cr.target===x.id)).join('');
-    const prev=(cr.base&&cr.target)?(agent?`✔ This formulation yields <b>${XS.agentName(agent)}</b>.`:'✗ Those don’t combine into a usable agent — try another pairing.')
-      :'Pick a base and a target to formulate a treatment.';
-    card(`<div class="sub">Synthesis lab · ${r.name}</div><h2>Develop the cure</h2>`+
-      `<p class="muted">Formulate a treatment from an <b>active compound</b> (the mechanism) + a <b>targeting vector</b> (the structure it hits). Many compounds and vectors are on the bench — only a pairing that matches your diagnosis yields a working agent, and wrong agents are punished.</p>`+
-      `<div class="synthwrap"><div class="synthcol"><div class="cap">Active compound — mechanism</div><div class="synthlist">${bases}</div></div>`+
-      `<div class="synthcol"><div class="cap">Targeting vector — what it hits</div><div class="synthlist">${tgts}</div></div></div>`+
-      `<div class="synthprev ${agent?'ok':(cr.base&&cr.target?'bad':'')}">${prev}</div>`+
-      `<div class="cta"><button class="btn pri" id="doSynth"${agent?'':' disabled'}>⚗ Synthesise &amp; apply</button><button class="btn" id="synthCancel">Back</button></div>`);
-    UI.overlay.querySelectorAll('[data-cb]').forEach(b=>b.onclick=()=>{ sfx('click'); cr.base=b.dataset.cb; render(); });
-    UI.overlay.querySelectorAll('[data-ct]').forEach(b=>b.onclick=()=>{ sfx('click'); cr.target=b.dataset.ct; render(); });
-    $('synthCancel').onclick=()=>{ UI.hideOverlay(); };
-    const ds=$('doSynth'); if(ds) ds.onclick=()=>{ const ag=XS.craftAgent(cr.base,cr.target); if(!ag) return;
-      const res=XS.treatRegion(ag); UI.hideOverlay(); if(!res) return; sfx(res.ok?'ok':'err');
-      readoutHTML=`<div class="ro-name" style="color:${res.ok?'var(--mint)':'var(--coral)'}">${res.ok?'✓':'✗'} Synthesised <b>${XS.agentName(ag)}</b> — ${res.msg}</div>`;
-      UI.renderLeft(); UI.renderRight(); UI.renderDock(); UI.updateVitals();
-      if(XS.app.result) UI.showResult(); };
+  let cr=XS.app.craft; if(!cr||!('items'in cr)) cr=XS.app.craft={items:[],step:null,made:null,tested:null};
+  cr.items=cr.items||[]; cr.made=null; cr.tested=null;
+  const dxLine = sc.objective==='neutralize'
+    ? `Target organism: <b>${sc.dxAnswer}</b> — make something its biology cannot withstand.`
+    : `Diagnosis: <b>${sc.dxAnswer}</b> — make the cure that destroys it, and nothing else.`;
+  const ingTiles = XS.INGREDIENTS.map(x=>
+    `<button class="ingt" data-ing="${x.id}"><span class="ingsw" style="background:${x.col}"></span>`+
+    `<span class="ingglyph">${x.glyph}</span><span class="ingtx"><b>${x.label}</b></span></button>`).join('');
+  const stepTiles = XS.LAB_STEPS.map(s=>
+    `<button class="stept" data-step="${s.id}"><span class="stepglyph">${s.glyph}</span>`+
+    `<span class="steptx"><b>${s.label}</b><small>${s.desc}</small></span></button>`).join('');
+
+  card(`<div class="sub">Synthesis bench · ${r.name}</div><h2>Develop a cure</h2>`+
+    `<div class="bench-dx">${dxLine}</div>`+
+    `<div class="benchwrap">`+
+      `<div class="bench-col shelf"><div class="cap">① Raw material — tap to add</div><div class="ing-grid">${ingTiles}</div></div>`+
+      `<div class="bench-col flaskcol"><canvas id="benchCv" width="240" height="272"></canvas>`+
+        `<div class="flask-label" id="flaskLabel">Empty flask</div></div>`+
+      `<div class="bench-col stepcol"><div class="cap">② Prepare it</div><div class="step-grid">${stepTiles}</div>`+
+        `<div class="bench-read" id="benchRead">Pick a raw material to begin.</div></div>`+
+    `</div>`+
+    `<div class="bench-test" id="benchTest" style="display:none"><canvas id="sampleCv" width="300" height="86"></canvas><div class="bench-testtx" id="benchTestTx"></div></div>`+
+    `<div class="cta bench-cta"><button class="btn ghost" id="benchEmpty">🗑 Empty</button>`+
+      `<button class="btn" id="benchTestBtn" disabled>🧪 Test on a sample</button>`+
+      `<button class="btn pri" id="benchAdmin" disabled>💉 Administer</button>`+
+      `<button class="btn" id="benchCancel">Back</button></div>`);
+  const cardEl=UI.overlay.querySelector('.card'); if(cardEl) cardEl.classList.add('bench-card');
+
+  const st={fill:0, target:0, rgb:[70,120,120], glow:0, flash:0};
+  const cv=$('benchCv'), ctx=cv.getContext('2d');
+  const scv=$('sampleCv'), sctx=scv?scv.getContext('2d'):null;
+  let sample=null;                                     // {parts, t0, eff}
+  UI._benchLoop=(UI._benchLoop||0)+1; const myLoop=UI._benchLoop;
+
+  const refresh=()=>{
+    UI.overlay.querySelectorAll('[data-ing]').forEach(b=>b.classList.toggle('sel',cr.items.includes(b.dataset.ing)));
+    UI.overlay.querySelectorAll('[data-step]').forEach(b=>b.classList.toggle('sel',cr.step===b.dataset.step));
+    const made=XS.benchResult(cr.items,cr.step); cr.made=made;
+    const cols=cr.items.map(id=>{const x=XS.INGREDIENTS.find(i=>i.id===id);return x?x.col:'#888';});
+    st.target = cr.items.length?Math.min(1,0.28+cr.items.length*0.22):0;
+    st.rgb = blendCols(cols);
+    const lbl=$('flaskLabel'); const read=$('benchRead');
+    if(made){ lbl.textContent='✓ '+made.name; lbl.className='flask-label ok'; }
+    else if(cr.items.length){ lbl.textContent=cr.items.map(id=>XS.INGREDIENTS.find(i=>i.id===id).label).join(' + '); lbl.className='flask-label'; }
+    else { lbl.textContent='Empty flask'; lbl.className='flask-label muted'; }
+    if(!cr.items.length) read.innerHTML='Pick a raw material to begin.';
+    else if(!cr.step) read.innerHTML='Now choose how to <b>prepare</b> it.';
+    else if(made){ const an=XS.agentName(made.agent).toLowerCase(), art=/^[aeiou]/.test(an)?'an':'a';
+      read.innerHTML=`✔ You made <b>${made.name}</b> — ${art} <b>${an}</b>.<div class="muted">${made.source}</div>`; }
+    else read.innerHTML='✗ Nothing usable forms this way. Try a different material or a different method.';
+    read.className='bench-read '+(made?'ok':(cr.items.length&&cr.step?'bad':''));
+    $('benchTestBtn').disabled=!made; $('benchAdmin').disabled=!made;
+    if(made) st.glow=1;
   };
-  render();
+
+  UI.overlay.querySelectorAll('[data-ing]').forEach(b=>b.onclick=()=>{ const id=b.dataset.ing;
+    if(cr.items.includes(id)) cr.items=cr.items.filter(x=>x!==id);
+    else if(cr.items.length<3) cr.items.push(id); else return;
+    sfx('click'); const x=XS.INGREDIENTS.find(i=>i.id===id);
+    $('benchTest').style.display='none'; sample=null; refresh();
+    const read=$('benchRead'); if(cr.items.includes(id)&&x) read.innerHTML=`<b>${x.label}.</b> ${x.note}`; });
+  UI.overlay.querySelectorAll('[data-step]').forEach(b=>b.onclick=()=>{ cr.step=(cr.step===b.dataset.step)?null:b.dataset.step;
+    sfx('blip'); st.flash=1; $('benchTest').style.display='none'; sample=null; refresh(); });
+
+  $('benchEmpty').onclick=()=>{ sfx('click'); cr.items=[]; cr.step=null; $('benchTest').style.display='none'; sample=null; refresh(); };
+  $('benchCancel').onclick=()=>{ UI.hideOverlay(); };
+  $('benchTestBtn').onclick=()=>{ if(!cr.made) return; const eff=benchEffective(cr.made.agent);
+    sfx(eff?'ok':'err'); const tp=$('benchTest'); tp.style.display=''; const tx=$('benchTestTx');
+    const nm=sc.objective==='neutralize'?sc.dxAnswer.toLowerCase():(XS.PATHOGENS[sc.pathType]?XS.PATHOGENS[sc.pathType].dx.toLowerCase():'invader');
+    tx.innerHTML=eff
+      ? `<b class="ok">✓ Effective.</b> On the cultured sample the ${nm} cells rupture and clear. This should work — administer it.`
+      : `<b class="bad">✗ No effect.</b> The sample shrugs it off. <b>${cr.made.name}</b> is the wrong weapon here — rework the flask.`;
+    // spawn sample particles for the little dish animation
+    const parts=[]; for(let i=0;i<14;i++) parts.push({x:40+Math.random()*220,y:14+Math.random()*58,r:5+Math.random()*4,ph:Math.random()*6});
+    sample={parts, t0:performance.now(), eff}; };
+  $('benchAdmin').onclick=()=>{ const made=cr.made; if(!made) return;
+    let res=XS.treatRegion(made.agent);
+    // a cure you synthesised yourself is administered as a full course — if it's
+    // landing (and this isn't a co-infection, which needs a second, DIFFERENT
+    // cure), finish the dosing so one correct build treats the patient
+    if(res && res.ok && !sc.cures && !sc.cured){ let g=0; while(sc.P<100 && res.ok && g++<8){ const nx=XS.treatRegion(made.agent); if(!nx) break; res=nx; } }
+    UI.hideOverlay(); if(!res) return; sfx(res.ok?'ok':'err');
+    readoutHTML=`<div class="ro-name" style="color:${res.ok?'var(--mint)':'var(--coral)'}">${res.ok?'✓':'✗'} Administered <b>${made.name}</b> — ${res.msg}</div>`;
+    UI.renderLeft(); UI.renderRight(); UI.renderDock(); UI.updateVitals();
+    if(XS.app.result) UI.showResult(); };
+
+  /* ---- flask + sample animation loop ---- */
+  function drawFlask(now){
+    const W=cv.width, H=cv.height; ctx.clearRect(0,0,W,H);
+    st.fill += (st.target-st.fill)*0.12; st.glow += ((cr.made?1:0)-st.glow)*0.15; st.flash*=0.9;
+    const nx1=103,nx2=137,ny=26, bx1=34,bx2=206,by=250, sh=84;
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(nx1,ny); ctx.lineTo(nx1,sh); ctx.lineTo(bx1,by); ctx.lineTo(bx2,by); ctx.lineTo(nx2,sh); ctx.lineTo(nx2,ny);
+    ctx.closePath();
+    // glass
+    ctx.save(); ctx.clip();
+    const level = by - st.fill*(by-100);
+    if(st.fill>0.01){
+      const [r,g,b]=st.rgb;
+      const grad=ctx.createLinearGradient(0,level,0,by);
+      grad.addColorStop(0,`rgba(${r},${g},${b},0.92)`); grad.addColorStop(1,`rgba(${Math.round(r*0.7)},${Math.round(g*0.7)},${Math.round(b*0.7)},0.98)`);
+      ctx.fillStyle=grad; ctx.fillRect(0,level,W,by-level);
+      // surface shimmer
+      ctx.fillStyle=`rgba(255,255,255,0.18)`; ctx.beginPath();
+      ctx.ellipse(120,level+Math.sin(now/500)*1.5,72,6,0,0,Math.PI*2); ctx.fill();
+      // bubbles while heating / fermenting
+      if(cr.made && (cr.step==='boil'||cr.step==='ferment')){
+        ctx.fillStyle='rgba(255,255,255,0.5)';
+        for(let i=0;i<7;i++){ const p=((now/900)+i/7)%1; const bx=70+((i*53)%110); const byb=by-p*(by-level-8);
+          ctx.beginPath(); ctx.arc(bx, byb, 2+ (i%3), 0, Math.PI*2); ctx.fill(); }
+      }
+    }
+    ctx.restore();
+    // glass outline + highlight
+    ctx.lineWidth=3.5; ctx.strokeStyle='rgba(200,236,245,0.9)'; ctx.stroke();
+    ctx.lineWidth=1.5; ctx.strokeStyle='rgba(255,255,255,0.28)';                 // left-edge sheen
+    ctx.beginPath(); ctx.moveTo(nx1+2,ny+4); ctx.lineTo(nx1+2,sh); ctx.lineTo(bx1+6,by-4); ctx.stroke();
+    ctx.lineWidth=4; ctx.strokeStyle='rgba(210,240,248,0.95)';
+    ctx.beginPath(); ctx.moveTo(nx1-9,ny); ctx.lineTo(nx2+9,ny); ctx.stroke();   // lip
+    if(st.glow>0.02){ ctx.save(); ctx.globalAlpha=st.glow*0.9; ctx.shadowColor='#5ff0c0'; ctx.shadowBlur=26;
+      ctx.lineWidth=3; ctx.strokeStyle='rgba(95,240,192,0.9)'; ctx.stroke(); ctx.restore(); }
+    if(st.flash>0.02){ ctx.save(); ctx.globalAlpha=st.flash*0.6; ctx.fillStyle='#fff';
+      ctx.fillRect(0,0,W,H); ctx.restore(); }
+    ctx.restore();
+  }
+  function drawSample(now){ if(!sctx||!sample) return; const W=scv.width,H=scv.height; sctx.clearRect(0,0,W,H);
+    // culture dish
+    sctx.fillStyle='rgba(10,20,26,0.6)'; sctx.strokeStyle='rgba(120,160,175,0.5)'; sctx.lineWidth=2;
+    sctx.beginPath(); sctx.roundRect(4,4,W-8,H-8,10); sctx.fill(); sctx.stroke();
+    const el=Math.min(1,(now-sample.t0)/1800);
+    sample.parts.forEach(p=>{
+      let r=p.r, a=1, x=p.x, y=p.y;
+      if(sample.eff){ r=p.r*Math.max(0,1-el*1.1); a=Math.max(0,1-el); }        // dying: shrink + fade out
+      else { x+=Math.sin(now/120+p.ph)*2.2; y+=Math.cos(now/140+p.ph)*2.2; }   // resisting: alive, jittering
+      if(r<=0.3) return;
+      sctx.fillStyle = sample.eff?`rgba(255,110,110,${a})`:'rgba(255,110,110,0.95)';
+      sctx.beginPath(); sctx.arc(x,y,r,0,Math.PI*2); sctx.fill();
+      sctx.fillStyle = sample.eff?`rgba(255,190,190,${a*0.7})`:'rgba(255,190,190,0.7)';   // nucleus dot
+      sctx.beginPath(); sctx.arc(x-r*0.3,y-r*0.3,r*0.35,0,Math.PI*2); sctx.fill();
+    });
+    if(sample.eff && el>0.25){ sctx.fillStyle=`rgba(120,230,170,${Math.min(0.9,(el-0.25))})`;   // "cleared" tick
+      sctx.font='600 13px system-ui'; sctx.fillText('✓ cleared', W-78, H-14); }
+  }
+  function frame(now){ if(myLoop!==UI._benchLoop || !document.getElementById('benchCv')) return;
+    drawFlask(now); drawSample(now); requestAnimationFrame(frame); }
+  requestAnimationFrame(frame);
+  refresh();
 };
 
 /* diagnosis (classify) overlay */
@@ -401,19 +537,19 @@ UI.showCodex=function(){
     return `<div class="cx ${known?'':'locked'}"><div class="cx-h"><span class="cx-dot" style="color:rgb(${K.col.join(',')});background:${known?`rgb(${K.col.join(',')})`:'#2a3a44'}"></span>${known?K.label:'???'}</div>`+
       (known?`<div class="cx-fn">${K.blurb}</div><div class="cx-fact">${learn((XS.KWIKI||{})[k])}</div>`:'<div class="cx-fn muted">Encounter these cells to unlock.</div>')+`</div>`;}).join('');
   // field-guide references (always visible)
-  const craftOf={}; Object.entries(XS.CRAFT_RECIPE||{}).forEach(([k,v])=>{(craftOf[v]||(craftOf[v]=[])).push(k.split('+'));});
-  const bL=id=>{const x=(XS.CRAFT_BASES||[]).find(b=>b.id===id);return x?x.label:id;};
-  const tL=id=>{const x=(XS.CRAFT_TARGETS||[]).find(b=>b.id===id);return x?x.label:id;};
-  const recipeOf=a=>{const rs=craftOf[a];return (rs&&rs.length)?rs.map(pr=>`${bL(pr[0])} + ${tL(pr[1])}`).join(' &nbsp;·&nbsp; '):null;};
+  const ingL=id=>{const x=(XS.INGREDIENTS||[]).find(b=>b.id===id);return x?x.label:id;};
+  const stepL=id=>{const x=(XS.LAB_STEPS||[]).find(b=>b.id===id);return x?x.label.toLowerCase():id;};
+  const recipeOf=a=>{const rs=(XS.recipesFor?XS.recipesFor(a):[])||[];
+    return rs.length?rs.map(f=>`${f.items.map(ingL).join(' + ')} → ${stepL(f.step)}`).join(' &nbsp;·&nbsp; '):null;};
   const affCol={virus:'#ff5ec7',bacterium:'#9fd0ff',fungus:'#ffd27a',parasite:'#b878ff',prion:'#e6e696',toxin_load:'#b4ff8c'};
   const aff=Object.keys(XS.PATHOGENS).map(k=>{const P=XS.PATHOGENS[k], rec=recipeOf(P.cure), c=affCol[k]||'#8fe9ff';
     return `<div class="cx"><div class="cx-h"><span class="cx-dot" style="color:${c};background:${c}"></span>${P.dx}</div>`+
       `<div class="cx-fn"><b>Spot it:</b> ${P.tell}</div>`+
-      `<div class="cx-fact">💊 Cure: <b>${XS.agentName(P.cure)}</b>${rec?` <span class="muted">· craft: ${rec}</span>`:''}</div>`+
+      `<div class="cx-fact">💊 Cure: <b>${XS.agentName(P.cure)}</b>${rec?` <span class="muted">· make it: ${rec}</span>`:''}</div>`+
       `<div class="cx-fn muted">${P.why}</div></div>`;}).join('');
   const tx=XS.TREATMENTS.map(t=>{const rec=recipeOf(t.id);
     return `<div class="cx"><div class="cx-h"><span class="cx-dot" style="color:var(--aqua);background:var(--aqua)"></span>${t.label}</div>`+
-      `<div class="cx-fn">${t.desc}</div>`+(rec?`<div class="cx-fact">⚗ Synthesise: <b>${rec}</b></div>`:'')+`</div>`;}).join('');
+      `<div class="cx-fn">${t.desc}</div>`+(rec?`<div class="cx-fact">⚗ Make it: <b>${rec}</b></div>`:'')+`</div>`;}).join('');
   const cmp=(XS.TRAITS||[]).map(tr=>`<div class="cx"><div class="cx-h"><span class="cx-dot" style="color:var(--warn);background:var(--warn)"></span>${tr.tag} · ${tr.label}</div><div class="cx-fn">${tr.hint}</div></div>`).join('');
   const tabs=[['org',`Organelles ${cx.organelles.length}/${cx.totalOrganelles}`,org],
     ['orgz',`Cell types ${cx.organisms.length}/${cx.totalOrganisms}`,orgz],

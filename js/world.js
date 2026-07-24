@@ -391,59 +391,66 @@ XS.buildScenario=function(objective, tier, forceCell){
   return sc;
 };
 
-/* ---------------- ADVANCED MODE · synthesise the cure yourself ----------------
-   You build a treatment from a BASE (what it does) + a TARGET (what it hits).
-   Only the correct pair yields the agent the biology can’t withstand — so you
-   learn the *mechanism* of each cure, not just its name.
+/* ---------------- ADVANCED MODE · the synthesis bench ----------------
+   You don't pick a finished drug — you MAKE one, the way real cures are made:
+   from a raw natural material (mould, bark, serum, salt…) worked through a
+   real preparation step (ferment, extract, heat/react, filter). The right
+   material + the right method yields a real drug — penicillin from mould,
+   quinine from bark, soap from oil + lye. So you learn where medicine actually
+   comes from, not just its name.
 ------------------------------------------------------------ */
-/* ACTIVE COMPOUNDS — a shelf of real drug-class reagents (the mechanism). */
-XS.CRAFT_BASES=[
-  {id:'betalactam',    label:'β-lactam',        desc:'Penicillin-class — blocks cell-wall building.'},
-  {id:'glycopeptide',  label:'Glycopeptide',    desc:'Vancomycin-class — binds wall precursors.'},
-  {id:'aminoglycoside',label:'Aminoglycoside',  desc:'Jams the bacterial 70S ribosome.'},
-  {id:'lysozyme_enz',  label:'Lysozyme enzyme', desc:'Enzymatically cracks a peptidoglycan wall.'},
-  {id:'azole',         label:'Azole',           desc:'Blocks ergosterol — the fungal membrane sterol.'},
-  {id:'polyene',       label:'Polyene',         desc:'Amphotericin-class — punches the fungal membrane.'},
-  {id:'echinocandin',  label:'Echinocandin',    desc:'Blocks fungal wall (chitin / β-glucan) synthesis.'},
-  {id:'nucleoside',    label:'Nucleoside analogue',desc:'Chain-terminates genome copying.'},
-  {id:'protease_inh',  label:'Protease inhibitor',desc:'Blocks viral protein maturation.'},
-  {id:'antiparasitic_c',label:'Antiparasitic core',desc:'Disrupts a eukaryotic parasite’s metabolism.'},
-  {id:'surfactant',    label:'Surfactant / soap',desc:'Dissolves any lipid membrane or envelope.'},
-  {id:'chaotrope',     label:'Chaotrope (urea)',desc:'Unfolds proteins.'},
-  {id:'heat',          label:'Denaturing heat', desc:'Melts protein structure apart.'},
-  {id:'antibody',      label:'Antibody',        desc:'Binds and neutralises a specific molecule.'},
-  {id:'chelator',      label:'Chelator',        desc:'Sequesters a toxin or metal ion.'},
-  {id:'hypertonic_sol',label:'Concentrated solute',desc:'Osmotically draws water OUT of cells.'},
-  {id:'hypotonic_sol', label:'Pure solvent',    desc:'Osmotically floods water IN.'},
+/* RAW MATERIALS — tangible things on the shelf, each a real drug source. */
+XS.INGREDIENTS=[
+  {id:'pen_mould',  label:'Penicillium mould',   glyph:'🧫', col:'#7fce8e', note:'A blue-green mould — the original source of penicillin.'},
+  {id:'soil_microbe',label:'Soil Streptomyces',  glyph:'🟤', col:'#b5824a', note:'Soil bacteria that secrete a huge share of our antibiotics.'},
+  {id:'griseo_mould',label:'Griseofulvin mould', glyph:'🍄', col:'#d8c164', note:'A mould whose secretion poisons fungal cells.'},
+  {id:'wormwood',   label:'Sweet wormwood',      glyph:'🌿', col:'#7cc257', note:'The leaf that gives artemisinin, a frontline antimalarial.'},
+  {id:'cinchona',   label:'Cinchona bark',       glyph:'🪵', col:'#c48a54', note:'Bark that yields quinine — the first antimalarial.'},
+  {id:'nucleoside', label:'Nucleoside stock',    glyph:'🧬', col:'#61c3ff', note:'Building blocks for a fake base that jams genome copying.'},
+  {id:'egg_white',  label:'Egg white',           glyph:'🥚', col:'#eee2b6', note:'Rich in lysozyme, an enzyme that cracks bacterial walls.'},
+  {id:'plant_oil',  label:'Plant oil',           glyph:'🫒', col:'#cfa93a', note:'A fat — one half of the recipe for soap.'},
+  {id:'lye',        label:'Lye (wood ash)',      glyph:'🪨', col:'#c3c8ce', note:'A strong alkali — the other half of soap-making.'},
+  {id:'sea_salt',   label:'Sea salt',            glyph:'🧂', col:'#e9eef2', note:'Concentrate it and it pulls water out of cells.'},
+  {id:'pure_water', label:'Distilled water',     glyph:'💧', col:'#a9ddff', note:'Purest solvent — floods a wall-less cell until it bursts.'},
+  {id:'urea',       label:'Urea / acid',         glyph:'⚗️', col:'#bfa2f2', note:'A chaotrope that unfolds protein structure.'},
+  {id:'serum',      label:'Immune serum',        glyph:'🩸', col:'#dc5d5d', note:'Antibodies raised in an inoculated host — the basis of antivenom.'},
+  {id:'charcoal',   label:'Activated charcoal',  glyph:'⬛', col:'#41474e', note:'A porous solid that adsorbs and traps a poison.'},
 ];
-/* TARGETING VECTORS — what the compound is aimed at. */
-XS.CRAFT_TARGETS=[
-  {id:'pgn',        label:'Peptidoglycan wall',  desc:'the bacterial wall'},
-  {id:'ribosome70', label:'70S ribosome',        desc:'the bacterial ribosome'},
-  {id:'ergosterol', label:'Ergosterol membrane', desc:'the fungal membrane'},
-  {id:'chitin',     label:'Chitin wall',         desc:'the fungal wall'},
-  {id:'genome',     label:'Viral genome',        desc:'the replicating genome'},
-  {id:'capsid',     label:'Viral proteins',      desc:'capsid / maturation'},
-  {id:'euk',        label:'Parasite metabolism', desc:'eukaryotic biochemistry'},
-  {id:'lipid',      label:'Lipid membrane',      desc:'envelope / ether-lipids'},
-  {id:'protein',    label:'Misfolded protein',   desc:'a prion aggregate'},
-  {id:'toxin',      label:'Toxin molecule',      desc:'the free poison'},
-  {id:'osmo_in',    label:'Flood water in',      desc:'burst a wall-less cell'},
-  {id:'osmo_out',   label:'Draw water out',      desc:'plasmolyse a walled cell'},
+/* PREPARATION STEPS — how you work the material (the method matters). */
+XS.LAB_STEPS=[
+  {id:'ferment', label:'Ferment', glyph:'🧫', verb:'Culturing…', desc:'Grow a microbe so it secretes its drug.'},
+  {id:'extract', label:'Extract', glyph:'🌿', verb:'Steeping…',   desc:'Steep the raw material in solvent and draw the compound out.'},
+  {id:'boil',    label:'Heat / react', glyph:'🔥', verb:'Reacting…', desc:'Drive a reaction — saponify, concentrate or denature.'},
+  {id:'filter',  label:'Filter / purify', glyph:'⚗️', verb:'Purifying…', desc:'Strain out the solids and isolate the pure agent.'},
 ];
-/* Many recipes → many drug classes; several valid cures per pathogen. */
-XS.CRAFT_RECIPE={
-  'betalactam+pgn':'antibiotic', 'glycopeptide+pgn':'antibiotic', 'aminoglycoside+ribosome70':'antibiotic',
-  'lysozyme_enz+pgn':'lysozyme',
-  'azole+ergosterol':'antifungal', 'polyene+ergosterol':'antifungal', 'echinocandin+chitin':'antifungal',
-  'nucleoside+genome':'antiviral', 'protease_inh+capsid':'antiviral',
-  'antiparasitic_c+euk':'antiparasitic',
-  'surfactant+lipid':'detergent',
-  'chaotrope+protein':'denaturant', 'heat+protein':'denaturant',
-  'antibody+toxin':'antitoxin', 'chelator+toxin':'antitoxin',
-  'hypotonic_sol+osmo_in':'hypotonic', 'hypertonic_sol+osmo_out':'hypertonic',
+/* FORMULATIONS — material(s) + the correct step → a real drug.
+   Several natural sources make the same class of cure (variety), and one
+   material can make different drugs by a different method (soil microbe →
+   antibiotic if fermented, antiparasitic if extracted). */
+XS.FORMULATIONS=[
+  {items:['pen_mould'],        step:'ferment', agent:'antibiotic',   name:'Penicillin',   source:'Grown from Penicillium mould — the first true antibiotic.'},
+  {items:['soil_microbe'],     step:'ferment', agent:'antibiotic',   name:'Streptomycin', source:'Fermented from soil Streptomyces bacteria.'},
+  {items:['soil_microbe'],     step:'extract', agent:'antiparasitic',name:'Ivermectin',   source:'The same soil microbe, purified another way, yields an antiparasitic.'},
+  {items:['griseo_mould'],     step:'ferment', agent:'antifungal',   name:'Griseofulvin', source:'A mould secretion that attacks the fungal wall.'},
+  {items:['wormwood'],         step:'extract', agent:'antiparasitic',name:'Artemisinin',  source:'Steeped out of sweet wormwood leaves.'},
+  {items:['cinchona'],         step:'extract', agent:'antiparasitic',name:'Quinine',      source:'Extracted from cinchona bark — the original antimalarial.'},
+  {items:['nucleoside'],       step:'boil',    agent:'antiviral',    name:'Nucleoside analogue', source:'A fake building block that chain-terminates the viral genome.'},
+  {items:['egg_white'],        step:'extract', agent:'lysozyme',     name:'Lysozyme',     source:'The wall-cracking enzyme, drawn from egg white.'},
+  {items:['lye','plant_oil'],  step:'boil',    agent:'detergent',    name:'Soap',         source:'Oil + lye, boiled — saponification makes a membrane-dissolving surfactant.'},
+  {items:['sea_salt'],         step:'boil',    agent:'hypertonic',   name:'Concentrated brine', source:'Boiled down to a hypertonic solution that draws water out of walled cells.'},
+  {items:['pure_water'],       step:'filter',  agent:'hypotonic',    name:'Sterile pure water', source:'A hypotonic solvent that floods wall-less cells until they burst.'},
+  {items:['urea'],             step:'boil',    agent:'denaturant',   name:'Hot chaotrope',source:'A heated chaotrope that unfolds protein — the only thing that destroys a prion.'},
+  {items:['serum'],            step:'filter',  agent:'antitoxin',    name:'Antitoxin serum', source:'Purified antibodies that bind and neutralise the poison.'},
+  {items:['charcoal'],         step:'filter',  agent:'antitoxin',    name:'Charcoal binder', source:'Activated charcoal that adsorbs and traps the toxin.'},
+];
+/* Resolve the current flask (a set of materials + one step) to a formulation. */
+XS.benchResult=function(items,step){
+  if(!items||!items.length||!step) return null;
+  const key=items.slice().sort().join('+');
+  return XS.FORMULATIONS.find(f=>f.step===step && f.items.slice().sort().join('+')===key)||null;
 };
-XS.craftAgent=function(base,target){ return (base&&target)?(XS.CRAFT_RECIPE[base+'+'+target]||null):null; };
+/* All recipes that make a given agent (for the field guide). */
+XS.recipesFor=function(agent){ return XS.FORMULATIONS.filter(f=>f.agent===agent); };
 
 /* ---------------- TRAITS / COMPLICATIONS ----------------
    The solution to "running out of content": a small library of biology-driven

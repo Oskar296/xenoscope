@@ -126,7 +126,7 @@ XS.enterRegion=function(region){
   XS.app.zoomRegion=region;
   XS.app.zoomPathogen=(sc.objective==='preserve'&&region.id===sc.keyId)?sc.pathType:null;
   const spec=XS.regionCell(sc,region); if(!spec.inspected) spec.inspected=new Set();
-  XS.app.spec=spec; XS.app.phase='zoom'; XS.app.zoomAt=XS.app.time; XS.app.scan=null; XS.app.hoverPart=null; XS.app.craft={base:null,target:null};
+  XS.app.spec=spec; XS.app.phase='zoom'; XS.app.zoomAt=XS.app.time; XS.app.scan=null; XS.app.hoverPart=null; XS.app.craft={items:[],step:null,made:null,tested:null};
   const kk=region.cell;
   if(!XS.progress.organisms.includes(kk)){ XS.progress.organisms.push(kk); XS.award(8,'Cell type: '+(XS.KINGDOMS[kk]?XS.KINGDOMS[kk].label:kk)); }
   if(isNew){ XS.progress.scans=(XS.progress.scans||0)+1; XS.award(4,'Scanned '+region.name); XS.checkAchievements(); }
