@@ -36,9 +36,24 @@ XS.award=function(n,reason){
 };
 
 /* ---------------- mission lifecycle ---------------- */
+/* Choose PRESERVE vs NEUTRALIZE for a free-play mission. A flat coin makes
+   neutralise streaks common; instead we make saving (rescue) the clear majority
+   of the mix and, above all, break up runs of neutralise — so you always have
+   more organisms to save. Settles at roughly two rescues per neutralise.
+   (The seeded Daily passes an explicit objective and never calls this, so it
+   stays deterministic.) */
+XS.pickObjective=function(){
+  let pPreserve=0.66;                          // rescues are the majority
+  const last=XS.app&&XS.app.lastObjective;
+  if(last==='neutralize') pPreserve+=0.14;      // just neutralised → almost always a rescue next
+  else if(last==='preserve') pPreserve-=0.10;   // still let some neutralise through
+  pPreserve=Math.max(0.45,Math.min(0.9,pPreserve));
+  return Math.random()<pPreserve?'preserve':'neutralize';
+};
 XS.startMission=function(objective, tier){
   XS.app.tier=tier||XS.app.tier; XS.app.daily=false; XS.app.tutorial=null;
-  const sc=XS.buildScenario(objective||(Math.random()<0.5?'preserve':'neutralize'), XS.app.tier);
+  const obj=objective||XS.pickObjective(); XS.app.lastObjective=obj;
+  const sc=XS.buildScenario(obj, XS.app.tier);
   XS.app.sc=sc; XS.app.phase='survey'; XS.app.spec=null; XS.app.zoomRegion=null; XS.app.zoomPathogen=null;
   XS.app.hoverRegion=null; XS.app.hoverPart=null; XS.app.scan=null; XS.app.result=null; XS.app.rankUp=null; XS.app.missionWrong=0;
   if(!XS.progress.archetypes.includes(sc.archKey)){ XS.progress.archetypes.push(sc.archKey); XS.award(12,'New kingdom: '+(XS.KINGDOMS[sc.archKey]?XS.KINGDOMS[sc.archKey].label:sc.archKey)); }
@@ -203,7 +218,10 @@ XS.dailyKey=function(){ const d=new Date();
 XS.startDaily=function(){
   const k=XS.dailyKey(); const seed=k.split('-').reduce((s,n)=>s*100+(+n),0);
   const orig=Math.random; Math.random=mulberry32(seed);
-  try{ XS.startMission(null,'field'); }finally{ Math.random=orig; }
+  // Explicit (seeded) objective so the Daily is identical for everyone and never
+  // touches the free-play bias in pickObjective. First seeded draw = objective,
+  // exactly as before, so buildScenario sees the same subsequent sequence.
+  try{ XS.startMission(Math.random()<0.5?'preserve':'neutralize','field'); }finally{ Math.random=orig; }
   XS.app.daily=true;
 };
 
