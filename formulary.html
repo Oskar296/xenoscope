@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="description" content="XENOSCOPE Field Formulary — which raw material + preparation step makes the right cure for every affliction and every organism.">
+<title>XENOSCOPE — Field Formulary</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧫</text></svg>">
+<style>
+  :root{
+    --bg:#060b0f; --bg2:#0a1218; --panel:#0e1a21; --panel2:#122531;
+    --line:rgba(150,200,210,.10); --line2:rgba(150,200,210,.18);
+    --ink:#e8f4f5; --dim:#8fa6ad; --faint:#5f757c;
+    --aqua:#5ef2d6; --mint:#7fe0a6; --violet:#b49cff; --coral:#ff7a6b; --gold:#ffcf6a;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body,.wrap{margin:0}
+  .wrap{background:
+      radial-gradient(1200px 700px at 78% -8%,rgba(94,242,214,.09),transparent 60%),
+      radial-gradient(900px 600px at 10% 4%,rgba(180,156,255,.08),transparent 55%),
+      var(--bg);
+    color:var(--ink);font-family:var(--sans);line-height:1.5;
+    min-height:100vh;padding:clamp(20px,5vw,64px) clamp(16px,4vw,48px) 72px;
+    -webkit-font-smoothing:antialiased;}
+  .inner{max-width:1080px;margin:0 auto}
+
+  /* header */
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.32em;text-transform:uppercase;color:var(--aqua);margin-bottom:14px}
+  h1{font-size:clamp(34px,6.4vw,66px);line-height:.96;letter-spacing:-.02em;font-weight:800;margin:0 0 14px;text-wrap:balance}
+  h1 .g{color:var(--aqua)} h1 .v{color:var(--violet)}
+  .lede{font-size:clamp(15px,2vw,18px);color:var(--dim);max-width:60ch;margin:0}
+  .lede b{color:var(--ink);font-weight:600}
+
+  /* the rule + steps primer */
+  .primer{margin:38px 0 8px;display:grid;gap:16px;grid-template-columns:1fr;}
+  .rule{border:1px solid var(--line2);border-left:3px solid var(--aqua);border-radius:14px;
+    background:linear-gradient(180deg,rgba(94,242,214,.06),rgba(94,242,214,.01));padding:16px 20px}
+  .rule .k{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--aqua);margin-bottom:6px}
+  .rule p{margin:0;font-size:15px;color:var(--ink)}
+  .rule b{color:var(--aqua)}
+  .steps{display:grid;gap:12px;grid-template-columns:repeat(4,1fr)}
+  .step{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:14px 15px}
+  .step .g{font-size:22px;line-height:1;display:block;margin-bottom:9px}
+  .step h4{margin:0 0 4px;font-size:14.5px;font-weight:700;color:var(--violet)}
+  .step p{margin:0;font-size:12.5px;color:var(--dim);line-height:1.45}
+
+  /* section headers */
+  .sec{margin-top:52px}
+  .sec-h{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:4px}
+  .sec-h h2{font-size:clamp(22px,3.4vw,32px);letter-spacing:-.01em;margin:0;font-weight:800}
+  .tag{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;padding:4px 10px;border-radius:999px;font-weight:700}
+  .tag.save{color:#04120c;background:var(--mint)}
+  .tag.kill{color:#1a0605;background:var(--coral)}
+  .sec-sub{color:var(--dim);font-size:14.5px;margin:6px 0 22px;max-width:66ch}
+  .sec-sub b{color:var(--ink);font-weight:600}
+
+  /* cards */
+  .grid{display:grid;gap:14px;grid-template-columns:repeat(2,1fr)}
+  .card{border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,var(--panel),rgba(9,16,21,.85));
+    padding:18px 18px 16px;display:flex;flex-direction:column;gap:13px;position:relative;overflow:hidden}
+  .card::before{content:"";position:absolute;inset:0 auto 0 0;width:3px;background:var(--dot,var(--aqua));opacity:.85}
+  .card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+  .target{font-size:20px;font-weight:800;letter-spacing:-.01em;line-height:1.1}
+  .target .sub{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:600;margin-top:4px}
+  .spot{font-size:12.5px;color:var(--dim);line-height:1.45;padding:8px 11px;border:1px dashed var(--line2);border-radius:10px;background:rgba(255,255,255,.015)}
+  .spot b{color:var(--aqua);font-weight:600}
+
+  /* recipe row */
+  .recipe{display:flex;flex-wrap:wrap;align-items:center;gap:7px}
+  .chip{font-family:var(--mono);font-size:12.5px;font-weight:600;padding:6px 10px;border-radius:9px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;border:1px solid transparent}
+  .chip .d{width:9px;height:9px;border-radius:50%;flex:0 0 9px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.4)}
+  .chip.mat{background:rgba(255,255,255,.05);border-color:var(--line2);color:var(--ink)}
+  .chip.step{background:rgba(180,156,255,.14);border-color:rgba(180,156,255,.4);color:#d8ccff}
+  .chip.drug{background:rgba(94,242,214,.14);border-color:rgba(94,242,214,.42);color:#aef7e7;font-weight:700}
+  .chip.drug.kill{background:rgba(255,122,107,.15);border-color:rgba(255,122,107,.45);color:#ffc2b8}
+  .op{color:var(--faint);font-weight:700;font-family:var(--mono);font-size:13px}
+  .alt{font-size:11.5px;color:var(--faint);font-family:var(--mono);padding-left:2px}
+  .alt b{color:var(--dim);font-weight:600}
+  .why{font-size:13px;color:var(--dim);line-height:1.5;margin-top:auto}
+  .why b{color:var(--ink);font-weight:600}
+
+  /* tips */
+  .tips{display:grid;gap:14px;grid-template-columns:repeat(3,1fr);margin-top:22px}
+  .tip{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:15px 16px}
+  .tip h4{margin:0 0 7px;font-size:14px;font-weight:700;color:var(--gold)}
+  .tip p{margin:0;font-size:12.8px;color:var(--dim);line-height:1.5}
+  .tip p b{color:var(--ink);font-weight:600}
+
+  footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--line);color:var(--faint);font-size:12.5px;line-height:1.6}
+  footer a{color:var(--aqua);text-decoration:none;border-bottom:1px solid rgba(94,242,214,.3)}
+  footer .mono{font-family:var(--mono)}
+
+  @media(max-width:760px){
+    .steps{grid-template-columns:repeat(2,1fr)}
+    .grid{grid-template-columns:1fr}
+    .tips{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap"><div class="inner">
+
+  <header>
+    <div class="eyebrow">XENOSCOPE · Advanced mode · synthesis bench</div>
+    <h1>Field <span class="g">Formulary</span></h1>
+    <p class="lede">Every cure, and how to build it from raw materials. In Advanced mode you don't pick a finished drug — you <b>make</b> one: a <b>raw material</b> plus a <b>preparation step</b>. This card is how you know which.</p>
+  </header>
+
+  <section class="primer">
+    <div class="rule">
+      <div class="k">The one rule</div>
+      <p>The <b>material</b> decides <em>which</em> drug you get. The <b>step</b> is the correct method to make it. Then just match the drug to what you diagnosed — run the assays first so you know the target.</p>
+    </div>
+    <div class="steps">
+      <div class="step"><span class="g">🧫</span><h4>Ferment</h4><p>Grow a microbe (a mould or soil bacteria) so it secretes its drug.</p></div>
+      <div class="step"><span class="g">🌿</span><h4>Extract</h4><p>Steep a plant part or tissue in solvent and draw the compound out.</p></div>
+      <div class="step"><span class="g">🔥</span><h4>Heat / react</h4><p>Drive a reaction — make soap, concentrate brine, denature protein, build the antiviral.</p></div>
+      <div class="step"><span class="g">⚗️</span><h4>Filter / purify</h4><p>Strain out solids and isolate the pure agent — water, serum, charcoal.</p></div>
+    </div>
+  </section>
+
+  <!-- PRESERVE -->
+  <section class="sec">
+    <div class="sec-h"><h2>Saving a sick organism</h2><span class="tag save">Preserve</span></div>
+    <p class="sec-sub">You diagnosed the <b>affliction</b> attacking the host. Make its one true cure — the biology is honest, so the wrong drug does nothing and hurts the patient.</p>
+    <div class="grid">
+
+      <div class="card" style="--dot:#ff5ec7">
+        <div class="card-top"><div class="target">Virus<span class="sub">Diagnosis · Virus</span></div></div>
+        <div class="spot"><b>Spot it:</b> a bare protein capsid packed with foreign nucleic acid — and <b>no ribosomes of its own</b>.</div>
+        <div class="recipe"><span class="chip mat"><span class="d" style="background:#61c3ff"></span>Nucleoside stock</span><span class="op">+</span><span class="chip step">🔥 Heat / react</span><span class="op">→</span><span class="chip drug">Antiviral</span></div>
+        <div class="why"><b>Why:</b> a nucleoside analogue is a counterfeit genome building‑block. When the virus copies itself it swallows the fake and the chain dead‑ends. Nothing else touches a virus.</div>
+      </div>
+
+      <div class="card" style="--dot:#9fd0ff">
+        <div class="card-top"><div class="target">Bacterium<span class="sub">Diagnosis · Bacterium</span></div></div>
+        <div class="spot"><b>Spot it:</b> a peptidoglycan wall (Gram stain reacts), its <b>own 70S ribosomes</b>, no nucleus.</div>
+        <div class="recipe"><span class="chip mat"><span class="d" style="background:#7fce8e"></span>Penicillium mould</span><span class="op">+</span><span class="chip step">🧫 Ferment</span><span class="op">→</span><span class="chip drug">Antibiotic</span></div>
+        <div class="alt"><b>also:</b> Soil Streptomyces + Ferment → Antibiotic (streptomycin)</div>
+        <div class="why"><b>Why:</b> penicillin (from mould) shatters the bacterial wall; streptomycin (from soil bacteria) jams the 70S ribosome. Bacteria only.</div>
+      </div>
+
+      <div class="card" style="--dot:#ffd27a">
+        <div class="card-top"><div class="target">Fungus<span class="sub">Diagnosis · Fungus</span></div></div>
+        <div class="spot"><b>Spot it:</b> a <b>chitin</b> wall and branching thread‑like hyphae.</div>
+        <div class="recipe"><span class="chip mat"><span class="d" style="background:#d8c164"></span>Griseofulvin mould</span><span class="op">+</span><span class="chip step">🧫 Ferment</span><span class="op">→</span><span class="chip drug">Antifungal</span></div>
+        <div class="why"><b>Why:</b> antifungals hit targets only fungi have — the <b>ergosterol</b> in their membrane or the <b>chitin</b> in their wall. (Griseofulvin, this one, jams the fungus's cell‑division machinery.)</div>
+      </div>
+
+      <div class="card" style="--dot:#b878ff">
+        <div class="card-top"><div class="target">Parasite<span class="sub">Diagnosis · Parasite</span></div></div>
+        <div class="spot"><b>Spot it:</b> a motile, <b>nucleated eukaryotic</b> cell — it shrugs off antibiotics.</div>
+        <div class="recipe"><span class="chip mat"><span class="d" style="background:#7cc257"></span>Sweet wormwood</span><span class="op">+</span><span class="chip step">🌿 Extract</span><span class="op">→</span><span class="chip drug">Antiparasitic</span></div>
+        <div class="alt"><b>also:</b> Cinchona bark + Extract (quinine) · Soil Streptomyces + Extract (ivermectin)</div>
+        <div class="why"><b>Why:</b> artemisinin, quinine and ivermectin poison a eukaryotic parasite's metabolism while sparing the host's cells.</div>
+      </div>
+
+      <div class="card" style="--dot:#e6e696">
+        <div class="card-top"><div class="target">Prion<span class="sub">Diagnosis · Prion</span></div></div>
+        <div class="spot"><b>Spot it:</b> the nucleic‑acid assay finds <b>nothing at all</b> — it's pure misfolded protein, not alive.</div>
+        <div class="recipe"><span class="chip mat"><span class="d" style="background:#bfa2f2"></span>Urea / acid</span><span class="op">+</span><span class="chip step">🔥 Heat / react</span><span class="op">→</span><span class="chip drug">Denaturant</span></div>
+        <div class="why"><b>Why:</b> there is no organism to kill. A prion is a shape — only a chaotrope + heat that <b>unfolds the protein</b> can destroy it. Antibiotics/antivirals are useless.</div>
+      </div>
+
+      <div class="card" style="--dot:#b4ff8c">
+        <div class="card-top"><div class="target">Toxin<span class="sub">Diagnosis · Chemical toxin</span></div></div>
+        <div class="spot"><b>Spot it:</b> <b>no invader at all</b> — the cells are dying around a diffusing poison. Every organism assay comes back empty.</div>
+        <div class="recipe"><span class="chip mat"><span class="d" style="background:#dc5d5d"></span>Immune serum</span><span class="op">+</span><span class="chip step">⚗️ Filter</span><span class="op">→</span><span class="chip drug">Antitoxin</span></div>
+        <div class="alt"><b>also:</b> Activated charcoal + Filter → Antitoxin (adsorbs the poison)</div>
+        <div class="why"><b>Why:</b> nothing to kill — you neutralise a <b>molecule</b>. Purified antibodies bind it; activated charcoal soaks it up. A living‑pathogen cure won't work.</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- NEUTRALIZE -->
+  <section class="sec">
+    <div class="sec-h"><h2>Destroying an invader</h2><span class="tag kill">Neutralize</span></div>
+    <p class="sec-sub">No infection here — the organism <em>is</em> the threat. Identify its <b>kingdom</b> from the assays, then exploit the one structural weakness of its cell. The right weapon depends entirely on its wall (or lack of one).</p>
+    <div class="grid">
+
+      <div class="card" style="--dot:#9fd0ff">
+        <div class="card-top"><div class="target">Bacterium<span class="sub">Kingdom · Monera</span></div></div>
+        <div class="spot"><b>Tell:</b> Gram stain + nuclear stain — a prokaryote with a <b>peptidoglycan</b> wall.</div>
+        <div class="recipe"><span class="chip mat"><span class="d" style="background:#7fce8e"></span>Penicillium mould</span><span class="op">+</span><span class="chip step">🧫 Ferment</span><span class="op">→</span><span class="chip drug kill">Antibiotic</span></div>
+        <div class="alt"><b>or:</b> Egg white + Extract → Lysozyme (cracks the same wall)</div>
+        <div class="why"><b>Why:</b> the peptidoglycan wall + 70S ribosome are exactly what an antibiotic attacks; lysozyme is an enzyme that dissolves that wall directly.</div>
+      </div>
+
+      <div class="card" style="--dot:#c9a9ff">
+        <div class="card-top"><div class="target">Archaeon<span class="sub">Kingdom · Archaea</span></div></div>
+        <div class="spot"><b>Tell:</b> run the <b>membrane‑lipid assay</b> — ether‑linked lipids. It's the only way to separate it from a bacterium.</div>
+        <div class="recipe"><span class="chip mat"><span class="d" style="background:#cfa93a"></span>Plant oil</span><span class="op">+</span><span class="chip mat"><span class="d" style="background:#c3c8ce"></span>Lye</span><span class="op">+</span><span class="chip step">🔥 Heat / react</span><span class="op">→</span><span class="chip drug kill">Detergent (soap)</span></div>
+        <div class="why"><b>Why:</b> archaea have <b>no peptidoglycan</b> wall for an antibiotic to attack — the classic trap. With no wall to target, you go after the <b>membrane</b> instead: soap (oil + lye, boiled — real saponification) breaks open the lipid bilayer.</div>
+      </div>
+
+      <div class="card" style="--dot:#ffd27a">
+        <div class="card-top"><div class="target">Fungus<span class="sub">Kingdom · Fungi</span></div></div>
+        <div class="spot"><b>Tell:</b> wall analysis returns <b>chitin</b>.</div>
+        <div class="recipe"><span class="chip mat"><span class="d" style="background:#d8c164"></span>Griseofulvin mould</span><span class="op">+</span><span class="chip step">🧫 Ferment</span><span class="op">→</span><span class="chip drug kill">Antifungal</span></div>
+        <div class="why"><b>Why:</b> a chitin‑walled cell falls to the antifungal — a drug aimed at fungus‑only targets (the ergosterol membrane or the chitin wall) that the host doesn't share.</div>
+      </div>
+
+      <div class="card" style="--dot:#8fe07a">
+        <div class="card-top"><div class="target">Plant<span class="sub">Kingdom · Plantae</span></div></div>
+        <div class="spot"><b>Tell:</b> a rigid <b>cellulose</b> wall + chloroplasts (pigment scan).</div>
+        <div class="recipe"><span class="chip mat"><span class="d" style="background:#e9eef2"></span>Sea salt</span><span class="op">+</span><span class="chip step">🔥 Heat / react</span><span class="op">→</span><span class="chip drug kill">Herbicide (brine)</span></div>
+        <div class="why"><b>Why:</b> the stiff cellulose wall resists bursting, so flooding it with water won't work. Boil salt to a <b>hypertonic</b> brine and draw water <em>out</em> — the cell collapses (plasmolysis).</div>
+      </div>
+
+      <div class="card" style="--dot:#ff9db0">
+        <div class="card-top"><div class="target">Animal<span class="sub">Kingdom · Animalia</span></div></div>
+        <div class="spot"><b>Tell:</b> wall analysis + nuclear stain — a <b>wall‑less</b> cell with a nucleus.</div>
+        <div class="recipe"><span class="chip mat"><span class="d" style="background:#a9ddff"></span>Distilled water</span><span class="op">+</span><span class="chip step">⚗️ Filter</span><span class="op">→</span><span class="chip drug kill">Osmotic shock</span></div>
+        <div class="why"><b>Why:</b> no wall to hold it together. A <b>hypotonic</b> (pure‑water) shock floods the cell until it swells and bursts.</div>
+      </div>
+
+      <div class="card" style="--dot:#7ad4c8">
+        <div class="card-top"><div class="target">Protist<span class="sub">Kingdom · Protista</span></div></div>
+        <div class="spot"><b>Tell:</b> a single‑celled eukaryote with <b>no wall</b>.</div>
+        <div class="recipe"><span class="chip mat"><span class="d" style="background:#a9ddff"></span>Distilled water</span><span class="op">+</span><span class="chip step">⚗️ Filter</span><span class="op">→</span><span class="chip drug kill">Osmotic shock</span></div>
+        <div class="why"><b>Why:</b> like an animal cell, it has no wall — the same pure‑water osmotic burst does it in.</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- TIPS -->
+  <section class="sec">
+    <div class="sec-h"><h2>When the case fights back</h2></div>
+    <div class="tips">
+      <div class="tip"><h4>Two invaders (co‑infection)</h4><p>The morphology assay shows <b>two</b> different attackers. Make <b>both</b> cures and administer each — one alone only gets you halfway.</p></div>
+      <div class="tip"><h4>Biofilm shield</h4><p>A slime layer blocks every drug. Make <b>Soap</b> (Plant oil + Lye → Heat) first to strip the film, then apply the real cure to the exposed cells.</p></div>
+      <div class="tip"><h4>Preserve ≠ Neutralize</h4><p>Curing an infection targets the <b>invader</b>; neutralizing an organism targets <b>its own cell's</b> weakness. Same bench, completely different logic — always read the orders.</p></div>
+    </div>
+  </section>
+
+  <footer>
+    <span class="mono">XENOSCOPE · Field Formulary</span> — a companion to the in‑game <span class="mono">📖 Codex → Treatments</span> tab, which lists every recipe you've unlocked.<br>
+    Play at <a href="https://raw.githack.com/Oskar296/xenoscope/main/index.html">raw.githack.com/Oskar296/xenoscope</a> · the biology it teaches is real.
+  </footer>
+
+</div></div>
+</body>
+</html>

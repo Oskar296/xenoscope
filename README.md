@@ -34,6 +34,18 @@ python3 -m http.server 8000   # then open http://localhost:8000
 
 Or just open `index.html` (some browsers disable saved progress on `file://`).
 
+**Play in your browser now** (no install):
+[raw.githack.com/Oskar296/xenoscope/main/index.html](https://raw.githack.com/Oskar296/xenoscope/main/index.html)
+
+### 📋 Field Formulary (cure cheat‑sheet)
+
+A companion reference — which **raw material + preparation step** makes the right
+cure for every affliction and every organism. It's built into the game (the
+**📋 Formulary** button on the menu, and **📖 Formulary** on the synthesis bench,
+which highlights the recipe for your current case), and also hosted as a
+standalone page:
+[`formulary.html`](https://raw.githack.com/Oskar296/xenoscope/main/formulary.html).
+
 ## The loop: **survey → analyse → diagnose → treat**
 
 1. **Survey.** See the whole creature on its exoplanet and read your orders
