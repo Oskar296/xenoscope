@@ -306,6 +306,31 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border:none;border-ra
 .ob-finalgrid{display:flex;gap:10px;margin-top:16px}
 .ob-finalgrid>div{flex:1;border:1px solid var(--line2);border-radius:12px;padding:10px;background:rgba(255,255,255,.03)}
 .ob-finalgrid b{display:block;font-size:22px} .ob-finalgrid span{font-size:11px;color:var(--dim)}
+/* field formulary · in-game recipe guide */
+.btn.help{border-color:var(--violet);color:#dcccff}
+.fm-steps{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 6px}
+.fm-step{font-size:11.5px;color:var(--dim);border:1px solid var(--line2);border-radius:9px;padding:6px 10px;background:rgba(255,255,255,.02)}
+.fm-step b{color:var(--violet)} .fm-step small{color:var(--faint,var(--dim))}
+.fm-sec-h{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;font-size:16px;font-weight:800;margin:20px 0 4px;letter-spacing:-.01em}
+.fm-sec-h em{font-style:normal;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;padding:3px 9px;border-radius:999px;font-weight:700}
+.fm-sec-h em.save{color:#04120c;background:var(--mint)} .fm-sec-h em.kill{color:#1a0605;background:var(--coral)}
+.fm-row{display:flex;gap:14px;padding:11px 2px;border-top:1px solid var(--line)}
+.fm-row.match{background:linear-gradient(90deg,rgba(94,242,214,.10),transparent 80%);border-radius:10px;box-shadow:inset 3px 0 0 var(--aqua);padding-left:11px}
+.fm-row.kill.match{background:linear-gradient(90deg,rgba(255,120,90,.10),transparent 80%);box-shadow:inset 3px 0 0 var(--coral)}
+.fm-target{flex:0 0 116px;font-size:15px;font-weight:800}
+.fm-target span{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);font-weight:600;margin-top:3px}
+.fm-tag{display:block;font-style:normal;font-size:10.5px;color:var(--aqua);font-weight:700;margin-top:5px}
+.fm-row.kill .fm-tag{color:var(--coral)}
+.fm-recipes{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;justify-content:center}
+.fm-recipe{display:flex;flex-wrap:wrap;align-items:center;gap:5px}
+.fm-chip{font-family:var(--mono);font-size:11.5px;font-weight:600;padding:5px 9px;border-radius:8px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;border:1px solid transparent}
+.fm-chip .fm-d{width:9px;height:9px;border-radius:50%;flex:0 0 9px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.4)}
+.fm-chip.mat{background:rgba(255,255,255,.05);border-color:var(--line2);color:var(--ink)}
+.fm-chip.step{background:rgba(140,110,240,.16);border-color:rgba(140,110,240,.4);color:#dcccff}
+.fm-chip.drug{background:rgba(94,242,214,.14);border-color:rgba(94,242,214,.42);color:#aef7e7;font-weight:700}
+.fm-row.kill .fm-chip.drug{background:rgba(255,122,107,.15);border-color:rgba(255,122,107,.45);color:#ffc2b8}
+.fm-op{color:var(--faint,var(--dim));font-weight:700;font-family:var(--mono);font-size:12px}
+@media(max-width:640px){ .fm-row{flex-direction:column;gap:7px} .fm-target{flex:0 0 auto} }
 /* interactive tutorial coach */
 .coach{position:fixed;top:74px;left:50%;transform:translateX(-50%);width:min(600px,94vw);z-index:24;
   background:linear-gradient(180deg,rgba(14,30,34,.97),rgba(9,20,26,.98));border:1px solid var(--aqua);border-radius:16px;

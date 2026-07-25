@@ -299,6 +299,7 @@ UI.showSynthesis=function(){ const sc=XS.app.sc, r=XS.app.zoomRegion; if(!sc||!r
     `</div>`+
     `<div class="bench-test" id="benchTest" style="display:none"><canvas id="sampleCv" width="300" height="86"></canvas><div class="bench-testtx" id="benchTestTx"></div></div>`+
     `<div class="cta bench-cta"><button class="btn ghost" id="benchEmpty">🗑 Empty</button>`+
+      `<button class="btn help" id="benchGuide">📖 Formulary</button>`+
       `<button class="btn" id="benchTestBtn" disabled>🧪 Test on a sample</button>`+
       `<button class="btn pri" id="benchAdmin" disabled>💉 Administer</button>`+
       `<button class="btn" id="benchCancel">Back</button></div>`);
@@ -341,6 +342,7 @@ UI.showSynthesis=function(){ const sc=XS.app.sc, r=XS.app.zoomRegion; if(!sc||!r
     sfx('blip'); st.flash=1; $('benchTest').style.display='none'; sample=null; refresh(); });
 
   $('benchEmpty').onclick=()=>{ sfx('click'); cr.items=[]; cr.step=null; $('benchTest').style.display='none'; sample=null; refresh(); };
+  $('benchGuide').onclick=()=>{ sfx('click'); UI.showFormulary({agent:sc.agent,objective:sc.objective}, true); };
   $('benchCancel').onclick=()=>{ UI.hideOverlay(); };
   $('benchTestBtn').onclick=()=>{ if(!cr.made) return; const eff=benchEffective(cr.made.agent);
     sfx(eff?'ok':'err'); const tp=$('benchTest'); tp.style.display=''; const tx=$('benchTestTx');
@@ -426,6 +428,37 @@ UI.showSynthesis=function(){ const sc=XS.app.sc, r=XS.app.zoomRegion; if(!sc||!r
   refresh();
 };
 
+/* ADVANCED · in-game recipe guide (opened from the bench or the menu) ---------
+   Built live from XS.FORMULATIONS / PATHOGENS / killAgentsFor so it can never
+   drift from the actual recipes. `hi` = {agent,objective} highlights the cure
+   for the current case; `back` returns to the bench on close. */
+UI.showFormulary=function(hi,back){
+  const recipeRow=f=>{ const st=(XS.LAB_STEPS||[]).find(s=>s.id===f.step)||{};
+    const mats=f.items.map(id=>{const x=(XS.INGREDIENTS||[]).find(i=>i.id===id)||{label:id,col:'#888'};
+      return `<span class="fm-chip mat"><span class="fm-d" style="background:${x.col}"></span>${x.label}</span>`;}).join('<span class="fm-op">+</span>');
+    return `${mats}<span class="fm-op">+</span><span class="fm-chip step">${st.glyph||''} ${st.label||f.step}</span>`+
+      `<span class="fm-op">→</span><span class="fm-chip drug">${XS.agentName(f.agent)}</span>`; };
+  const entry=(section,name,sub,agents)=>{ const fs=[]; agents.forEach(a=>(XS.recipesFor(a)||[]).forEach(f=>fs.push(f)));
+    const match = hi && hi.objective===section && agents.some(a=>a===hi.agent);
+    const rows=fs.map(f=>`<div class="fm-recipe">${recipeRow(f)}</div>`).join('');
+    return `<div class="fm-row${section==='neutralize'?' kill':''}${match?' match':''}"><div class="fm-target">${name}`+
+      `<span>${sub}</span>${match?'<em class="fm-tag">◀ your case</em>':''}</div><div class="fm-recipes">${rows}</div></div>`; };
+  const pres=Object.keys(XS.PATHOGENS).map(k=>entry('preserve',XS.PATHOGENS[k].dx,'affliction',[XS.PATHOGENS[k].cure])).join('');
+  const kings=[['Monera','Bacterium'],['Archaea','Archaeon'],['Fungi','Fungus'],['Plantae','Plant'],['Animalia','Animal'],['Protista','Protist']];
+  const neut=kings.map(([cell,name])=>entry('neutralize',name,'organism',XS.killAgentsFor(cell))).join('');
+  const steps=(XS.LAB_STEPS||[]).map(s=>`<span class="fm-step">${s.glyph} <b>${s.label}</b> <small>${s.desc.split(' ').slice(0,6).join(' ')}…</small></span>`).join('');
+  card(
+    `<div class="sub">Field formulary · how to build any cure</div><h2>Make the right cure</h2>`+
+    `<p class="muted">Pick a <b>raw material</b> + a <b>preparation step</b>. The material decides <em>which</em> drug you get; the step is the correct method — then match the drug to your diagnosis.</p>`+
+    `<div class="fm-steps">${steps}</div>`+
+    `<div class="fm-sec-h">Saving a sick organism <em class="save">preserve · cure the affliction</em></div>${pres}`+
+    `<div class="fm-sec-h">Destroying an invader <em class="kill">neutralize · hit the cell’s weakness</em></div>${neut}`+
+    `<div class="cta"><button class="btn pri" id="fmClose">${back?'← Back to the bench':'Close'}</button></div>`
+  );
+  const c=UI.overlay.querySelector('.card'); if(c) c.classList.add('bench-card');
+  $('fmClose').onclick=()=>{ sfx('click'); if(back){ UI.showSynthesis(); } else { UI.hideOverlay(); if(XS.app.phase==='menu') UI.showMenu(); } };
+};
+
 /* diagnosis (classify) overlay */
 UI.showIdentify=function(){
   const sc=XS.app.sc, r=XS.app.zoomRegion; if(!sc||!r) return;
@@ -479,6 +512,7 @@ UI.showMenu=function(){
       `<button class="btn ob" id="outbreakBtn">🌊 Outbreak${p.outbreakBest?` · best ${p.outbreakBest}`:''}</button>`+
       `<button class="btn ${!p.tutorialSeen?'pulse':''}" id="tutBtn">🎓 Tutorial</button>`+
       `<button class="btn" id="dailyBtn">🗓 Daily</button><button class="btn" id="codexBtn2">📖 Codex</button>`+
+      `<button class="btn" id="formularyBtn">📋 Formulary</button>`+
       `<button class="btn" id="achBtn">🏆 ${p.badges.length}/${XS.ACHIEVEMENTS.length}</button></div>`+
       (!p.tutorialSeen?`<div class="muted" style="margin-top:8px;font-size:12px">🆕 New here? Start with the <b>🎓 Tutorial</b> — it walks you through a case step by step.</div>`:'')+
     `<div class="setrow"><span class="setlbl">🔊</span><input type="range" id="volSld" min="0" max="100" value="${Math.round((XS.sfx?XS.sfx.volume:.7)*100)}">`+
@@ -493,6 +527,7 @@ UI.showMenu=function(){
   $('tutBtn').onclick=()=>{ sfx('click'); UI.hideOverlay(); UI.startTutorial(); };
   $('dailyBtn').onclick=()=>{ sfx('click'); UI.hideOverlay(); XS.startDaily(); UI.renderPhase(); };
   $('codexBtn2').onclick=()=>{sfx('click');UI.showCodex();};
+  $('formularyBtn').onclick=()=>{ sfx('click'); UI.showFormulary(null,false); };
   $('achBtn').onclick=()=>{ sfx('click'); UI.showAchievements(); };
   $('volSld').oninput=e=>{ if(XS.sfx) XS.sfx.setVolume((+e.target.value)/100); };
   $('volSld').onchange=()=>sfx('blip');
