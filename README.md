@@ -66,6 +66,14 @@ Or just open `index.html` (some browsers disable saved progress on `file://`).
   shield, mutualistic symbiont, virulent, extreme habitat, **co‑infection** (two
   cures), **necrotic decoy** (a false target) and **rapidly‑mutating**.
 - **Two very different modes.** ⚡ **Quick** — pick a ready-made treatment; fast, punchy runs. ⚗ **Advanced** — much more time, and a hands-on **synthesis bench** where you *make* the cure the way real medicine is made: take a **raw natural material** (Penicillium mould, cinchona bark, sweet wormwood, egg white, sea salt, plant oil + lye, immune serum, activated charcoal…) and work it through a real **preparation step** — **ferment, extract, heat/react, filter**. Watch the flask fill, bubble and glow as it resolves into a real drug (penicillin from mould, quinine from bark, soap from oil + lye by saponification, antivenom from serum), then **test it on a cultured sample** — see the invader cells rupture and clear, or shrug it off — before you administer. It teaches where drugs actually come from, not just their names.
+- 🌊 **Outbreak — a scored survival run.** The arcade heart of the game: cases come
+  back‑to‑back against a collapsing **Colony Vitality** bar. Solve fast *and* clean
+  to earn a per‑case grade (**S / A / B / C**), a rising **combo multiplier** and
+  score; every lost patient tears 34 off the colony. Cases **escalate** from Intern →
+  Field → Director with stacking complications, and the odd **⭐ high‑value (×2)** or
+  **⚠ fast‑spreading** case shakes up the rhythm. It runs until the colony collapses —
+  then you chase a **persistent high score**. A live HUD tracks case, colony, score,
+  combo and a ticking clock, so there's always a "one more case" reason to keep going.
 - **Difficulty tiers** (Intern / Field / Director). Field & Director require a correct
   diagnosis and punish wrong calls; **Director adds up to two complications and a
   limited assay budget**, so you must choose which tests to spend.

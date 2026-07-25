@@ -10,7 +10,7 @@ const KEY='xenoscope.save.v2';
 
 XS.app={ phase:'menu', tier:'field', mode:'quick', time:0, daily:false, toasts:[],
   sc:null, spec:null, zoomRegion:null, zoomAt:0, zoomPathogen:null,
-  hoverRegion:null, hoverPart:null, scan:null, result:null, craft:null,
+  hoverRegion:null, hoverPart:null, scan:null, result:null, craft:null, run:null,
   lastXP:[], rankUp:null, missionWrong:0, demo:null };
 
 function fresh(){ return { xp:0, organelles:[], organisms:[], subs:[], badges:[], archetypes:[], species:[],
@@ -182,8 +182,48 @@ XS.finishMission=function(res){
     if(sc.traits && sc.traits.length>=2){ XS.progress.hardWins=(XS.progress.hardWins||0)+1; XS.award(12,'Handled '+sc.traits.length+' complications'); }
     XS.award(30, sc.objective==='preserve'?'Organism preserved':'Threat neutralised');
   }
+  // ---- OUTBREAK run scoring: grade the case, bank score, drive the colony ----
+  if(XS.app.run && XS.app.run.active){
+    const run=XS.app.run;
+    const el=Math.max(0,(XS.app.time-(run.caseStartT||XS.app.time))/1000);
+    let g = el<25?'S':el<45?'A':el<75?'B':'C';
+    if(XS.app.missionWrong>0) g = g==='S'?'A':g==='A'?'B':(g==='B'?'C':'C');  // sloppy caps out
+    const gm={S:3,A:2,B:1.4,C:1}[g]||1, tm={intern:1,field:1.35,director:1.8}[XS.app.tier]||1;
+    let gained=0;
+    if(win){ gained=Math.round(100*gm*tm*run.mult*(run.mod==='double'?2:1));
+      run.score+=gained; run.cleared=(run.cleared||0)+1;
+      run.streak++; run.mult=Math.min(5, +(1+run.streak*0.4).toFixed(2));
+      run.colony=Math.min(100, run.colony + ({S:16,A:12,B:8,C:4}[g]||6));
+      if(run.score>(XS.progress.outbreakBest||0)){ XS.progress.outbreakBest=run.score; run.newBest=true; }
+    } else { run.streak=0; run.mult=1; run.colony=Math.max(0, run.colony-34); }
+    run.lastGrade={g:win?g:'—', gained, el:Math.round(el), win, mult:run.mult};
+    if(run.colony<=0) run.over=true;
+  }
   XS.app.result={win, why:res.why}; XS.app.phase='result'; XS.saveProgress(); XS.checkAchievements();
 };
+
+/* ---------------- OUTBREAK · an escalating, scored survival run ----------------
+   Chains cases back-to-back against a collapsing Colony Vitality bar. Speed +
+   accuracy earn a per-case grade (S/A/B/C), a rising combo multiplier and score;
+   every lost patient tears 34 off the colony. Cases ramp from Intern → Director
+   with complications, plus the odd high-value (×2) or fast-spreading case. Runs
+   until the colony hits zero — then you chase a new high score. */
+XS.startOutbreak=function(){
+  XS.app.mode='quick'; XS.app.tutorial=null; XS.app.daily=false;
+  XS.app.run={active:true, colony:100, score:0, streak:0, mult:1, caseNum:0,
+    cleared:0, mod:null, over:false, newBest:false, lastGrade:null,
+    best:XS.progress.outbreakBest||0};
+  XS.outbreakNextCase();
+};
+XS.outbreakNextCase=function(){ const run=XS.app.run; if(!run) return; run.caseNum++;
+  const n=run.caseNum;
+  const tier = n<=2?'intern' : n<=5?'field' : 'director';
+  run.mod = (n>=4 && n%4===0)?'rush' : (n>=3 && n%3===0)?'double' : null;
+  XS.startMission(null, tier);
+  const sc=XS.app.sc; run.caseStartT=XS.app.time;
+  if(run.mod==='rush'){ sc.hostDrain=(sc.hostDrain||0)*1.7; sc.mutating=true; }   // fast-spreading strain
+};
+XS.endOutbreak=function(){ XS.app.run=null; };
 
 /* ---------------- achievements ---------------- */
 XS.ACHIEVEMENTS=[

@@ -73,6 +73,7 @@ UI.tick=function(dt){
     UI.renderTop(); UI.renderLeft(); if(app.phase==='zoom'){ UI.renderRight(); UI.renderDock(); }
   }
   if(app.phase==='survey'||app.phase==='zoom') UI.updateVitals();
+  if(app.run && app.run.active) UI.renderRunHud();
   if(app.toasts && app.toasts.length) UI.showToast(app.toasts.shift());
   if(app.tutorial){ const s=XS.tutorialStep(); if(s>app.tutorial.step){ app.tutorial.step=s; UI.updateCoach(); } }
 };
@@ -109,7 +110,7 @@ UI.showToast=function(t){ sfx('rank');
 };
 
 /* ---------------- phase router ---------------- */
-UI.renderPhase=function(){ UI.top.style.display='flex'; UI.renderTop(); UI.renderLeft(); UI.renderRight(); UI.renderDock(); if(!XS.app.tutorial && UI.coach) UI.coach.style.display='none'; };
+UI.renderPhase=function(){ UI.top.style.display='flex'; UI.renderTop(); UI.renderLeft(); UI.renderRight(); UI.renderDock(); if(!XS.app.tutorial && UI.coach) UI.coach.style.display='none'; UI.renderRunHud(); };
 
 /* ---------------- top bar ---------------- */
 UI.renderTop=function(){
@@ -475,6 +476,7 @@ UI.showMenu=function(){
     `</div>`+
     `<div class="muted lbl">DIFFICULTY</div><div class="tiers">${tiers}</div>`+
     `<div class="cta"><button class="btn pri" id="startBtn">▶ Receive Assignment</button>`+
+      `<button class="btn ob" id="outbreakBtn">🌊 Outbreak${p.outbreakBest?` · best ${p.outbreakBest}`:''}</button>`+
       `<button class="btn ${!p.tutorialSeen?'pulse':''}" id="tutBtn">🎓 Tutorial</button>`+
       `<button class="btn" id="dailyBtn">🗓 Daily</button><button class="btn" id="codexBtn2">📖 Codex</button>`+
       `<button class="btn" id="achBtn">🏆 ${p.badges.length}/${XS.ACHIEVEMENTS.length}</button></div>`+
@@ -487,6 +489,7 @@ UI.showMenu=function(){
   UI.overlay.querySelectorAll('[data-tier]').forEach(b=>b.onclick=()=>{sfx('click');XS.app.tier=b.dataset.tier;UI.overlay.querySelectorAll('[data-tier]').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');});
   UI.overlay.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{sfx('click');XS.app.mode=b.dataset.mode;UI.overlay.querySelectorAll('[data-mode]').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');});
   $('startBtn').onclick=()=>{ sfx('click'); UI.hideOverlay(); XS.startMission(null,XS.app.tier); UI.renderPhase(); };
+  $('outbreakBtn').onclick=()=>{ sfx('click'); UI.hideOverlay(); XS.startOutbreak(); UI.renderPhase(); };
   $('tutBtn').onclick=()=>{ sfx('click'); UI.hideOverlay(); UI.startTutorial(); };
   $('dailyBtn').onclick=()=>{ sfx('click'); UI.hideOverlay(); XS.startDaily(); UI.renderPhase(); };
   $('codexBtn2').onclick=()=>{sfx('click');UI.showCodex();};
@@ -507,6 +510,7 @@ UI.showAchievements=function(){
 
 UI.showResult=function(){
   if(XS.app.tutorial){ XS.app.tutorial.step=4; UI.updateCoach(); return; }   // tutorial handles its own finish
+  if(XS.app.run && XS.app.run.active) return UI.showOutbreakCase();           // outbreak run · scored interstitial
   const app=XS.app, sc=app.sc, O=XS.OBJECTIVE_INFO[sc.objective], win=app.result.win;
   sfx(win?'win':'lose'); if(app.rankUp) setTimeout(()=>sfx('rank'),650);
   const xpList=app.lastXP.slice(0,5).map(x=>`<div class="xp-row"><span>${x.reason}</span><b>+${x.n}</b></div>`).join('');
@@ -526,6 +530,60 @@ UI.showResult=function(){
   $('nextBtn').onclick=()=>{ sfx('click'); UI.hideOverlay(); XS.startMission(null,XS.app.tier); UI.renderPhase(); };
   $('menuBtn3').onclick=UI.showMenu; $('codexBtn3').onclick=UI.showCodex;
   const cs=$('copyShare'); if(cs) cs.onclick=()=>{ try{ navigator.clipboard.writeText(shareStr); cs.textContent='✓ Copied'; }catch(e){ cs.textContent='select ↑'; } };
+};
+
+/* ---------------- OUTBREAK · scored survival run ---------------- */
+function colonyCol(v){ return v>50?'var(--mint)':v>25?'var(--warn)':'var(--coral)'; }
+UI.showOutbreakCase=function(){ const run=XS.app.run; if(!run) return; const lg=run.lastGrade||{}, sc=XS.app.sc, win=lg.win;
+  sfx(win?'win':'lose');
+  if(run.over) return UI.showOutbreakSummary();
+  const badge = win?`<div class="gradebadge g${lg.g}">${lg.g}</div>`:`<div class="gradebadge lost">✕</div>`;
+  const scoreLine = win
+    ? `<div class="ob-gain">+${lg.gained}<small>pts · solved in ${lg.el}s${run.mod==='double'?' · ⭐ high-value ×2':''}</small></div>`
+    : `<div class="ob-gain lost">Patient lost<small>${(XS.app.result&&XS.app.result.why)||'the case slipped away'} · −34 colony</small></div>`;
+  card(
+    `<div class="sub">Outbreak · Case ${run.caseNum}</div>`+
+    `<div class="ob-head">${badge}<div><div class="verdict ${win?'win':'lose'}" style="font-size:22px;letter-spacing:2px">${win?'CASE CLEARED':'PATIENT LOST'}</div>`+
+      `<div class="muted">${sc?sc.name:''}${sc?' · '+(sc.objective==='preserve'?'preserved':'neutralised'):''}</div></div></div>`+
+    scoreLine+
+    `<div class="ob-stats"><div class="ob-stat"><span>🔥 Combo</span><b>${run.streak} <em>×${run.mult}</em></b></div>`+
+      `<div class="ob-stat"><span>🏆 Score</span><b>${run.score}</b></div>`+
+      `<div class="ob-stat"><span>⭐ Best</span><b>${Math.max(run.score,XS.progress.outbreakBest||0)}</b></div></div>`+
+    `<div class="ob-colonywrap"><div class="cap">Colony vitality</div><div class="ob-track"><i style="width:${run.colony}%;background:${colonyCol(run.colony)}"></i></div></div>`+
+    `<div class="cta"><button class="btn pri" id="obNext">▶ Next case</button><button class="btn" id="obEnd">✕ End run</button></div>`
+  );
+  $('obNext').onclick=()=>{ sfx('click'); UI.hideOverlay(); XS.outbreakNextCase(); UI.renderPhase(); };
+  $('obEnd').onclick=()=>{ sfx('click'); UI.hideOverlay(); UI.showOutbreakSummary(); };
+};
+UI.showOutbreakSummary=function(){ const run=XS.app.run; if(!run){ UI.showMenu(); return; }
+  const best=XS.progress.outbreakBest||0;
+  const share=`XENOSCOPE Outbreak — ${run.cleared} case${run.cleared===1?'':'s'} cleared · ${run.score} pts${run.newBest?' 🏅 new best!':''}`;
+  card(
+    `<div class="sub">Outbreak · run over</div>`+
+    `<div class="verdict ${run.newBest?'win':'lose'}">${run.newBest?'🏅 NEW HIGH SCORE':'OUTBREAK CONTAINED'}</div>`+
+    `<div class="ob-final"><div class="ob-finalscore">${run.score}<small>points</small></div>`+
+      `<div class="ob-finalgrid"><div><b>${run.cleared}</b><span>cases cleared</span></div><div><b>${run.caseNum}</b><span>cases faced</span></div><div><b>${best}</b><span>your best</span></div></div></div>`+
+    `<div class="sharebox"><div class="sharestr" id="shareStr">${share}</div><button class="chipbtn" id="copyShare">📋 Copy result</button></div>`+
+    `<div class="cta"><button class="btn pri" id="obAgain">↺ New run</button><button class="btn" id="obMenu">☰ Menu</button></div>`
+  );
+  $('obAgain').onclick=()=>{ sfx('click'); UI.hideOverlay(); XS.startOutbreak(); UI.renderPhase(); };
+  $('obMenu').onclick=()=>{ sfx('click'); XS.endOutbreak(); UI.hideOverlay(); UI.showMenu(); };
+  const cs=$('copyShare'); if(cs) cs.onclick=()=>{ try{ navigator.clipboard.writeText(share); cs.textContent='✓ Copied'; }catch(e){ cs.textContent='select ↑'; } };
+};
+/* live run HUD strip (re-rendered only when a value changes) */
+UI.renderRunHud=function(){ const run=XS.app.run; let el=document.getElementById('runhud');
+  if(!run||!run.active||XS.app.phase==='menu'||XS.app.phase==='result'){ if(el) el.style.display='none'; return; }
+  if(!el){ el=document.createElement('div'); el.id='runhud'; document.body.appendChild(el); }
+  el.style.display='flex';
+  const t=run.caseStartT?Math.max(0,Math.floor((XS.app.time-run.caseStartT)/1000)):0;
+  const sig=[run.caseNum,Math.round(run.colony),run.score,run.streak,run.mult,t,run.mod].join('|');
+  if(el.dataset.sig===sig) return; el.dataset.sig=sig;
+  const modTag = run.mod==='double'?'<span class="rh-mod dbl">⭐ ×2</span>' : run.mod==='rush'?'<span class="rh-mod rush">⚠ RUSH</span>' : '';
+  el.innerHTML=`<div class="rh-case">CASE ${run.caseNum} ${modTag}</div>`+
+    `<div class="rh-colony"><span>COLONY</span><div class="rh-bar"><i style="width:${run.colony}%;background:${colonyCol(run.colony)}"></i></div></div>`+
+    `<div class="rh-score">🏆 <b>${run.score}</b></div>`+
+    `<div class="rh-combo ${run.streak>=2?'hot':''}">🔥 ${run.streak}${run.streak>=1?` <em>×${run.mult}</em>`:''}</div>`+
+    `<div class="rh-timer">⏱ ${t}s</div>`;
 };
 
 UI.showCodex=function(){

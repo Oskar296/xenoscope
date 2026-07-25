@@ -269,6 +269,43 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border:none;border-ra
 .bench-cta{flex-wrap:wrap} .btn.ghost{opacity:.75}
 @media(max-width:720px){ .benchwrap{flex-direction:column} .bench-col.flaskcol{flex:0 0 auto;order:-1} .ing-grid{max-height:none} .bench-test{flex-direction:column} #sampleCv{flex:0 0 auto} }
 .btn.pri[disabled]{opacity:.4;cursor:default;filter:grayscale(.4)}
+/* outbreak · arcade run */
+.btn.ob{border-color:var(--violet);color:#dcccff;background:linear-gradient(180deg,rgba(140,110,240,.18),rgba(140,110,240,.06))}
+.btn.ob:hover{border-color:#b49cff;box-shadow:0 0 0 1px rgba(180,156,255,.4),0 0 18px rgba(140,110,240,.3)}
+#runhud{position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:8;display:none;align-items:center;gap:14px;
+  padding:7px 14px;border-radius:999px;font-family:var(--mono);font-size:12px;color:var(--ink);
+  background:linear-gradient(180deg,rgba(10,20,26,.9),rgba(6,14,18,.92));border:1px solid var(--line2);
+  box-shadow:0 10px 30px #0009,inset 0 1px 0 rgba(255,255,255,.05);white-space:nowrap;pointer-events:none}
+#runhud b{color:#fff}
+.rh-case{font-weight:700;letter-spacing:1px;color:var(--dim)}
+.rh-mod{margin-left:4px;padding:1px 6px;border-radius:6px;font-weight:700}
+.rh-mod.dbl{color:#ffdf7a;background:rgba(255,210,90,.14)} .rh-mod.rush{color:var(--coral);background:rgba(255,110,90,.15)}
+.rh-colony{display:flex;align-items:center;gap:6px} .rh-colony span{color:var(--dim);font-size:10px;letter-spacing:1px}
+.rh-bar{width:120px;height:8px;border-radius:5px;background:rgba(255,255,255,.08);overflow:hidden}
+.rh-bar>i{display:block;height:100%;border-radius:5px;transition:width .35s ease}
+.rh-combo em{font-style:normal;color:var(--violet)} .rh-combo.hot{color:#ffb454} .rh-combo.hot em{color:#ffb454}
+.rh-timer{color:var(--dim)}
+@media(max-width:640px){ #runhud{gap:9px;font-size:10.5px;padding:6px 9px;flex-wrap:wrap;max-width:94vw} .rh-bar{width:70px} }
+.gradebadge{flex:0 0 auto;width:58px;height:58px;border-radius:14px;display:grid;place-items:center;font-size:30px;font-weight:900;
+  font-family:var(--mono);color:#08120f;box-shadow:0 8px 24px #0008}
+.gradebadge.gS{background:linear-gradient(160deg,#7ff0c0,#40c88f)} .gradebadge.gA{background:linear-gradient(160deg,#9fe0ff,#5aa8e6)}
+.gradebadge.gB{background:linear-gradient(160deg,#ffe08a,#e6b24a)} .gradebadge.gC{background:linear-gradient(160deg,#d7dde2,#a7b0b8)}
+.gradebadge.lost{background:linear-gradient(160deg,#ff8a7a,#d1503f);color:#fff;font-size:26px}
+.ob-head{display:flex;align-items:center;gap:14px;margin:6px 0 10px}
+.ob-gain{font-size:30px;font-weight:800;color:var(--mint);margin:4px 0 12px} .ob-gain.lost{color:var(--coral);font-size:22px}
+.ob-gain small{display:block;font-size:12px;font-weight:500;color:var(--dim);margin-top:3px}
+.ob-stats{display:flex;gap:10px;margin-bottom:12px}
+.ob-stat{flex:1;border:1px solid var(--line2);border-radius:12px;padding:9px 12px;background:rgba(255,255,255,.03)}
+.ob-stat span{display:block;font-size:11px;color:var(--dim)} .ob-stat b{font-size:18px} .ob-stat em{font-style:normal;color:var(--violet);font-size:14px}
+.ob-colonywrap{margin-bottom:4px}
+.ob-track{height:12px;border-radius:7px;background:rgba(255,255,255,.08);overflow:hidden;margin-top:5px}
+.ob-track>i{display:block;height:100%;border-radius:7px;transition:width .4s ease}
+.ob-final{text-align:center;margin:14px 0}
+.ob-finalscore{font-size:52px;font-weight:900;letter-spacing:1px;line-height:1;color:var(--mint)}
+.ob-finalscore small{display:block;font-size:13px;font-weight:500;letter-spacing:3px;color:var(--dim);margin-top:6px}
+.ob-finalgrid{display:flex;gap:10px;margin-top:16px}
+.ob-finalgrid>div{flex:1;border:1px solid var(--line2);border-radius:12px;padding:10px;background:rgba(255,255,255,.03)}
+.ob-finalgrid b{display:block;font-size:22px} .ob-finalgrid span{font-size:11px;color:var(--dim)}
 /* interactive tutorial coach */
 .coach{position:fixed;top:74px;left:50%;transform:translateX(-50%);width:min(600px,94vw);z-index:24;
   background:linear-gradient(180deg,rgba(14,30,34,.97),rgba(9,20,26,.98));border:1px solid var(--aqua);border-radius:16px;
