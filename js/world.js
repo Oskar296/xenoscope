@@ -233,9 +233,9 @@ XS.killAgentsFor=function(cellKey){
 XS.WEAKNESS_WHY={
   hypotonic:'Its cells have no wall — a hypotonic (low-salt) shock floods them until they swell and burst.',
   hypertonic:'Rigid cellulose walls resist bursting, so a hypertonic (high-salt) shock draws water OUT and collapses them (plasmolysis).',
-  antifungal:'Its chitin-walled cells fall to an antifungal that dissolves the fungal wall / membrane.',
+  antifungal:'Its cells fall to an antifungal — a drug aimed at targets only fungi have, like the ergosterol in their membrane or the chitin in their wall.',
   antibiotic:'Its bacterial peptidoglycan wall and 70S ribosomes are exactly what an antibiotic attacks.',
-  detergent:'Antibiotics fail — it has no peptidoglycan. But its ether-lipid membrane dissolves in detergent.',
+  detergent:'Antibiotics fail — an archaeon has no peptidoglycan wall to attack. With no wall to target, you go after its membrane instead: a detergent breaks open the lipid bilayer.',
 };
 
 /* ---------------- pathogens (PRESERVE) ---------------- */
@@ -248,7 +248,7 @@ XS.PATHOGENS={
     why:'An antibiotic attacks the bacterial wall / 70S ribosome, sparing the host.'},
   fungus:   {label:'fungal infection', dx:'Fungus', cure:'antifungal', particle:'fungus',
     tell:'Branching chitin-walled threads (hyphae) creeping through the tissue.',
-    why:'An antifungal disrupts the chitin wall / fungal membrane.'},
+    why:'An antifungal hits fungus-only targets — the ergosterol membrane or the chitin wall.'},
   parasite: {label:'parasitic infection', dx:'Parasite', cure:'antiparasitic', particle:'parasite',
     tell:'Motile, nucleated eukaryotic cells burrowing between the host cells.',
     why:'A eukaryotic parasite shrugs off antibiotics; it needs a targeted antiparasitic.'},
@@ -263,13 +263,13 @@ XS.PATHOGENS={
 /* ---------------- treatment palette (dock) ---------------- */
 XS.TREATMENTS=[
   {id:'antibiotic', label:'Antibiotic',   desc:'Attacks peptidoglycan walls / 70S ribosomes. Kills bacteria only.'},
-  {id:'antifungal', label:'Antifungal',   desc:'Disrupts the chitin wall / fungal membrane. Hits fungi only.'},
+  {id:'antifungal', label:'Antifungal',   desc:'Hits fungus-only targets — the ergosterol membrane or the chitin/glucan wall. Fungi only.'},
   {id:'antiviral',  label:'Antiviral',    desc:'Blocks viral replication. Works only on viruses.'},
   {id:'antiparasitic',label:'Antiparasitic',desc:'Targets eukaryotic parasites; spares the host.'},
   {id:'lysozyme',   label:'Lysozyme',     desc:'An enzyme that cracks peptidoglycan — bursts many bacteria.'},
   {id:'hypotonic',  label:'Osmotic shock',desc:'Floods cells with water. Bursts wall-less cells; walled cells resist.'},
   {id:'hypertonic', label:'Herbicide',    desc:'Draws water out. Plasmolyses walled plant cells.'},
-  {id:'detergent',  label:'Detergent',    desc:'Dissolves lipid membranes — enveloped viruses and archaeal ether-membranes.'},
+  {id:'detergent',  label:'Detergent',    desc:'Dissolves any lipid membrane or viral envelope — the way to hit an archaeon, which has no peptidoglycan for an antibiotic to attack.'},
   {id:'denaturant', label:'Protein denaturant',desc:'Unfolds and breaks down misfolded proteins — the only thing that destroys a prion.'},
   {id:'antitoxin',  label:'Antitoxin',    desc:'Binds and neutralises a chemical toxin. Useless against any living pathogen.'},
   {id:'toxin',      label:'Broad cytotoxin',desc:'A blunt poison that harms almost anything — indiscriminate and reckless.'},
@@ -431,7 +431,7 @@ XS.FORMULATIONS=[
   {items:['pen_mould'],        step:'ferment', agent:'antibiotic',   name:'Penicillin',   source:'Grown from Penicillium mould — the first true antibiotic.'},
   {items:['soil_microbe'],     step:'ferment', agent:'antibiotic',   name:'Streptomycin', source:'Fermented from soil Streptomyces bacteria.'},
   {items:['soil_microbe'],     step:'extract', agent:'antiparasitic',name:'Ivermectin',   source:'The same soil microbe, purified another way, yields an antiparasitic.'},
-  {items:['griseo_mould'],     step:'ferment', agent:'antifungal',   name:'Griseofulvin', source:'A mould secretion that attacks the fungal wall.'},
+  {items:['griseo_mould'],     step:'ferment', agent:'antifungal',   name:'Griseofulvin', source:'A real mould secretion (griseofulvin) that jams a fungus’s cell-division machinery.'},
   {items:['wormwood'],         step:'extract', agent:'antiparasitic',name:'Artemisinin',  source:'Steeped out of sweet wormwood leaves.'},
   {items:['cinchona'],         step:'extract', agent:'antiparasitic',name:'Quinine',      source:'Extracted from cinchona bark — the original antimalarial.'},
   {items:['nucleoside'],       step:'boil',    agent:'antiviral',    name:'Nucleoside analogue', source:'A fake building block that chain-terminates the viral genome.'},
