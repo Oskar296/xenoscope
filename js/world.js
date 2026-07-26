@@ -352,6 +352,68 @@ XS.genMorph=function(base){ const R=Math.random, cl=XS.cl||((v,a,b)=>v<a?a:v>b?b
   return { col, size:0.85+R()*0.32, form, pattern:['spots','stripes','bands','none','none'][Math.floor(R()*5)], glow:0.8+R()*0.5, seed:R()*6.28 };
 };
 
+/* ---------------- ULTRA MODE · named real-world intruders ----------------
+   A roster of famous real pathogens. Each maps onto one of the six affliction
+   KINDS (so the existing assays / visuals / win-logic all still apply), names
+   its real front-line drug, and points at the exact in-game recipe that
+   represents it — synthesising that precise recipe is the "textbook drug of
+   choice" and earns a bonus. Everything here is real medicine. */
+XS.INTRUDERS=[
+  // — viruses (cure class: antiviral · nucleoside analogue) —
+  {id:'sarscov2', name:'SARS-CoV-2', aka:'COVID-19', kind:'virus', drug:'Remdesivir — a nucleoside analogue',
+   recipe:{items:['nucleoside'],step:'boil'},
+   dossier:'An enveloped RNA virus crowned with spike proteins, spread in respiratory droplets. Front-line drug: <b>remdesivir</b>, a nucleoside analogue that stalls its RNA copying.'},
+  {id:'influenza', name:'Influenza', aka:'the flu', kind:'virus', drug:'an antiviral (oseltamivir / Tamiflu)',
+   recipe:{items:['nucleoside'],step:'boil'},
+   dossier:'A fast-mutating RNA virus that reshapes its coat every season. Treated with an antiviral such as <b>oseltamivir</b> (Tamiflu), first made from star-anise.'},
+  {id:'hiv', name:'HIV', aka:'human immunodeficiency virus', kind:'virus', drug:'AZT — a nucleoside reverse-transcriptase inhibitor',
+   recipe:{items:['nucleoside'],step:'boil'},
+   dossier:'A retrovirus that writes its RNA into the host genome. Held in check by antiretrovirals — <b>AZT</b> is a nucleoside analogue that jams that copying.'},
+  {id:'herpes', name:'Herpes simplex', aka:'HSV', kind:'virus', drug:'Acyclovir — a nucleoside analogue',
+   recipe:{items:['nucleoside'],step:'boil'},
+   dossier:'A DNA virus that hides in nerves and flares up. <b>Acyclovir</b>, a nucleoside analogue, shuts down its replication.'},
+  // — bacteria (cure class: antibiotic) —
+  {id:'tb', name:'Tuberculosis', aka:'Mycobacterium tuberculosis', kind:'bacterium', drug:'Rifampicin — a soil-actinomycete antibiotic',
+   recipe:{items:['soil_microbe'],step:'ferment'},
+   dossier:'A slow, waxy-walled lung bacterium. Cured over months with <b>rifampicin</b> — an antibiotic fermented from a soil actinomycete.'},
+  {id:'strep', name:'Strep throat', aka:'Streptococcus', kind:'bacterium', drug:'Penicillin — from Penicillium mould',
+   recipe:{items:['pen_mould'],step:'ferment'},
+   dossier:'A chain-forming bacterium with a peptidoglycan wall. Classic cure: <b>penicillin</b>, grown from Penicillium mould.'},
+  {id:'mrsa', name:'MRSA', aka:'methicillin-resistant Staph', kind:'bacterium', drug:'Vancomycin — a soil-actinomycete glycopeptide',
+   recipe:{items:['soil_microbe'],step:'ferment'},
+   dossier:'A drug-resistant Staph that shrugs off penicillin. Held in reserve: <b>vancomycin</b>, a glycopeptide from a soil actinomycete.'},
+  {id:'cholera', name:'Cholera', aka:'Vibrio cholerae', kind:'bacterium', drug:'a tetracycline antibiotic (from Streptomyces)',
+   recipe:{items:['soil_microbe'],step:'ferment'},
+   dossier:'A comma-shaped waterborne bacterium whose toxin drains the gut. Treated with a <b>tetracycline</b> antibiotic from soil Streptomyces (plus rehydration).'},
+  // — fungi (cure class: antifungal) —
+  {id:'ringworm', name:'Ringworm', aka:'dermatophyte', kind:'fungus', drug:'Griseofulvin — a mould antifungal',
+   recipe:{items:['griseo_mould'],step:'ferment'},
+   dossier:'A skin fungus that eats keratin, spreading in itchy rings. The classic cure is <b>griseofulvin</b> — an antifungal grown from a mould.'},
+  {id:'candida', name:'Candidiasis', aka:'Candida / thrush', kind:'fungus', drug:'an antifungal (an azole or amphotericin)',
+   recipe:{items:['griseo_mould'],step:'ferment'},
+   dossier:'A yeast that overgrows warm, moist tissue. Cleared with an <b>antifungal</b> that hits the fungal membrane or wall.'},
+  // — parasites (cure class: antiparasitic) —
+  {id:'malaria', name:'Malaria', aka:'Plasmodium', kind:'parasite', drug:'Artemisinin — from sweet wormwood',
+   recipe:{items:['wormwood'],step:'extract'},
+   dossier:'A protozoan injected by mosquitoes; it multiplies inside red blood cells. Front-line cure: <b>artemisinin</b>, extracted from sweet wormwood.'},
+  {id:'riverblind', name:'River blindness', aka:'Onchocerca', kind:'parasite', drug:'Ivermectin — from a soil actinomycete',
+   recipe:{items:['soil_microbe'],step:'extract'},
+   dossier:'A parasitic worm spread by blackflies. <b>Ivermectin</b> — purified from a soil actinomycete — clears the larvae.'},
+  // — prion (cure class: denaturant) —
+  {id:'cjd', name:'Creutzfeldt-Jakob', aka:'CJD prion', kind:'prion', drug:'a protein denaturant (nothing living to kill)',
+   recipe:{items:['urea'],step:'boil'},
+   dossier:'Not a living thing — a misfolded protein that forces its neighbours to misfold. It has no genome; only a <b>denaturant</b> that unfolds protein can destroy it.'},
+  // — toxins (cure class: antitoxin) —
+  {id:'botulism', name:'Botulism', aka:'botulinum toxin', kind:'toxin_load', drug:'Antitoxin serum',
+   recipe:{items:['serum'],step:'filter'},
+   dossier:'The most lethal toxin known, made by Clostridium — it paralyses nerves. There is no microbe to kill in the blood; only <b>antitoxin serum</b> neutralises the poison.'},
+  {id:'snakebite', name:'Snake envenomation', aka:'venom', kind:'toxin_load', drug:'Antivenom serum',
+   recipe:{items:['serum'],step:'filter'},
+   dossier:'A cocktail of venom proteins injected by a bite. Countered by <b>antivenom</b> — antibodies purified from an inoculated host’s serum.'},
+];
+XS.intruderRecipeMatches=function(sc,items,step){ const tr=sc&&sc.textbookRecipe; if(!tr||!items||!step) return false;
+  return step===tr.step && items.slice().sort().join('+')===tr.items.slice().sort().join('+'); };
+
 /* ---------------- scenario generation ---------------- */
 XS.buildScenario=function(objective, tier, forceCell){
   const T=(XS.TIERS&&XS.TIERS[tier])||{margin:1};
@@ -369,7 +431,9 @@ XS.buildScenario=function(objective, tier, forceCell){
     evidence:[], clues:{}, tests:{}, diagnosed:false, dxWrong:0, assaysSince:0, recon:false }); });
   const key=pick(regions);
   const nm=pick(A.name)+pick(A.epi);
-  const mode=(XS.app&&XS.app.mode)||'quick', craft=mode==='advanced';
+  const mode=(XS.app&&XS.app.mode)||'quick', ultra=mode==='ultra';
+  if(ultra) objective='preserve';                 // Ultra = synthesise cures for named real diseases
+  const craft=mode==='advanced'||ultra;
   const sc={ objective, archKey:base.cell, A, morph, planet, name:nm,
     regions, keyId:key.id,
     P:0, host:100, resist:0, cured:false, done:false,
@@ -379,7 +443,10 @@ XS.buildScenario=function(objective, tier, forceCell){
     sc.pathType=ptype; sc.agent=XS.PATHOGENS[ptype].cure; sc.dxAnswer=XS.PATHOGENS[ptype].dx;
     key.problem={kind:'pathogen', pathType:ptype};
     sc.brief=`${nm} is failing — something is spreading inside it. Zoom into its tissues, run assays to identify the invader, then ${craft?'synthesise the right cure':'apply the one correct cure'} before the organism dies.`;
-    sc.hostDrain=(2.2/(T.margin||1))*(craft?0.3:1);   // Advanced mode: much more time to think & craft
+    if(ultra){ const poolI=XS.INTRUDERS.filter(i=>i.kind===ptype);
+      if(poolI.length){ const it=pick(poolI); sc.intruder=it; sc.textbookRecipe=it.recipe;
+        sc.brief=`🧬 <b>CASE FILE</b> — the invader in ${nm} matches <b>${it.name}</b> <span class="dim">(${it.aka})</span>. ${it.dossier} Run assays to confirm the kind, then synthesise its real cure at the bench.`; } }
+    sc.hostDrain=(2.2/(T.margin||1))*(craft?0.3:1);   // Advanced/Ultra: much more time to think & craft
   } else {
     sc.agent=XS.killAgentsFor(A.cell)[0]; sc.dxAnswer=XS.KINGDOM_ANSWER[A.cell];
     key.problem={kind:'vital'};

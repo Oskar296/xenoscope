@@ -119,6 +119,7 @@ UI.renderTop=function(){
   const loc = app.phase==='zoom'&&app.zoomRegion ? app.zoomRegion.name : `${sc.A.label} · ${sc.planet.name}`;
   UI.top.innerHTML=
     `<span class="chip ${O.tone}">${O.label}</span>`+
+    (sc.intruder?`<span class="chip ultra">🧬 ${sc.intruder.name}</span>`:'')+
     `<span class="titlewrap"><span class="name">${sc.name}</span><span class="obj2">${loc}</span></span>`+
     `<span class="topgap"></span>`+
     `<span class="rankpill"><span class="rk">${rank.name}</span><span class="xp">${XS.progress.xp}</span></span>`+
@@ -278,7 +279,9 @@ function benchEffective(agent){ const sc=XS.app.sc, r=XS.app.zoomRegion; if(!sc|
 UI.showSynthesis=function(){ const sc=XS.app.sc, r=XS.app.zoomRegion; if(!sc||!r) return;
   let cr=XS.app.craft; if(!cr||!('items'in cr)) cr=XS.app.craft={items:[],step:null,made:null,tested:null};
   cr.items=cr.items||[]; cr.made=null; cr.tested=null;
-  const dxLine = sc.objective==='neutralize'
+  const dxLine = sc.intruder
+    ? `🧬 Case: <b>${sc.intruder.name}</b> <span class="muted">(${sc.intruder.aka})</span> — a <b>${sc.dxAnswer}</b>. Its real cure is <b>${sc.intruder.drug}</b> — synthesise it.`
+    : sc.objective==='neutralize'
     ? `Target organism: <b>${sc.dxAnswer}</b> — make something its biology cannot withstand.`
     : `Diagnosis: <b>${sc.dxAnswer}</b> — make the cure that destroys it, and nothing else.`;
   const ingTiles = XS.INGREDIENTS.map(x=>
@@ -354,13 +357,17 @@ UI.showSynthesis=function(){ const sc=XS.app.sc, r=XS.app.zoomRegion; if(!sc||!r
     const parts=[]; for(let i=0;i<14;i++) parts.push({x:40+Math.random()*220,y:14+Math.random()*58,r:5+Math.random()*4,ph:Math.random()*6});
     sample={parts, t0:performance.now(), eff}; };
   $('benchAdmin').onclick=()=>{ const made=cr.made; if(!made) return;
+    // ULTRA · did they build the exact textbook drug for this named pathogen?
+    const textbook = XS.intruderRecipeMatches(sc, cr.items, cr.step);
     let res=XS.treatRegion(made.agent);
     // a cure you synthesised yourself is administered as a full course — if it's
     // landing (and this isn't a co-infection, which needs a second, DIFFERENT
     // cure), finish the dosing so one correct build treats the patient
     if(res && res.ok && !sc.cures && !sc.cured){ let g=0; while(sc.P<100 && res.ok && g++<8){ const nx=XS.treatRegion(made.agent); if(!nx) break; res=nx; } }
+    if(res && res.ok && textbook && !sc._tbAwarded){ sc._tbAwarded=true; sc.textbookMatch=true; XS.award(20,'Textbook drug: '+(sc.intruder?sc.intruder.name:made.name)); }
     UI.hideOverlay(); if(!res) return; sfx(res.ok?'ok':'err');
-    readoutHTML=`<div class="ro-name" style="color:${res.ok?'var(--mint)':'var(--coral)'}">${res.ok?'✓':'✗'} Administered <b>${made.name}</b> — ${res.msg}</div>`;
+    const tbTag = res.ok&&textbook&&sc.intruder?` <span style="color:var(--aqua)">· ✓ textbook drug of choice</span>`:'';
+    readoutHTML=`<div class="ro-name" style="color:${res.ok?'var(--mint)':'var(--coral)'}">${res.ok?'✓':'✗'} Administered <b>${made.name}</b> — ${res.msg}${tbTag}</div>`;
     UI.renderLeft(); UI.renderRight(); UI.renderDock(); UI.updateVitals();
     if(XS.app.result) UI.showResult(); };
 
@@ -505,7 +512,8 @@ UI.showMenu=function(){
       `<div class="rk-stats"><span>💚 ${p.saves} saved</span><span>☠️ ${p.kills} neutralised</span><span>🧬 ${cx.organelles.length}/${cx.totalOrganelles} organelles</span></div></div>`+
     `<div class="muted lbl">MODE</div><div class="tiers">`+
       `<button class="tierbtn ${XS.app.mode==='quick'?'sel':''}" data-mode="quick"><b>⚡ Quick</b><small>Pick a ready-made treatment. Fast, punchy runs.</small></button>`+
-      `<button class="tierbtn ${XS.app.mode==='advanced'?'sel':''}" data-mode="advanced"><b>⚗ Advanced</b><small>Much more time — and you <b>synthesise the cure yourself</b> from a base + a target.</small></button>`+
+      `<button class="tierbtn ${XS.app.mode==='advanced'?'sel':''}" data-mode="advanced"><b>⚗ Advanced</b><small>Much more time — and you <b>synthesise the cure yourself</b> at the bench.</small></button>`+
+      `<button class="tierbtn ultra ${XS.app.mode==='ultra'?'sel':''}" data-mode="ultra"><b>🧬 Ultra</b><small>Named real diseases — <b>COVID, malaria, MRSA, botulism…</b> Synthesise the actual real drug for each.</small></button>`+
     `</div>`+
     `<div class="muted lbl">DIFFICULTY</div><div class="tiers">${tiers}</div>`+
     `<div class="cta"><button class="btn pri" id="startBtn">▶ Receive Assignment</button>`+
@@ -551,13 +559,14 @@ UI.showResult=function(){
   const xpList=app.lastXP.slice(0,5).map(x=>`<div class="xp-row"><span>${x.reason}</span><b>+${x.n}</b></div>`).join('');
   const rankUp=app.rankUp?`<div class="rankup">⬆ Promoted to <b>${app.rankUp.name}</b>!</div>`:'';
   const flawless=win&&app.missionWrong===0?`<div class="streakline">🎯 Clean diagnosis — no wrong treatments</div>`:'';
+  const ultraBlock=sc.intruder?`<div class="rev ultra">🧬 CASE · <span class="hl">${sc.intruder.name}</span> <span class="muted">(${sc.intruder.aka})</span> · REAL-WORLD DRUG · <span class="hl">${sc.intruder.drug}</span>${win?(sc.textbookMatch?` · <span class="hl" style="color:var(--aqua)">✓ you built the textbook drug</span>`:` <span class="muted">· a valid drug of the right class, though not the classic choice</span>`):''}</div>`:'';
   const shareStr=app.daily?`XENOSCOPE Daily ${XS.dailyKey()} — ${sc.name} ${win?'✅ '+O.label.toLowerCase():'❌ failed'}`:'';
   const dailyBlock=app.daily?`<div class="sharebox"><div class="share-h">🗓 Daily ${XS.dailyKey()}</div><div class="sharestr" id="shareStr">${shareStr}</div><button class="chipbtn" id="copyShare">📋 Copy result</button></div>`:'';
   card(
     `<div class="sub">Field report · ${sc.name}</div>`+
     `<div class="verdict ${win?'win':'lose'}">${win?'✦ '+O.winT:'ASSIGNMENT FAILED'}</div>`+
     `<p>${win?`You correctly ${sc.objective==='preserve'?'diagnosed and cured':'found the weakness of'} <b>${sc.name}</b>, ${sc.A.body}.`:`<b>${sc.name}</b> — ${app.result.why||'the objective was missed'}.`}</p>`+
-    rankUp+flawless+
+    rankUp+flawless+ultraBlock+
     `<div class="rev">CAUSE · <span class="hl">${sc.objective==='preserve'?XS.PATHOGENS[sc.pathType].label:'structural weakness'}</span> · CORRECT TREATMENT · <span class="hl">${XS.agentName(sc.agent)}</span></div>`+
     `<div class="xp-list">${xpList}</div>`+ dailyBlock+
     `<div class="cta"><button class="btn pri" id="nextBtn">▶ Next assignment</button><button class="btn" id="menuBtn3">☰ Menu</button><button class="btn" id="codexBtn3">📖 Codex</button></div>`
