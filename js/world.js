@@ -258,7 +258,26 @@ XS.PATHOGENS={
   toxin_load:{label:'chemical intoxication', dx:'Toxin', cure:'antitoxin', particle:'toxin',
     tell:'No invading organism at all — the cells are dying of an accumulated TOXIN diffusing through the tissue.',
     why:'There is nothing to kill. Only an ANTITOXIN that binds and neutralises the poison will help.'},
+
+  /* ---- XENO (alien) afflictions — biology that breaks Earth's rules ----
+     Each one invalidates an assumption every Earth cure is built on, so the
+     whole normal shelf fails and you need chemistry aimed at the new rule. */
+  silicate:{alien:true, label:'silicate lattice bloom', dx:'Silicate lattice', cure:'fluoride', particle:'silicate',
+    tell:'Angular, glassy crystals growing THROUGH the tissue. The wall assay reads silicon–oxygen, not carbon; there is no membrane and no nucleic acid anywhere.',
+    why:'Its body is a silicon lattice, not carbon chemistry — every Earth drug is shaped to attack carbon-based life and simply slides off. Only FLUORIDE breaks Si–O bonds (it is what etches glass).'},
+  chiral:{alien:true, label:'mirror-life infection', dx:'Mirror-life', cure:'enantiomer', particle:'chiral',
+    tell:'Cells that look utterly ordinary — until the polarimeter shows every sugar and amino acid is the MIRROR IMAGE of ours (D-amino acids, L-sugars).',
+    why:'A drug is a shaped key. Mirror-life has mirror-image locks, so our cures physically cannot bind — they are the wrong hand. Only the ENANTIOMER, the mirrored drug, fits.'},
+  radiotroph:{alien:true, label:'radiotrophic bloom', dx:'Radiotroph', cure:'shielding', particle:'radiotroph',
+    tell:'Densely melanised cells that GROW FASTER the more you irradiate them. Heat and chemical agents barely dent them.',
+    why:'It eats ionising radiation. Poisons and heat are just more energy — they feed it. You cannot kill it, you must STARVE it: neutron-absorbing shielding cuts off its food.'},
+  ammono:{alien:true, label:'ammonia-solvent cell', dx:'Ammono-life', cure:'solvent_shock', particle:'ammono',
+    tell:'Cells thriving at −40 °C whose internal solvent is liquid AMMONIA, not water. The environment probe reads far below anything Earth life tolerates.',
+    why:'Water is not neutral to it — it is a violently reactive solvent that tears ammonia-based biochemistry apart. Our universal solvent is its poison.'},
 };
+XS.isAlienPath=k=>!!(XS.PATHOGENS[k]&&XS.PATHOGENS[k].alien);
+XS.EARTH_PATHS=()=>Object.keys(XS.PATHOGENS).filter(k=>!XS.PATHOGENS[k].alien);
+XS.ALIEN_PATHS =()=>Object.keys(XS.PATHOGENS).filter(k=> XS.PATHOGENS[k].alien);
 
 /* ---------------- treatment palette (dock) ---------------- */
 XS.TREATMENTS=[
@@ -273,6 +292,11 @@ XS.TREATMENTS=[
   {id:'denaturant', label:'Protein denaturant',desc:'Unfolds and breaks down misfolded proteins — the only thing that destroys a prion.'},
   {id:'antitoxin',  label:'Antitoxin',    desc:'Binds and neutralises a chemical toxin. Useless against any living pathogen.'},
   {id:'toxin',      label:'Broad cytotoxin',desc:'A blunt poison that harms almost anything — indiscriminate and reckless.'},
+  // — xeno agents: for biology Earth chemistry can't touch —
+  {id:'fluoride',   label:'Fluoride flux', desc:'Breaks silicon–oxygen bonds. The only thing that dissolves a silicate lattice.'},
+  {id:'enantiomer', label:'Mirror-image drug',desc:'The enantiomer — a drug rebuilt as its own mirror image, so it fits mirror-life’s reversed chemistry.'},
+  {id:'shielding',  label:'Neutron shield', desc:'Boron shielding that starves a radiotroph of the radiation it feeds on.'},
+  {id:'solvent_shock',label:'Aqueous shock',desc:'Warm water — harmless to us, a violently reactive solvent to ammonia-based life.'},
 ];
 XS.agentName=function(id){ const t=XS.TREATMENTS.find(x=>x.id===id); return t?t.label:id; };
 
@@ -312,7 +336,11 @@ XS.ASSAYS=[
       fungus:'has chitin walls and eukaryotic nuclei',
       parasite:'a nucleated, motile eukaryote',
       prion:'NO nucleic acid whatsoever — pure protein, not an organism',
-      toxin_load:'no pathogen nucleic acid at all — no organism here'};
+      toxin_load:'no pathogen nucleic acid at all — no organism here',
+      silicate:'NO nucleic acid and no carbon at all — the signal is silicon and oxygen',
+      chiral:'nucleic acid built from MIRRORED sugars — the helix twists the wrong way',
+      radiotroph:'ordinary nucleic acid, but packed in melanin that converts radiation into growth',
+      ammono:'nucleic-acid-like polymers dissolved in AMMONIA, not water'};
       const f=k=>m[k]||m.parasite;
       const text=(sc&&sc.cures&&sc.pathType2)?('Two invaders: ① '+f(pt)+'; ② '+f(sc.pathType2)+'.'):('The invader '+f(pt)+'.');
       return {clue:'pna', text}; }},
@@ -322,7 +350,11 @@ XS.ASSAYS=[
       fungus:'a tough chitin wall sheaths every thread',
       parasite:'a flexible pellicle, no wall — a naked eukaryotic membrane',
       prion:'no membrane or wall — only aggregated misfolded protein',
-      toxin_load:'nothing to sheath — only diffusing toxin molecules'};
+      toxin_load:'nothing to sheath — only diffusing toxin molecules',
+      silicate:'a rigid glassy shell of silica — not a membrane at all',
+      chiral:'an ordinary-looking membrane built from MIRRORED lipids',
+      radiotroph:'a thick melanin coat that harvests radiation instead of blocking it',
+      ammono:'a membrane that stays fluid in liquid ammonia and would freeze solid in water'};
       const f=k=>m[k]||m.parasite;
       const text=(sc&&sc.cures&&sc.pathType2)?('Two coats: ① '+f(pt)+'; ② '+f(sc.pathType2)+'.'):('The invader shows '+f(pt)+'.');
       return {clue:'pcoat', text}; }},
@@ -431,18 +463,21 @@ XS.buildScenario=function(objective, tier, forceCell){
     evidence:[], clues:{}, tests:{}, diagnosed:false, dxWrong:0, assaysSince:0, recon:false }); });
   const key=pick(regions);
   const nm=pick(A.name)+pick(A.epi);
-  const mode=(XS.app&&XS.app.mode)||'quick', ultra=mode==='ultra';
-  if(ultra) objective='preserve';                 // Ultra = synthesise cures for named real diseases
-  const craft=mode==='advanced'||ultra;
+  const mode=(XS.app&&XS.app.mode)||'quick', ultra=mode==='ultra', alien=mode==='alien';
+  if(ultra||alien) objective='preserve';          // both are "synthesise the cure" modes
+  const craft=mode==='advanced'||ultra||alien;
   const sc={ objective, archKey:base.cell, A, morph, planet, name:nm,
     regions, keyId:key.id,
     P:0, host:100, resist:0, cured:false, done:false,
     tier, mode, craft, sway:Math.random()*Math.PI*2 };
   if(objective==='preserve'){
-    const ptype=pick(Object.keys(XS.PATHOGENS));
+    const ptype=pick(alien?XS.ALIEN_PATHS():XS.EARTH_PATHS());
+    sc.alien=alien;
     sc.pathType=ptype; sc.agent=XS.PATHOGENS[ptype].cure; sc.dxAnswer=XS.PATHOGENS[ptype].dx;
     key.problem={kind:'pathogen', pathType:ptype};
     sc.brief=`${nm} is failing — something is spreading inside it. Zoom into its tissues, run assays to identify the invader, then ${craft?'synthesise the right cure':'apply the one correct cure'} before the organism dies.`;
+    if(alien){ const P=XS.PATHOGENS[ptype];
+      sc.brief=`👽 <b>XENO CASE</b> — whatever is killing ${nm} does not obey Earth biology. ${P.tell} <b>Your entire normal shelf may be useless here.</b> Run the assays, work out which rule it breaks, and synthesise chemistry that answers <em>that</em>.`; }
     if(ultra){ const poolI=XS.INTRUDERS.filter(i=>i.kind===ptype);
       if(poolI.length){ const it=pick(poolI); sc.intruder=it; sc.textbookRecipe=it.recipe;
         sc.brief=`🧬 <b>CASE FILE</b> — the invader in ${nm} matches <b>${it.name}</b> <span class="dim">(${it.aka})</span>. ${it.dossier} Run assays to confirm the kind, then synthesise its real cure at the bench.`; } }
@@ -487,6 +522,10 @@ XS.INGREDIENTS=[
   {id:'ribose',     label:'Ribose sugar',        glyph:'🍬', col:'#ffd9a0', note:'The 5-carbon sugar that forms the backbone of every nucleoside.'},
   {id:'purine',     label:'Modified purine base',glyph:'🔷', col:'#8fbcff', note:'An altered A/G base — the counterfeit letter of the genetic code.'},
   {id:'phosphoryl', label:'Phosphoryl donor',    glyph:'🟣', col:'#c58cff', note:'Adds the phosphate group a nucleoside needs to be incorporated.'},
+  // --- xeno reagents (for biology that isn't carbon-and-water) ---
+  {id:'fluorspar',  label:'Fluorspar ore',       glyph:'🔶', col:'#8fe6e0', note:'Calcium fluoride — react it with acid and it gives up fluoride, the one thing that dissolves silicon–oxygen bonds.'},
+  {id:'chiral_cat', label:'Chiral catalyst',     glyph:'🔁', col:'#ff9ad5', note:'Flips a molecule into its mirror image — turns an ordinary drug into its enantiomer.'},
+  {id:'boron',      label:'Boron mineral',       glyph:'⬜', col:'#b9c6d6', note:'Borax — an exceptional neutron absorber, used for real reactor shielding.'},
   // --- intermediates you SYNTHESISE, not pick up ---
   {id:'nucleoside', label:'Nucleoside stock',    glyph:'🧬', col:'#61c3ff', made:true,
    note:'A counterfeit genome letter. You must build it: ribose sugar + a modified purine base, coupled at 60 °C.'},
@@ -547,6 +586,15 @@ XS.FORMULATIONS=[
    why:'Antibodies are proteins — purify them cold, at fridge temperature <b>4 °C</b>, or they denature and stop binding.'},
   {items:['charcoal'],         step:'filter',  temp:25, tol:10, agent:'antitoxin',   name:'Charcoal binder', source:'Activated charcoal that adsorbs and traps the toxin.',
    why:'Adsorption onto charcoal works fine at room temperature, <b>25 °C</b>.'},
+  // — xeno formulations —
+  {items:['fluorspar','urea'], step:'boil',    temp:120, tol:10, agent:'fluoride',   name:'Fluoride flux', source:'Fluorspar reacted with acid gives hydrogen fluoride — the one chemistry that dissolves a silicon–oxygen lattice.',
+   why:'Driving fluoride off the ore needs a hot <b>120 °C</b> reaction. This is the real process behind glass etching.'},
+  {items:['chiral_cat','ribose'], step:'boil', temp:70, tol:8, agent:'enantiomer',   name:'Mirror-image drug', source:'The catalyst inverts the sugar backbone, building the drug as its own mirror image.',
+   why:'Inversion runs at <b>70 °C</b> — hot enough to flip the centre, cool enough not to scramble it back into a useless mixture.'},
+  {items:['boron'],            step:'filter',  temp:25, tol:12, agent:'shielding',   name:'Boron shield', source:'Milled boron packed around the tissue soaks up the neutrons a radiotroph feeds on.',
+   why:'Purely physical shielding — no reaction needed, so it is prepared at room temperature <b>25 °C</b>.'},
+  {items:['pure_water'],       step:'boil',    temp:70, tol:10, agent:'solvent_shock',name:'Aqueous shock', source:'Warm water — an ordinary solvent to us, a violently reactive one to ammonia-based biochemistry.',
+   why:'Served warm at <b>70 °C</b>: far above liquid ammonia’s range, so the alien solvent chemistry is destroyed on contact.'},
 ];
 /* Resolve the current flask (materials + step [+ temperature]) to a formulation.
    Pass a temp to enforce the exact condition; omit it to just match the recipe. */
@@ -636,9 +684,14 @@ XS.runAssay=function(sc, region, id){
 
 /* the classification / diagnosis options for the key threat */
 XS.identifyOptions=function(sc){
-  return sc.objective==='preserve'
-    ? {kind:'pathogen', prompt:'What is the cause?', options:['Virus','Bacterium','Fungus','Parasite','Prion','Toxin']}
-    : {kind:'class',    prompt:'What kind of organism is this?', options:XS.CLASSIFY.slice()};
+  if(sc.objective!=='preserve') return {kind:'class', prompt:'What kind of organism is this?', options:XS.CLASSIFY.slice()};
+  // XENO cases add the alien afflictions alongside familiar ones — you have to
+  // recognise that Earth categories don't apply here.
+  const alien=sc.alien||XS.isAlienPath(sc.pathType);
+  return {kind:'pathogen', prompt:'What is the cause?',
+    options: alien
+      ? ['Virus','Bacterium','Toxin','Silicate lattice','Mirror-life','Radiotroph','Ammono-life']
+      : ['Virus','Bacterium','Fungus','Parasite','Prion','Toxin']};
 };
 /* the give-away feature of each option — you match this to the evidence you gathered
    (structure from the assays), NOT the particle colour. */
@@ -653,6 +706,10 @@ XS.DX_HALLMARK={
   Plant:'Rigid cellulose wall + chloroplasts (photosynthetic).',
   Archaeon:'Prokaryote with NO peptidoglycan; ether-linked membrane; often an extremophile.',
   Protist:'A single wall-less eukaryotic cell (nucleus present).',
+  'Silicate lattice':'Glassy angular crystal — silicon–oxygen, no carbon, no membrane, no nucleic acid.',
+  'Mirror-life':'Looks like a normal cell, but every sugar and amino acid is the MIRROR image of ours.',
+  Radiotroph:'Heavily melanised cells that grow FASTER under radiation instead of dying.',
+  'Ammono-life':'Thrives at −40 °C — its internal solvent is liquid ammonia, not water.',
 };
 
 /* submit a diagnosis for the current region */

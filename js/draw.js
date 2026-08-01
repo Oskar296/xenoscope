@@ -1101,6 +1101,36 @@ function drawPathogens(kind,t){ ctx.save(); ctx.globalCompositeOperation='lighte
       ctx.fillStyle='rgba(180,255,140,.5)'; ctx.shadowColor='#b4ff8c'; ctx.shadowBlur=10;
       ctx.beginPath(); ctx.arc(x,y,s*0.5,0,6.3); ctx.fill();
       ctx.fillStyle='rgba(180,255,140,.25)'; ctx.beginPath(); ctx.arc(x+Math.sin(t+i)*s,y+Math.cos(t*1.3+i)*s,s*0.3,0,6.3); ctx.fill(); }
+    else if(kind==='silicate'){ // hard angular glass crystal — no membrane at all
+      ctx.save(); ctx.translate(x,y); ctx.rotate(a*0.3);
+      ctx.fillStyle='rgba(160,240,235,.45)'; ctx.strokeStyle='#9ff0ea'; ctx.shadowColor='#9ff0ea'; ctx.shadowBlur=10; ctx.lineWidth=1.4;
+      ctx.beginPath(); ctx.moveTo(0,-s*1.6); ctx.lineTo(s*0.9,-s*0.4); ctx.lineTo(s*0.6,s*1.3);
+      ctx.lineTo(-s*0.6,s*1.3); ctx.lineTo(-s*0.9,-s*0.4); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0,-s*1.6); ctx.lineTo(0,s*1.3); ctx.stroke(); ctx.restore(); }
+    else if(kind==='chiral'){ // mirrored pair — same shape, opposite handedness
+      ctx.save(); ctx.translate(x,y); ctx.rotate(a);
+      ctx.strokeStyle='#ff9ad5'; ctx.shadowColor='#ff9ad5'; ctx.shadowBlur=9; ctx.lineWidth=1.8;
+      for(const sgn of [1,-1]){ ctx.beginPath();
+        for(let k=0;k<=12;k++){ const th=k/12*3.1, px=sgn*(s*0.5+th*s*0.5)*Math.cos(th+t), py=(th-1.5)*s*0.8;
+          k?ctx.lineTo(px,py):ctx.moveTo(px,py); } ctx.stroke(); }
+      ctx.restore(); }
+    else if(kind==='radiotroph'){ // melanised body throwing off absorbed radiation
+      ctx.save(); ctx.translate(x,y);
+      ctx.fillStyle='rgba(40,30,55,.85)'; ctx.shadowColor='#c9a6ff'; ctx.shadowBlur=14;
+      ctx.beginPath(); ctx.arc(0,0,s*0.95,0,6.3); ctx.fill();
+      ctx.strokeStyle=`rgba(210,180,255,${0.45+0.35*Math.sin(t*4+i)})`; ctx.lineWidth=1.3;
+      for(let k=0;k<6;k++){ const aa=k/6*6.283+t; ctx.beginPath();
+        ctx.moveTo(Math.cos(aa)*s*1.15,Math.sin(aa)*s*1.15); ctx.lineTo(Math.cos(aa)*s*1.9,Math.sin(aa)*s*1.9); ctx.stroke(); }
+      ctx.restore(); }
+    else if(kind==='ammono'){ // super-cold ammonia droplet with frost spicules
+      ctx.save(); ctx.translate(x,y);
+      const g=ctx.createRadialGradient(0,0,1,0,0,s*1.5);
+      g.addColorStop(0,'rgba(190,240,255,.85)'); g.addColorStop(1,'rgba(90,170,220,0)');
+      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,0,s*1.5,0,6.3); ctx.fill();
+      ctx.strokeStyle='rgba(210,245,255,.8)'; ctx.lineWidth=1.2;
+      for(let k=0;k<4;k++){ const aa=k/4*6.283+t*0.5; ctx.beginPath();
+        ctx.moveTo(0,0); ctx.lineTo(Math.cos(aa)*s*1.3,Math.sin(aa)*s*1.3); ctx.stroke(); }
+      ctx.restore(); }
     else { ctx.strokeStyle='#ffd27a'; ctx.shadowColor='#ffd27a'; ctx.shadowBlur=8; ctx.lineWidth=2;
       ctx.beginPath(); ctx.moveTo(x-s,y); ctx.quadraticCurveTo(x,y-s*1.5,x+s,y); ctx.quadraticCurveTo(x,y+s*1.5,x-s,y); ctx.stroke(); }
   }

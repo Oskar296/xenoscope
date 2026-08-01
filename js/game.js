@@ -52,7 +52,7 @@ XS.pickObjective=function(){
 };
 XS.startMission=function(objective, tier){
   XS.app.tier=tier||XS.app.tier; XS.app.daily=false; XS.app.tutorial=null;
-  const obj=objective||(XS.app.mode==='ultra'?'preserve':XS.pickObjective()); XS.app.lastObjective=obj;
+  const m=XS.app.mode, obj=objective||((m==='ultra'||m==='alien')?'preserve':XS.pickObjective()); XS.app.lastObjective=obj;
   const sc=XS.buildScenario(obj, XS.app.tier);
   XS.app.sc=sc; XS.app.phase='survey'; XS.app.spec=null; XS.app.zoomRegion=null; XS.app.zoomPathogen=null;
   XS.app.hoverRegion=null; XS.app.hoverPart=null; XS.app.scan=null; XS.app.result=null; XS.app.rankUp=null; XS.app.missionWrong=0;

@@ -89,6 +89,18 @@ standalone page:
   nucleoside analogue? You **synthesise the nucleoside stock first** — **ribose sugar + a
   modified purine base, coupled at 60 °C** (too cold and it won't couple; too hot and the
   sugar caramelises) — *then* use it to make the antiviral.
+- 👽 **Xeno mode — biology that breaks Earth's rules.** The name finally earns itself:
+  afflictions that are *not* carbon-and-water life, where your whole normal shelf fails
+  and you need chemistry aimed at the new rule. A **silicate lattice** built from
+  silicon–oxygen, not carbon — every Earth drug is shaped for carbon life and slides off,
+  so you make a **fluoride flux** (fluorspar + acid at 120 °C — the real chemistry that
+  etches glass). **Mirror-life**, whose every sugar and amino acid is the mirror image of
+  ours, so our drugs are the wrong hand and can't bind — you invert one with a **chiral
+  catalyst** into its **enantiomer**. A **radiotroph** that *eats* radiation, so poisons and
+  heat only feed it — you have to starve it behind a **boron neutron shield**. And
+  **ammono-life** at −40 °C whose solvent is liquid ammonia — to which ordinary **warm
+  water** is a violently destructive solvent. Each one teaches that our "universal" rules
+  are just the assumptions of one biochemistry.
 - 🧬 **Ultra mode — named real diseases.** The bench, but against **15 famous real pathogens** with case‑file dossiers: **COVID‑19, influenza, HIV, herpes, tuberculosis, strep, MRSA, cholera, ringworm, thrush, malaria, river blindness, CJD, botulism, snakebite**. Each names its **actual front‑line drug** and points at the exact recipe that represents it — synthesise the *precise* textbook drug (remdesivir for COVID, artemisinin‑from‑wormwood for malaria, griseofulvin for ringworm, antivenom serum for a bite) and earn a **“textbook drug of choice”** bonus. It teaches where medicine really comes from, not just drug *classes*.
 - 🌊 **Outbreak — a scored survival run.** The arcade heart of the game: cases come
   back‑to‑back against a collapsing **Colony Vitality** bar. Solve fast *and* clean

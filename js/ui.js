@@ -120,6 +120,7 @@ UI.renderTop=function(){
   UI.top.innerHTML=
     `<span class="chip ${O.tone}">${O.label}</span>`+
     (sc.intruder?`<span class="chip ultra">🧬 ${sc.intruder.name}</span>`:'')+
+    (sc.alien?`<span class="chip alien">👽 XENO — non-Earth biology</span>`:'')+
     `<span class="titlewrap"><span class="name">${sc.name}</span><span class="obj2">${loc}</span></span>`+
     `<span class="topgap"></span>`+
     `<span class="rankpill"><span class="rk">${rank.name}</span><span class="xp">${XS.progress.xp}</span></span>`+
@@ -281,7 +282,9 @@ UI.showSynthesis=function(){ const sc=XS.app.sc, r=XS.app.zoomRegion; if(!sc||!r
   cr.items=cr.items||[]; cr.made=null; cr.tested=null;
   if(cr.temp==null) cr.temp=25;                       // bench dial, °C
   cr.stock=cr.stock||{};                              // intermediates you've synthesised
-  const dxLine = sc.intruder
+  const dxLine = sc.alien
+    ? `👽 Diagnosis: <b>${sc.dxAnswer}</b> — non-Earth biology. ${(XS.PATHOGENS[sc.pathType]||{}).why||''}`
+    : sc.intruder
     ? `🧬 Case: <b>${sc.intruder.name}</b> <span class="muted">(${sc.intruder.aka})</span> — a <b>${sc.dxAnswer}</b>. Its real cure is <b>${sc.intruder.drug}</b> — synthesise it.`
     : sc.objective==='neutralize'
     ? `Target organism: <b>${sc.dxAnswer}</b> — make something its biology cannot withstand.`
@@ -514,7 +517,11 @@ UI.showFormulary=function(hi,back){
     const rows=fs.map(f=>`<div class="fm-recipe">${recipeRow(f)}</div>`).join('');
     return `<div class="fm-row${section==='neutralize'?' kill':''}${match?' match':''}"><div class="fm-target">${name}`+
       `<span>${sub}</span>${match?'<em class="fm-tag">◀ your case</em>':''}</div><div class="fm-recipes">${rows}</div></div>`; };
-  const pres=Object.keys(XS.PATHOGENS).map(k=>entry('preserve',XS.PATHOGENS[k].dx,'affliction',[XS.PATHOGENS[k].cure])).join('');
+  const pres=(XS.EARTH_PATHS?XS.EARTH_PATHS():Object.keys(XS.PATHOGENS))
+    .map(k=>entry('preserve',XS.PATHOGENS[k].dx,'affliction',[XS.PATHOGENS[k].cure])).join('');
+  const alienRows=(XS.ALIEN_PATHS?XS.ALIEN_PATHS():[]).map(k=>{const P=XS.PATHOGENS[k];
+    return entry('preserve',P.dx,'xeno affliction',[P.cure]).replace('<div class="fm-recipes">',
+      `<div class="fm-recipes"><div class="fm-why">👽 ${P.why}</div>`);}).join('');
   const kings=[['Monera','Bacterium'],['Archaea','Archaeon'],['Fungi','Fungus'],['Plantae','Plant'],['Animalia','Animal'],['Protista','Protist']];
   const neut=kings.map(([cell,name])=>entry('neutralize',name,'organism',XS.killAgentsFor(cell))).join('');
   const steps=(XS.LAB_STEPS||[]).map(s=>`<span class="fm-step">${s.glyph} <b>${s.label}</b> <small>${s.desc.split(' ').slice(0,6).join(' ')}…</small></span>`).join('');
@@ -525,6 +532,8 @@ UI.showFormulary=function(hi,back){
     (preRows?`<div class="fm-sec-h">Reagents you must build first <em class="pre">intermediates</em></div>`+
       `<p class="muted" style="margin:2px 0 0;font-size:12.5px">Some things aren’t on the shelf — you synthesise them from their own chemical precursors, then use them in a drug recipe.</p>${preRows}`:'')+
     `<div class="fm-sec-h">Saving a sick organism <em class="save">preserve · cure the affliction</em></div>${pres}`+
+    (alienRows?`<div class="fm-sec-h">Non-Earth biology <em class="xeno">xeno · the rules don’t apply</em></div>`+
+      `<p class="muted" style="margin:2px 0 0;font-size:12.5px">Each of these breaks an assumption every Earth cure depends on, so the normal shelf fails and you need chemistry aimed at the new rule.</p>${alienRows}`:'')+
     `<div class="fm-sec-h">Destroying an invader <em class="kill">neutralize · hit the cell’s weakness</em></div>${neut}`+
     `<div class="cta"><button class="btn pri" id="fmClose">${back?'← Back to the bench':'Close'}</button></div>`
   );
@@ -580,6 +589,7 @@ UI.showMenu=function(){
       `<button class="tierbtn ${XS.app.mode==='quick'?'sel':''}" data-mode="quick"><b>⚡ Quick</b><small>Pick a ready-made treatment. Fast, punchy runs.</small></button>`+
       `<button class="tierbtn ${XS.app.mode==='advanced'?'sel':''}" data-mode="advanced"><b>⚗ Advanced</b><small>Much more time — and you <b>synthesise the cure yourself</b> at the bench.</small></button>`+
       `<button class="tierbtn ultra ${XS.app.mode==='ultra'?'sel':''}" data-mode="ultra"><b>🧬 Ultra</b><small>Named real diseases — <b>COVID, malaria, MRSA, botulism…</b> Synthesise the actual real drug for each.</small></button>`+
+      `<button class="tierbtn alien ${XS.app.mode==='alien'?'sel':''}" data-mode="alien"><b>👽 Xeno</b><small><b>Truly alien biology</b> — silicon lattices, mirror-life, radiation-eaters. Earth's whole shelf fails; you need new chemistry.</small></button>`+
     `</div>`+
     `<div class="muted lbl">DIFFICULTY</div><div class="tiers">${tiers}</div>`+
     `<div class="cta"><button class="btn pri" id="startBtn">▶ Receive Assignment</button>`+

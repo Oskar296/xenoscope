@@ -360,6 +360,11 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border:none;border-ra
 .ingt.locked:hover{border-color:var(--coral);background:rgba(255,120,90,.06)}
 .btn.pre{border-color:var(--violet);color:#dcccff;background:linear-gradient(180deg,rgba(140,110,240,.2),rgba(140,110,240,.07))}
 .btn.pre[disabled]{opacity:.4;cursor:default}
+/* xeno mode · alien biology */
+.chip.alien{background:linear-gradient(180deg,rgba(120,240,220,.22),rgba(120,240,220,.08));color:#9ff0ea;border:1px solid rgba(159,240,234,.5);font-weight:700}
+.tierbtn.alien b{color:#7ff0e0}
+.tierbtn.alien.sel{border-color:#7ff0e0;box-shadow:0 0 0 1px #7ff0e0,0 0 22px rgba(127,240,224,.28)}
+.fm-sec-h em.xeno{color:#04201d;background:#7ff0e0}
 /* interactive tutorial coach */
 .coach{position:fixed;top:74px;left:50%;transform:translateX(-50%);width:min(600px,94vw);z-index:24;
   background:linear-gradient(180deg,rgba(14,30,34,.97),rgba(9,20,26,.98));border:1px solid var(--aqua);border-radius:16px;
