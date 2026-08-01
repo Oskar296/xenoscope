@@ -466,23 +466,45 @@ XS.buildScenario=function(objective, tier, forceCell){
    quinine from bark, soap from oil + lye. So you learn where medicine actually
    comes from, not just its name.
 ------------------------------------------------------------ */
-/* RAW MATERIALS — tangible things on the shelf, each a real drug source. */
+/* RAW MATERIALS — tangible things on the shelf, each a real drug source.
+   `made` marks an INTERMEDIATE: not on the shelf at the start, you have to
+   synthesise it from its own precursors first (see XS.PRECURSORS). */
 XS.INGREDIENTS=[
   {id:'pen_mould',  label:'Penicillium mould',   glyph:'🧫', col:'#7fce8e', note:'A blue-green mould — the original source of penicillin.'},
   {id:'soil_microbe',label:'Soil Streptomyces',  glyph:'🟤', col:'#b5824a', note:'Soil bacteria that secrete a huge share of our antibiotics.'},
   {id:'griseo_mould',label:'Griseofulvin mould', glyph:'🍄', col:'#d8c164', note:'A mould whose secretion poisons fungal cells.'},
   {id:'wormwood',   label:'Sweet wormwood',      glyph:'🌿', col:'#7cc257', note:'The leaf that gives artemisinin, a frontline antimalarial.'},
   {id:'cinchona',   label:'Cinchona bark',       glyph:'🪵', col:'#c48a54', note:'Bark that yields quinine — the first antimalarial.'},
-  {id:'nucleoside', label:'Nucleoside stock',    glyph:'🧬', col:'#61c3ff', note:'Building blocks for a fake base that jams genome copying.'},
   {id:'egg_white',  label:'Egg white',           glyph:'🥚', col:'#eee2b6', note:'Rich in lysozyme, an enzyme that cracks bacterial walls.'},
-  {id:'plant_oil',  label:'Plant oil',           glyph:'🫒', col:'#cfa93a', note:'A fat — one half of the recipe for soap.'},
-  {id:'lye',        label:'Lye (wood ash)',      glyph:'🪨', col:'#c3c8ce', note:'A strong alkali — the other half of soap-making.'},
+  {id:'plant_oil',  label:'Plant oil',           glyph:'🫒', col:'#cfa93a', note:'A triglyceride fat — one half of the recipe for soap.'},
+  {id:'lye',        label:'Lye (wood ash)',      glyph:'🪨', col:'#c3c8ce', note:'Sodium hydroxide from leached ash — the alkali that saponifies fat.'},
   {id:'sea_salt',   label:'Sea salt',            glyph:'🧂', col:'#e9eef2', note:'Concentrate it and it pulls water out of cells.'},
   {id:'pure_water', label:'Distilled water',     glyph:'💧', col:'#a9ddff', note:'Purest solvent — floods a wall-less cell until it bursts.'},
   {id:'urea',       label:'Urea / acid',         glyph:'⚗️', col:'#bfa2f2', note:'A chaotrope that unfolds protein structure.'},
   {id:'serum',      label:'Immune serum',        glyph:'🩸', col:'#dc5d5d', note:'Antibodies raised in an inoculated host — the basis of antivenom.'},
   {id:'charcoal',   label:'Activated charcoal',  glyph:'⬛', col:'#41474e', note:'A porous solid that adsorbs and traps a poison.'},
+  // --- precursor chemicals (shelf stock you build intermediates from) ---
+  {id:'ribose',     label:'Ribose sugar',        glyph:'🍬', col:'#ffd9a0', note:'The 5-carbon sugar that forms the backbone of every nucleoside.'},
+  {id:'purine',     label:'Modified purine base',glyph:'🔷', col:'#8fbcff', note:'An altered A/G base — the counterfeit letter of the genetic code.'},
+  {id:'phosphoryl', label:'Phosphoryl donor',    glyph:'🟣', col:'#c58cff', note:'Adds the phosphate group a nucleoside needs to be incorporated.'},
+  // --- intermediates you SYNTHESISE, not pick up ---
+  {id:'nucleoside', label:'Nucleoside stock',    glyph:'🧬', col:'#61c3ff', made:true,
+   note:'A counterfeit genome letter. You must build it: ribose sugar + a modified purine base, coupled at 60 °C.'},
 ];
+/* PRECURSOR SYNTHESIS — build an intermediate from real chemical precursors.
+   Same bench, same dial: exact inputs AND an exact temperature. */
+XS.PRECURSORS=[
+  {items:['ribose','purine'], step:'boil', temp:60, tol:8, makes:'nucleoside', name:'Nucleoside stock',
+   how:'Glycosylation — the purine base is coupled to the ribose sugar at a gentle <b>60 °C</b>. Too cold and it won’t couple; too hot and the sugar caramelises.'},
+];
+XS.precursorResult=function(items,step,temp){
+  if(!items||!items.length||!step) return null;
+  const key=items.slice().sort().join('+');
+  const p=XS.PRECURSORS.find(x=>x.step===step && x.items.slice().sort().join('+')===key);
+  if(!p) return null;
+  const ok = (temp==null) ? false : Math.abs(temp-p.temp)<=p.tol;
+  return {p, ok, temp:p.temp, tol:p.tol};
+};
 /* PREPARATION STEPS — how you work the material (the method matters). */
 XS.LAB_STEPS=[
   {id:'ferment', label:'Ferment', glyph:'🧫', verb:'Culturing…', desc:'Grow a microbe so it secretes its drug.'},
@@ -493,28 +515,48 @@ XS.LAB_STEPS=[
 /* FORMULATIONS — material(s) + the correct step → a real drug.
    Several natural sources make the same class of cure (variety), and one
    material can make different drugs by a different method (soil microbe →
-   antibiotic if fermented, antiparasitic if extracted). */
+   antibiotic if fermented, antiparasitic if extracted).
+   Each carries an EXACT temperature (°C) with a tolerance — the real
+   condition the process runs at, so "heat" is never just "heat". */
 XS.FORMULATIONS=[
-  {items:['pen_mould'],        step:'ferment', agent:'antibiotic',   name:'Penicillin',   source:'Grown from Penicillium mould — the first true antibiotic.'},
-  {items:['soil_microbe'],     step:'ferment', agent:'antibiotic',   name:'Streptomycin', source:'Fermented from soil Streptomyces bacteria.'},
-  {items:['soil_microbe'],     step:'extract', agent:'antiparasitic',name:'Ivermectin',   source:'The same soil microbe, purified another way, yields an antiparasitic.'},
-  {items:['griseo_mould'],     step:'ferment', agent:'antifungal',   name:'Griseofulvin', source:'A real mould secretion (griseofulvin) that jams a fungus’s cell-division machinery.'},
-  {items:['wormwood'],         step:'extract', agent:'antiparasitic',name:'Artemisinin',  source:'Steeped out of sweet wormwood leaves.'},
-  {items:['cinchona'],         step:'extract', agent:'antiparasitic',name:'Quinine',      source:'Extracted from cinchona bark — the original antimalarial.'},
-  {items:['nucleoside'],       step:'boil',    agent:'antiviral',    name:'Nucleoside analogue', source:'A fake building block that chain-terminates the viral genome.'},
-  {items:['egg_white'],        step:'extract', agent:'lysozyme',     name:'Lysozyme',     source:'The wall-cracking enzyme, drawn from egg white.'},
-  {items:['lye','plant_oil'],  step:'boil',    agent:'detergent',    name:'Soap',         source:'Oil + lye, boiled — saponification makes a membrane-dissolving surfactant.'},
-  {items:['sea_salt'],         step:'boil',    agent:'hypertonic',   name:'Concentrated brine', source:'Boiled down to a hypertonic solution that draws water out of walled cells.'},
-  {items:['pure_water'],       step:'filter',  agent:'hypotonic',    name:'Sterile pure water', source:'A hypotonic solvent that floods wall-less cells until they burst.'},
-  {items:['urea'],             step:'boil',    agent:'denaturant',   name:'Hot chaotrope',source:'A heated chaotrope that unfolds protein — the only thing that destroys a prion.'},
-  {items:['serum'],            step:'filter',  agent:'antitoxin',    name:'Antitoxin serum', source:'Purified antibodies that bind and neutralise the poison.'},
-  {items:['charcoal'],         step:'filter',  agent:'antitoxin',    name:'Charcoal binder', source:'Activated charcoal that adsorbs and traps the toxin.'},
+  {items:['pen_mould'],        step:'ferment', temp:24, tol:4, agent:'antibiotic',   name:'Penicillin',   source:'Grown from Penicillium mould — the first true antibiotic.',
+   why:'Penicillium is cultured cool, around <b>24 °C</b>. Fever-warm and the mould stops making penicillin.'},
+  {items:['soil_microbe'],     step:'ferment', temp:28, tol:4, agent:'antibiotic',   name:'Streptomycin', source:'Fermented from soil Streptomyces bacteria.',
+   why:'Soil actinomycetes ferment best at <b>28 °C</b> — soil-warm, not blood-warm.'},
+  {items:['soil_microbe'],     step:'extract', temp:40, tol:8, agent:'antiparasitic',name:'Ivermectin',   source:'The same soil microbe, purified another way, yields an antiparasitic.',
+   why:'A warm <b>40 °C</b> solvent extraction pulls the avermectins out intact.'},
+  {items:['griseo_mould'],     step:'ferment', temp:25, tol:4, agent:'antifungal',   name:'Griseofulvin', source:'A real mould secretion (griseofulvin) that jams a fungus’s cell-division machinery.',
+   why:'Another cool mould culture, about <b>25 °C</b>.'},
+  {items:['wormwood'],         step:'extract', temp:50, tol:8, agent:'antiparasitic',name:'Artemisinin',  source:'Steeped out of sweet wormwood leaves.',
+   why:'Artemisinin is heat-fragile — extract warm at <b>50 °C</b>, never boiling, or you destroy the peroxide bridge that kills the parasite.'},
+  {items:['cinchona'],         step:'extract', temp:80, tol:10, agent:'antiparasitic',name:'Quinine',     source:'Extracted from cinchona bark — the original antimalarial.',
+   why:'Quinine is tough — a hot <b>80 °C</b> steep drives it out of the bark.'},
+  {items:['nucleoside'],       step:'boil',    temp:95, tol:8, agent:'antiviral',    name:'Nucleoside analogue', source:'A fake building block that chain-terminates the viral genome.',
+   why:'Phosphorylating and activating the analogue needs a hard <b>95 °C</b> reaction.'},
+  {items:['egg_white'],        step:'extract', temp:20, tol:6, agent:'lysozyme',     name:'Lysozyme',     source:'The wall-cracking enzyme, drawn from egg white.',
+   why:'Lysozyme is a protein — keep it at room temperature, <b>20 °C</b>. Heat it and you denature the very enzyme you want.'},
+  {items:['lye','plant_oil'],  step:'boil',    temp:100, tol:10, agent:'detergent',  name:'Soap',         source:'Oil + lye, boiled — saponification makes a membrane-dissolving surfactant.',
+   why:'Saponification is a full rolling boil at <b>100 °C</b> to split the fat and form soap.'},
+  {items:['sea_salt'],         step:'boil',    temp:105, tol:10, agent:'hypertonic', name:'Concentrated brine', source:'Boiled down to a hypertonic solution that draws water out of walled cells.',
+   why:'Boil past <b>105 °C</b> — saturated brine boils above pure water — to drive the water off and concentrate it.'},
+  {items:['pure_water'],       step:'filter',  temp:100, tol:12, agent:'hypotonic',  name:'Sterile pure water', source:'A hypotonic solvent that floods wall-less cells until they burst.',
+   why:'Distil at <b>100 °C</b>: steam leaves the salts behind, giving pure, sterile, hypotonic water.'},
+  {items:['urea'],             step:'boil',    temp:134, tol:10, agent:'denaturant', name:'Hot chaotrope',source:'A heated chaotrope that unfolds protein — the only thing that destroys a prion.',
+   why:'Prions survive ordinary boiling. Real prion decontamination is an autoclave at <b>134 °C</b> — that is why this one runs so hot.'},
+  {items:['serum'],            step:'filter',  temp:4, tol:6, agent:'antitoxin',     name:'Antitoxin serum', source:'Purified antibodies that bind and neutralise the poison.',
+   why:'Antibodies are proteins — purify them cold, at fridge temperature <b>4 °C</b>, or they denature and stop binding.'},
+  {items:['charcoal'],         step:'filter',  temp:25, tol:10, agent:'antitoxin',   name:'Charcoal binder', source:'Activated charcoal that adsorbs and traps the toxin.',
+   why:'Adsorption onto charcoal works fine at room temperature, <b>25 °C</b>.'},
 ];
-/* Resolve the current flask (a set of materials + one step) to a formulation. */
-XS.benchResult=function(items,step){
+/* Resolve the current flask (materials + step [+ temperature]) to a formulation.
+   Pass a temp to enforce the exact condition; omit it to just match the recipe. */
+XS.benchResult=function(items,step,temp){
   if(!items||!items.length||!step) return null;
   const key=items.slice().sort().join('+');
-  return XS.FORMULATIONS.find(f=>f.step===step && f.items.slice().sort().join('+')===key)||null;
+  const f=XS.FORMULATIONS.find(f=>f.step===step && f.items.slice().sort().join('+')===key)||null;
+  if(!f) return null;
+  if(temp!=null && f.temp!=null && Math.abs(temp-f.temp)>(f.tol||8)) return null;   // wrong temperature → no product
+  return f;
 };
 /* All recipes that make a given agent (for the field guide). */
 XS.recipesFor=function(agent){ return XS.FORMULATIONS.filter(f=>f.agent===agent); };

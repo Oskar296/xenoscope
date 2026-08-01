@@ -78,6 +78,17 @@ standalone page:
   shield, mutualistic symbiont, virulent, extreme habitat, **co‑infection** (two
   cures), **necrotic decoy** (a false target) and **rapidly‑mutating**.
 - **Three very different modes.** ⚡ **Quick** — pick a ready-made treatment; fast, punchy runs. ⚗ **Advanced** — much more time, and a hands-on **synthesis bench** where you *make* the cure the way real medicine is made: take a **raw natural material** (Penicillium mould, cinchona bark, sweet wormwood, egg white, sea salt, plant oil + lye, immune serum, activated charcoal…) and work it through a real **preparation step** — **ferment, extract, heat/react, filter**. Watch the flask fill, bubble and glow as it resolves into a real drug (penicillin from mould, quinine from bark, soap from oil + lye by saponification, antivenom from serum), then **test it on a cultured sample** — see the invader cells rupture and clear, or shrug it off — before you administer.
+- 🌡 **Precision synthesis.** "Heat" is never just heat — **every process has an exact
+  temperature** you dial in, and it has to be right or nothing usable forms: Penicillium
+  cultures at **24 °C**, artemisinin extracts warm at **50 °C** (boil it and you destroy the
+  peroxide bridge that kills the parasite), saponification needs a **100 °C** rolling boil,
+  antibody serum must be purified cold at **4 °C** or it denatures, and prions need a real
+  **134 °C** autoclave because they survive ordinary boiling. The flask glows and boils
+  harder as you turn up the dial.
+- ⚗️ **Reagents you build from precursors.** Some things aren't on the shelf at all. Need a
+  nucleoside analogue? You **synthesise the nucleoside stock first** — **ribose sugar + a
+  modified purine base, coupled at 60 °C** (too cold and it won't couple; too hot and the
+  sugar caramelises) — *then* use it to make the antiviral.
 - 🧬 **Ultra mode — named real diseases.** The bench, but against **15 famous real pathogens** with case‑file dossiers: **COVID‑19, influenza, HIV, herpes, tuberculosis, strep, MRSA, cholera, ringworm, thrush, malaria, river blindness, CJD, botulism, snakebite**. Each names its **actual front‑line drug** and points at the exact recipe that represents it — synthesise the *precise* textbook drug (remdesivir for COVID, artemisinin‑from‑wormwood for malaria, griseofulvin for ringworm, antivenom serum for a bite) and earn a **“textbook drug of choice”** bonus. It teaches where medicine really comes from, not just drug *classes*.
 - 🌊 **Outbreak — a scored survival run.** The arcade heart of the game: cases come
   back‑to‑back against a collapsing **Colony Vitality** bar. Solve fast *and* clean

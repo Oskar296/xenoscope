@@ -279,14 +279,18 @@ function benchEffective(agent){ const sc=XS.app.sc, r=XS.app.zoomRegion; if(!sc|
 UI.showSynthesis=function(){ const sc=XS.app.sc, r=XS.app.zoomRegion; if(!sc||!r) return;
   let cr=XS.app.craft; if(!cr||!('items'in cr)) cr=XS.app.craft={items:[],step:null,made:null,tested:null};
   cr.items=cr.items||[]; cr.made=null; cr.tested=null;
+  if(cr.temp==null) cr.temp=25;                       // bench dial, °C
+  cr.stock=cr.stock||{};                              // intermediates you've synthesised
   const dxLine = sc.intruder
     ? `🧬 Case: <b>${sc.intruder.name}</b> <span class="muted">(${sc.intruder.aka})</span> — a <b>${sc.dxAnswer}</b>. Its real cure is <b>${sc.intruder.drug}</b> — synthesise it.`
     : sc.objective==='neutralize'
     ? `Target organism: <b>${sc.dxAnswer}</b> — make something its biology cannot withstand.`
     : `Diagnosis: <b>${sc.dxAnswer}</b> — make the cure that destroys it, and nothing else.`;
-  const ingTiles = XS.INGREDIENTS.map(x=>
-    `<button class="ingt" data-ing="${x.id}"><span class="ingsw" style="background:${x.col}"></span>`+
-    `<span class="ingglyph">${x.glyph}</span><span class="ingtx"><b>${x.label}</b></span></button>`).join('');
+  const ingTile = x=>{ const locked = x.made && !cr.stock[x.id];
+    return `<button class="ingt${locked?' locked':''}" data-ing="${x.id}"><span class="ingsw" style="background:${x.col}"></span>`+
+    `<span class="ingglyph">${x.glyph}</span><span class="ingtx"><b>${x.label}</b>`+
+    (x.made?`<em>${locked?'🔒 must be synthesised':'✓ synthesised'}</em>`:'')+`</span></button>`; };
+  const ingTiles = XS.INGREDIENTS.map(ingTile).join('');
   const stepTiles = XS.LAB_STEPS.map(s=>
     `<button class="stept" data-step="${s.id}"><span class="stepglyph">${s.glyph}</span>`+
     `<span class="steptx"><b>${s.label}</b><small>${s.desc}</small></span></button>`).join('');
@@ -298,11 +302,15 @@ UI.showSynthesis=function(){ const sc=XS.app.sc, r=XS.app.zoomRegion; if(!sc||!r
       `<div class="bench-col flaskcol"><canvas id="benchCv" width="240" height="272"></canvas>`+
         `<div class="flask-label" id="flaskLabel">Empty flask</div></div>`+
       `<div class="bench-col stepcol"><div class="cap">② Prepare it</div><div class="step-grid">${stepTiles}</div>`+
+        `<div class="tempwrap"><div class="cap">③ Exact temperature <b class="tempval" id="tempVal">${cr.temp} °C</b></div>`+
+          `<input type="range" id="tempDial" class="tempdial" min="0" max="150" step="1" value="${cr.temp}">`+
+          `<div class="temphint" id="tempHint">Every process has one right temperature.</div></div>`+
         `<div class="bench-read" id="benchRead">Pick a raw material to begin.</div></div>`+
     `</div>`+
     `<div class="bench-test" id="benchTest" style="display:none"><canvas id="sampleCv" width="300" height="86"></canvas><div class="bench-testtx" id="benchTestTx"></div></div>`+
     `<div class="cta bench-cta"><button class="btn ghost" id="benchEmpty">🗑 Empty</button>`+
       `<button class="btn help" id="benchGuide">📖 Formulary</button>`+
+      `<button class="btn pre" id="benchPre" style="display:none" disabled>⚗ Synthesise reagent</button>`+
       `<button class="btn" id="benchTestBtn" disabled>🧪 Test on a sample</button>`+
       `<button class="btn pri" id="benchAdmin" disabled>💉 Administer</button>`+
       `<button class="btn" id="benchCancel">Back</button></div>`);
@@ -315,37 +323,75 @@ UI.showSynthesis=function(){ const sc=XS.app.sc, r=XS.app.zoomRegion; if(!sc||!r
   UI._benchLoop=(UI._benchLoop||0)+1; const myLoop=UI._benchLoop;
 
   const refresh=()=>{
-    UI.overlay.querySelectorAll('[data-ing]').forEach(b=>b.classList.toggle('sel',cr.items.includes(b.dataset.ing)));
+    UI.overlay.querySelectorAll('[data-ing]').forEach(b=>{ b.classList.toggle('sel',cr.items.includes(b.dataset.ing));
+      const x=XS.INGREDIENTS.find(i=>i.id===b.dataset.ing);
+      if(x&&x.made){ const lk=!cr.stock[x.id]; b.classList.toggle('locked',lk);
+        const em=b.querySelector('em'); if(em) em.textContent=lk?'🔒 must be synthesised':'✓ synthesised'; } });
     UI.overlay.querySelectorAll('[data-step]').forEach(b=>b.classList.toggle('sel',cr.step===b.dataset.step));
-    const made=XS.benchResult(cr.items,cr.step); cr.made=made;
+    // is this flask a PRECURSOR synthesis (building an intermediate) or a drug?
+    const pre=XS.precursorResult(cr.items,cr.step,cr.temp);
+    const madeExact=XS.benchResult(cr.items,cr.step,cr.temp);      // temperature enforced
+    const madeLoose=XS.benchResult(cr.items,cr.step);              // right inputs, maybe wrong heat
+    const made=madeExact; cr.made=made; cr.pre=pre;
     const cols=cr.items.map(id=>{const x=XS.INGREDIENTS.find(i=>i.id===id);return x?x.col:'#888';});
     st.target = cr.items.length?Math.min(1,0.28+cr.items.length*0.22):0;
     st.rgb = blendCols(cols);
-    const lbl=$('flaskLabel'); const read=$('benchRead');
-    if(made){ lbl.textContent='✓ '+made.name; lbl.className='flask-label ok'; }
+    st.hot = Math.max(0, Math.min(1,(cr.temp-40)/110));            // glow ramps with heat
+    const lbl=$('flaskLabel'), read=$('benchRead'), hint=$('tempHint'), tv=$('tempVal');
+    if(tv) tv.textContent=cr.temp+' °C';
+    // temperature guidance: only reveal the target once the inputs+method are right
+    const want = madeLoose||(pre&&pre.p);
+    if(hint){ if(want){ const t=want.temp, d=cr.temp-t;
+        hint.innerHTML = Math.abs(d)<=(want.tol||8) ? `<span class="ok">✓ on target — ${t} °C</span>`
+          : `<span class="bad">${d<0?'🔻 too cold':'🔺 too hot'}</span> · this process needs <b>${t} °C</b>`;
+      } else hint.innerHTML='Every process has one right temperature.'; }
+    if(made||(pre&&pre.ok)){ lbl.textContent='✓ '+(made?made.name:pre.p.name); lbl.className='flask-label ok'; }
     else if(cr.items.length){ lbl.textContent=cr.items.map(id=>XS.INGREDIENTS.find(i=>i.id===id).label).join(' + '); lbl.className='flask-label'; }
     else { lbl.textContent='Empty flask'; lbl.className='flask-label muted'; }
     if(!cr.items.length) read.innerHTML='Pick a raw material to begin.';
-    else if(!cr.step) read.innerHTML='Now choose how to <b>prepare</b> it.';
+    else if(!cr.step) read.innerHTML='Now choose how to <b>prepare</b> it — then dial in the exact temperature.';
+    else if(pre){ read.innerHTML = pre.ok
+        ? `⚗ <b>${pre.p.name}</b> synthesised — it’s on the shelf now. <div class="muted">${pre.p.how}</div>`
+        : `Right precursors for <b>${pre.p.name}</b>, wrong heat. <div class="muted">${pre.p.how}</div>`; }
     else if(made){ const an=XS.agentName(made.agent).toLowerCase(), art=/^[aeiou]/.test(an)?'an':'a';
-      read.innerHTML=`✔ You made <b>${made.name}</b> — ${art} <b>${an}</b>.<div class="muted">${made.source}</div>`; }
-    else read.innerHTML='✗ Nothing usable forms this way. Try a different material or a different method.';
-    read.className='bench-read '+(made?'ok':(cr.items.length&&cr.step?'bad':''));
+      read.innerHTML=`✔ You made <b>${made.name}</b> — ${art} <b>${an}</b>.<div class="muted">${made.source}</div>`+
+        (made.why?`<div class="muted">🌡 ${made.why}</div>`:''); }
+    else if(madeLoose){ read.innerHTML=`Right ingredients and method for <b>${madeLoose.name}</b> — but the temperature is wrong, so nothing usable forms.`+
+        (madeLoose.why?`<div class="muted">🌡 ${madeLoose.why}</div>`:''); }
+    else read.innerHTML='✗ Nothing usable forms this way. Try different materials, another method, or a different temperature.';
+    read.className='bench-read '+((made||(pre&&pre.ok))?'ok':(cr.items.length&&cr.step?'bad':''));
+    // precursor flasks produce a reagent, not a treatment
+    const pb=$('benchPre'); if(pb){ pb.style.display=pre?'':'none'; pb.disabled=!(pre&&pre.ok); }
     $('benchTestBtn').disabled=!made; $('benchAdmin').disabled=!made;
-    if(made) st.glow=1;
+    if(made||(pre&&pre.ok)) st.glow=1;
   };
 
   UI.overlay.querySelectorAll('[data-ing]').forEach(b=>b.onclick=()=>{ const id=b.dataset.ing;
-    if(cr.items.includes(id)) cr.items=cr.items.filter(x=>x!==id);
+    const x=XS.INGREDIENTS.find(i=>i.id===id);
+    if(x&&x.made&&!cr.stock[id]&&!cr.items.includes(id)){    // locked intermediate — must be built first
+      sfx('err'); const read=$('benchRead');
+      read.className='bench-read bad';
+      read.innerHTML=`🔒 <b>${x.label}</b> isn’t on the shelf — you have to <b>synthesise</b> it first.<div class="muted">${x.note}</div>`;
+      return; }
+    if(cr.items.includes(id)) cr.items=cr.items.filter(y=>y!==id);
     else if(cr.items.length<3) cr.items.push(id); else return;
-    sfx('click'); const x=XS.INGREDIENTS.find(i=>i.id===id);
+    sfx('click');
     $('benchTest').style.display='none'; sample=null; refresh();
-    const read=$('benchRead'); if(cr.items.includes(id)&&x) read.innerHTML=`<b>${x.label}.</b> ${x.note}`; });
+    const read=$('benchRead'); if(cr.items.includes(id)&&x&&!cr.step) read.innerHTML=`<b>${x.label}.</b> ${x.note}`; });
+  const dial=$('tempDial'); if(dial){ dial.oninput=()=>{ cr.temp=+dial.value; $('benchTest').style.display='none'; sample=null; refresh(); };
+    dial.onchange=()=>sfx('blip'); }
   UI.overlay.querySelectorAll('[data-step]').forEach(b=>b.onclick=()=>{ cr.step=(cr.step===b.dataset.step)?null:b.dataset.step;
     sfx('blip'); st.flash=1; $('benchTest').style.display='none'; sample=null; refresh(); });
 
   $('benchEmpty').onclick=()=>{ sfx('click'); cr.items=[]; cr.step=null; $('benchTest').style.display='none'; sample=null; refresh(); };
   $('benchGuide').onclick=()=>{ sfx('click'); UI.showFormulary({agent:sc.agent,objective:sc.objective}, true); };
+  $('benchPre').onclick=()=>{ const pre=cr.pre; if(!pre||!pre.ok) return; sfx('ok');
+    cr.stock[pre.p.makes]=true;                       // the intermediate is now on the shelf
+    if(!XS.progress.reagents) XS.progress.reagents=[];
+    if(!XS.progress.reagents.includes(pre.p.makes)){ XS.progress.reagents.push(pre.p.makes); XS.award(8,'Synthesised: '+pre.p.name); XS.saveProgress(); }
+    cr.items=[]; cr.step=null; st.flash=1; refresh();
+    const read=$('benchRead'); read.className='bench-read ok';
+    read.innerHTML=`⚗ <b>${pre.p.name}</b> is on the shelf — now use it to build the drug.<div class="muted">${pre.p.how}</div>`; };
   $('benchCancel').onclick=()=>{ UI.hideOverlay(); };
   $('benchTestBtn').onclick=()=>{ if(!cr.made) return; const eff=benchEffective(cr.made.agent);
     sfx(eff?'ok':'err'); const tp=$('benchTest'); tp.style.display=''; const tx=$('benchTestTx');
@@ -358,7 +404,7 @@ UI.showSynthesis=function(){ const sc=XS.app.sc, r=XS.app.zoomRegion; if(!sc||!r
     sample={parts, t0:performance.now(), eff}; };
   $('benchAdmin').onclick=()=>{ const made=cr.made; if(!made) return;
     // ULTRA · did they build the exact textbook drug for this named pathogen?
-    const textbook = XS.intruderRecipeMatches(sc, cr.items, cr.step);
+    const textbook = XS.intruderRecipeMatches(sc, cr.items, cr.step);   // temp already enforced to make the drug
     let res=XS.treatRegion(made.agent);
     // a cure you synthesised yourself is administered as a full course — if it's
     // landing (and this isn't a co-infection, which needs a second, DIFFERENT
@@ -391,11 +437,13 @@ UI.showSynthesis=function(){ const sc=XS.app.sc, r=XS.app.zoomRegion; if(!sc||!r
       // surface shimmer
       ctx.fillStyle=`rgba(255,255,255,0.18)`; ctx.beginPath();
       ctx.ellipse(120,level+Math.sin(now/500)*1.5,72,6,0,0,Math.PI*2); ctx.fill();
-      // bubbles while heating / fermenting
-      if(cr.made && (cr.step==='boil'||cr.step==='ferment')){
-        ctx.fillStyle='rgba(255,255,255,0.5)';
-        for(let i=0;i<7;i++){ const p=((now/900)+i/7)%1; const bx=70+((i*53)%110); const byb=by-p*(by-level-8);
-          ctx.beginPath(); ctx.arc(bx, byb, 2+ (i%3), 0, Math.PI*2); ctx.fill(); }
+      // bubbles — more and faster the hotter the dial is set
+      const heat=st.hot||0;
+      if(heat>0.05 || (cr.made&&cr.step==='ferment')){
+        const n=Math.round(2+heat*10), spd=700-heat*420;
+        ctx.fillStyle=`rgba(255,255,255,${0.35+heat*0.35})`;
+        for(let i=0;i<n;i++){ const p=((now/spd)+i/n)%1; const bx=62+((i*47)%126); const byb=by-p*(by-level-8);
+          ctx.beginPath(); ctx.arc(bx, byb, 1.5+(i%3)+heat*1.5, 0, Math.PI*2); ctx.fill(); }
       }
     }
     ctx.restore();
@@ -405,6 +453,11 @@ UI.showSynthesis=function(){ const sc=XS.app.sc, r=XS.app.zoomRegion; if(!sc||!r
     ctx.beginPath(); ctx.moveTo(nx1+2,ny+4); ctx.lineTo(nx1+2,sh); ctx.lineTo(bx1+6,by-4); ctx.stroke();
     ctx.lineWidth=4; ctx.strokeStyle='rgba(210,240,248,0.95)';
     ctx.beginPath(); ctx.moveTo(nx1-9,ny); ctx.lineTo(nx2+9,ny); ctx.stroke();   // lip
+    // heat halo under the flask — reads the dial even before a product forms
+    if((st.hot||0)>0.05){ const h=st.hot; ctx.save(); ctx.globalAlpha=Math.min(0.75,h*0.9);
+      const hg=ctx.createRadialGradient(120,by+6,2,120,by+6,70);
+      hg.addColorStop(0,`rgba(255,${Math.round(190-h*120)},60,0.85)`); hg.addColorStop(1,'rgba(255,90,20,0)');
+      ctx.fillStyle=hg; ctx.beginPath(); ctx.ellipse(120,by+6,72,20,0,0,Math.PI*2); ctx.fill(); ctx.restore(); }
     if(st.glow>0.02){ ctx.save(); ctx.globalAlpha=st.glow*0.9; ctx.shadowColor='#5ff0c0'; ctx.shadowBlur=26;
       ctx.lineWidth=3; ctx.strokeStyle='rgba(95,240,192,0.9)'; ctx.stroke(); ctx.restore(); }
     if(st.flash>0.02){ ctx.save(); ctx.globalAlpha=st.flash*0.6; ctx.fillStyle='#fff';
@@ -443,8 +496,19 @@ UI.showFormulary=function(hi,back){
   const recipeRow=f=>{ const st=(XS.LAB_STEPS||[]).find(s=>s.id===f.step)||{};
     const mats=f.items.map(id=>{const x=(XS.INGREDIENTS||[]).find(i=>i.id===id)||{label:id,col:'#888'};
       return `<span class="fm-chip mat"><span class="fm-d" style="background:${x.col}"></span>${x.label}</span>`;}).join('<span class="fm-op">+</span>');
-    return `${mats}<span class="fm-op">+</span><span class="fm-chip step">${st.glyph||''} ${st.label||f.step}</span>`+
+    const tmp=(f.temp!=null)?`<span class="fm-op">@</span><span class="fm-chip temp">🌡 ${f.temp} °C</span>`:'';
+    return `${mats}<span class="fm-op">+</span><span class="fm-chip step">${st.glyph||''} ${st.label||f.step}</span>${tmp}`+
       `<span class="fm-op">→</span><span class="fm-chip drug">${XS.agentName(f.agent)}</span>`; };
+  // intermediates you must build first, shown as their own sub-recipes
+  const preRows=(XS.PRECURSORS||[]).map(p=>{ const st=(XS.LAB_STEPS||[]).find(s=>s.id===p.step)||{};
+    const mats=p.items.map(id=>{const x=(XS.INGREDIENTS||[]).find(i=>i.id===id)||{label:id,col:'#888'};
+      return `<span class="fm-chip mat"><span class="fm-d" style="background:${x.col}"></span>${x.label}</span>`;}).join('<span class="fm-op">+</span>');
+    const out=(XS.INGREDIENTS||[]).find(i=>i.id===p.makes)||{label:p.makes,col:'#61c3ff'};
+    return `<div class="fm-row"><div class="fm-target">${p.name}<span>intermediate</span></div><div class="fm-recipes">`+
+      `<div class="fm-recipe">${mats}<span class="fm-op">+</span><span class="fm-chip step">${st.glyph||''} ${st.label||p.step}</span>`+
+      `<span class="fm-op">@</span><span class="fm-chip temp">🌡 ${p.temp} °C</span><span class="fm-op">→</span>`+
+      `<span class="fm-chip mat"><span class="fm-d" style="background:${out.col}"></span>${out.label}</span></div>`+
+      `<div class="fm-why">${p.how}</div></div></div>`; }).join('');
   const entry=(section,name,sub,agents)=>{ const fs=[]; agents.forEach(a=>(XS.recipesFor(a)||[]).forEach(f=>fs.push(f)));
     const match = hi && hi.objective===section && agents.some(a=>a===hi.agent);
     const rows=fs.map(f=>`<div class="fm-recipe">${recipeRow(f)}</div>`).join('');
@@ -456,8 +520,10 @@ UI.showFormulary=function(hi,back){
   const steps=(XS.LAB_STEPS||[]).map(s=>`<span class="fm-step">${s.glyph} <b>${s.label}</b> <small>${s.desc.split(' ').slice(0,6).join(' ')}…</small></span>`).join('');
   card(
     `<div class="sub">Field formulary · how to build any cure</div><h2>Make the right cure</h2>`+
-    `<p class="muted">Pick a <b>raw material</b> + a <b>preparation step</b>. The material decides <em>which</em> drug you get; the step is the correct method — then match the drug to your diagnosis.</p>`+
+    `<p class="muted">Pick a <b>raw material</b> + a <b>preparation step</b> + the <b>exact temperature</b>. The material decides <em>which</em> drug you get, the step is the correct method, and the heat has to be right — a real process only runs in its own narrow window.</p>`+
     `<div class="fm-steps">${steps}</div>`+
+    (preRows?`<div class="fm-sec-h">Reagents you must build first <em class="pre">intermediates</em></div>`+
+      `<p class="muted" style="margin:2px 0 0;font-size:12.5px">Some things aren’t on the shelf — you synthesise them from their own chemical precursors, then use them in a drug recipe.</p>${preRows}`:'')+
     `<div class="fm-sec-h">Saving a sick organism <em class="save">preserve · cure the affliction</em></div>${pres}`+
     `<div class="fm-sec-h">Destroying an invader <em class="kill">neutralize · hit the cell’s weakness</em></div>${neut}`+
     `<div class="cta"><button class="btn pri" id="fmClose">${back?'← Back to the bench':'Close'}</button></div>`
