@@ -53,6 +53,27 @@ const R_MICROBE=[
   {id:'matrix',name:'Matrix layer',  tissue:'shared matrix',  x:0.06, y:0.06},
   {id:'base',  name:'Basal film',    tissue:'anchoring film', x:-0.06,y:0.46},
 ];
+/* ---- XENO anatomies: alien organisms don't have Earth tissues ---- */
+const R_CRYSTAL=[
+  {id:'apex',   name:'Growth apex',     tissue:'accreting crystal face', x:0.01, y:-0.46},
+  {id:'lattice',name:'Lattice body',    tissue:'silicate framework',     x:-0.14,y:0.06},
+  {id:'base',   name:'Anchor foot',     tissue:'mineral substrate bond', x:0.06, y:0.50},
+];
+const R_PLASMA=[
+  {id:'core',   name:'Plasma core',     tissue:'ionised core',           x:0.0,  y:-0.06},
+  {id:'loops',  name:'Confinement loops',tissue:'magnetic field lines',  x:0.34, y:-0.34},
+  {id:'halo',   name:'Discharge halo',  tissue:'outer discharge shell',  x:-0.34,y:0.30},
+];
+const R_CRYO=[
+  {id:'bell',   name:'Rimed envelope',  tissue:'frost-sheathed membrane',x:0.0,  y:-0.40},
+  {id:'vac',    name:'Ammonia reservoir',tissue:'solvent vacuole',       x:0.06, y:0.10},
+  {id:'fringe', name:'Spicule fringe',  tissue:'frost spicules',         x:-0.30,y:0.34},
+];
+const R_METAL=[
+  {id:'crust',  name:'Oxide crust',     tissue:'metal-oxide armour',     x:0.0,  y:-0.30},
+  {id:'vent',   name:'Redox vents',     tissue:'ion-respiring pores',    x:0.24, y:0.14},
+  {id:'seam',   name:'Mineral seam',    tissue:'metal-depositing seam',  x:-0.26,y:0.42},
+];
 const R_BY_PLAN={
   beast:R_ANIMAL, medusa:R_ANIMAL, arthropod:R_ANIMAL, tentacled:R_ANIMAL, worm:R_ANIMAL,
   anemone:R_ANIMAL, crinoid:R_ANIMAL, sponge:R_ANIMAL, starfish:R_ANIMAL, combjelly:R_ANIMAL, winged:R_ANIMAL, snail:R_ANIMAL,
@@ -60,6 +81,8 @@ const R_BY_PLAN={
   mushroom:R_FUNGI, bracket:R_FUNGI, coral:R_FUNGI, puffball:R_FUNGI, mold:R_FUNGI, lichen:R_FUNGI,
   amoeba:R_PROTIST, ciliate:R_PROTIST, diatom:R_PROTIST, radiolarian:R_PROTIST, urchin:R_PROTIST, slimemold:R_PROTIST, dino:R_PROTIST, foram:R_PROTIST,
   colony:R_MICROBE,
+  crystalspire:R_CRYSTAL, geodecluster:R_CRYSTAL, plasmawisp:R_PLASMA,
+  cryodrifter:R_CRYO, rustbloom:R_METAL, ferrovein:R_METAL,
 };
 
 /* per-plan hotspot positions — each body-plan is drawn differently, so the
@@ -218,6 +241,20 @@ XS.SPECIES=[
     blurb:'A single-celled protist in cellulose armour plates, spun through the water by two flagella.'},
   {id:'foram', name:['Fora','Globi','Nummu'], epi:[' chamber',' coil',' test'], kingdom:'Protist', body:'a chambered foraminiferan protist', plan:'foram', cell:'Protista', col:[230,215,180], size:1.0, form:{}, minXP:150,
     blurb:'A single-celled protist that builds a many-chambered mineral shell and feeds through a net of fine threads.'},
+
+  /* ---- XENO SPECIES — first-contact organisms with no Earth ancestry ---- */
+  {id:'crystalspire', alien:true, name:['Crysta','Silico','Quartzo'], epi:[' spire',' prism',' geode'], kingdom:'Silicoid', body:'a self-assembling silicate crystal organism', plan:'crystalspire', cell:'Silicoid', col:[159,240,234], size:1.1, form:{}, minXP:0,
+    blurb:'A tower of interlocking silicon–oxygen prisms that grows by laying down dissolved mineral. It never divides, never eats, and has no genome — yet it repairs damage and reproduces by fracture.'},
+  {id:'geodeling', alien:true, name:['Litho','Druse','Vitrea'], epi:[' nodule',' druse',' cluster'], kingdom:'Silicoid', body:'a nodular silicate accretion colony', plan:'geodecluster', cell:'Silicoid', col:[186,246,240], size:1.0, form:{}, minXP:80,
+    blurb:'A hollow mineral nodule lined with inward-facing crystal teeth, thickening ring by ring like a stalactite.'},
+  {id:'plasmawisp', alien:true, name:['Aurora','Ioni','Corona'], epi:[' wisp',' veil',' flare'], kingdom:'Plasmoid', body:'a magnetically bound plasma organism', plan:'plasmawisp', cell:'Plasmoid', col:[255,154,213], size:1.15, form:{}, minXP:0,
+    blurb:'A living knot of ionised gas that holds its own shape with self-generated magnetic loops. There is no matter to poison here — only a field to collapse.'},
+  {id:'cryodrifter', alien:true, name:['Cryo','Glacio','Boreal'], epi:[' drifter',' bloom',' frond'], kingdom:'Ammonoid', body:'an ammonia-solvent cryophile', plan:'cryodrifter', cell:'Ammonoid', col:[169,221,255], size:1.05, form:{}, minXP:0,
+    blurb:'A genuine cell — nucleus, membrane, ribosomes — but built around liquid ammonia at −40 °C. Familiar architecture, alien solvent.'},
+  {id:'rustbloom', alien:true, name:['Ferro','Oxido','Mangano'], epi:[' bloom',' crust',' vein'], kingdom:'Metallophyte', body:'a metal-respiring lithotroph', plan:'rustbloom', cell:'Metallophyte', col:[185,163,122], size:1.0, form:{}, minXP:0,
+    blurb:'A rock-eater that oxidises dissolved iron for energy and armours itself in the rust it excretes. It needs neither sunlight nor prey.'},
+  {id:'ferrovein', alien:true, name:['Cupro','Magneto','Siderite'], epi:[' vein',' seam',' lattice'], kingdom:'Metallophyte', body:'a branching metallic vein colony', plan:'ferrovein', cell:'Metallophyte', col:[205,180,130], size:1.05, form:{}, minXP:80,
+    blurb:'A branching metallic seam that creeps through rock along redox gradients, plating every surface it crosses in oxide.'},
 ];
 
 /* ---------------- neutralise weakness by cell kingdom (real biology) ---------------- */
@@ -227,10 +264,19 @@ XS.killAgentsFor=function(cellKey){
     case 'Archaea': return ['detergent'];            // no peptidoglycan → antibiotics fail
     case 'Fungi': return ['antifungal'];
     case 'Plantae': case 'PlantTissue': return ['hypertonic'];
+    // — xeno kingdoms: no Earth weakness applies —
+    case 'Silicoid': return ['fluoride'];             // silicon–oxygen lattice, no carbon to attack
+    case 'Plasmoid': return ['quench'];               // no chemistry at all — collapse the magnetic field
+    case 'Ammonoid': return ['solvent_shock'];        // water is the poison here
+    case 'Metallophyte': return ['chelation'];        // strip the metal ions it respires
     default: return ['hypotonic'];                    // Animalia, Protista (no wall)
   }
 };
 XS.WEAKNESS_WHY={
+  fluoride:'It has no carbon chemistry to poison and no membrane to breach — it is a silicon–oxygen crystal. Only fluoride attacks Si–O bonds directly (the same reaction that etches glass).',
+  quench:'There is nothing to poison — no wall, no membrane, no molecules. It is plasma held together by its own magnetic field, so you strip its energy out and the field collapses.',
+  chelation:'Its metal-oxide armour ignores every wall-targeting agent, and it respires metal ions rather than food or light. A chelator locks those ions away and dissolves the crust with them.',
+  solvent_shock:'Its solvent is liquid ammonia, not water. Warm water — harmless to everything we know — is a violently reactive reagent to ammonia biochemistry.',
   hypotonic:'Its cells have no wall — a hypotonic (low-salt) shock floods them until they swell and burst.',
   hypertonic:'Rigid cellulose walls resist bursting, so a hypertonic (high-salt) shock draws water OUT and collapses them (plasmolysis).',
   antifungal:'Its cells fall to an antifungal — a drug aimed at targets only fungi have, like the ergosterol in their membrane or the chitin in their wall.',
@@ -297,6 +343,8 @@ XS.TREATMENTS=[
   {id:'enantiomer', label:'Mirror-image drug',desc:'The enantiomer — a drug rebuilt as its own mirror image, so it fits mirror-life’s reversed chemistry.'},
   {id:'shielding',  label:'Neutron shield', desc:'Boron shielding that starves a radiotroph of the radiation it feeds on.'},
   {id:'solvent_shock',label:'Aqueous shock',desc:'Warm water — harmless to us, a violently reactive solvent to ammonia-based life.'},
+  {id:'quench',     label:'Cryogenic quench',desc:'Strips the energy out of a plasma so its confining magnetic field collapses. Nothing chemical to attack — you switch it off.'},
+  {id:'chelation',  label:'Chelating agent',desc:'Locks up the metal ions a rock-eater respires, and strips the metal-oxide crust it hides behind.'},
 ];
 XS.agentName=function(id){ const t=XS.TREATMENTS.find(x=>x.id===id); return t?t.label:id; };
 
@@ -304,26 +352,39 @@ XS.agentName=function(id){ const t=XS.TREATMENTS.find(x=>x.id===id); return t?t.
    Each returns a finding string computed from the actual zoomed cell / pathogen,
    plus a `clue` bucket used to fill the Analysis panel.
 ------------------------------------------------------------ */
-const WALLNAME={cellulose:'cellulose',chitin:'chitin',pepti:'peptidoglycan',slayer:'protein S-layer',none:'none (bare membrane)'};
+const WALLNAME={cellulose:'cellulose',chitin:'chitin',pepti:'peptidoglycan',slayer:'protein S-layer',none:'none (bare membrane)',
+  silica:'a SILICON–OXYGEN lattice — mineral, not organic',metal:'a precipitated METAL-OXIDE crust'};
 XS.ASSAYS=[
   {id:'wall', label:'Wall analysis', short:'wall material', group:'host',
-    run:(sp)=>{ const w=sp.K.wall; return {clue:'wall', text:'Cell wall: '+(WALLNAME[w]||w)+'.'}; }},
+    run:(sp)=>{ const w=sp.K.wall;
+      if(sp.kingdomKey==='Plasmoid') return {clue:'wall', text:'No wall AND no membrane — the boundary is a magnetic field, not matter.'};
+      return {clue:'wall', text:'Cell wall: '+(WALLNAME[w]||w)+'.'}; }},
   {id:'nuclear', label:'Nuclear stain', short:'nucleus?', group:'host',
-    run:(sp)=>({clue:'nucleus', text: sp.K.nucleus?'A true membrane-bound NUCLEUS is present → a eukaryote.':'No nucleus — DNA lies loose as a nucleoid → a prokaryote.'})},
+    run:(sp)=>{ if(sp.kingdomKey==='Silicoid') return {clue:'nucleus', text:'The stain finds NO nucleic acid of any kind — there is no genome here to stain.'};
+      if(sp.kingdomKey==='Plasmoid') return {clue:'nucleus', text:'Nothing to stain — no nucleus, no DNA, no molecules at all. This is ionised gas.'};
+      return {clue:'nucleus', text: sp.K.nucleus?'A true membrane-bound NUCLEUS is present → a eukaryote.':'No nucleus — DNA lies loose as a nucleoid → a prokaryote.'}; }},
   {id:'lipid', label:'Membrane-lipid assay', short:'ester / ether', group:'host',
-    run:(sp)=>({clue:'lipid', text: sp.kingdomKey==='Archaea'?'Membrane lipids are ETHER-linked → this is an ARCHAEON (not a bacterium).':'Membrane lipids are ester-linked (bacteria & eukaryotes).'})},
+    run:(sp)=>{ if(sp.kingdomKey==='Silicoid') return {clue:'lipid', text:'No lipids whatsoever — no membrane exists to sample.'};
+      if(sp.kingdomKey==='Plasmoid') return {clue:'lipid', text:'No lipids — nothing here is made of molecules.'};
+      if(sp.kingdomKey==='Ammonoid') return {clue:'lipid', text:'Lipids present, but they stay FLUID far below freezing — this membrane is tuned for a solvent that is not water.'};
+      return {clue:'lipid', text: sp.kingdomKey==='Archaea'?'Membrane lipids are ETHER-linked → this is an ARCHAEON (not a bacterium).':'Membrane lipids are ester-linked (bacteria & eukaryotes).'}; }},
   {id:'gram', label:'Gram stain', short:'purple / pink', group:'host',
     run:(sp)=>{ if(sp.kingdomKey==='Monera') return {clue:'gram', text:'Gram '+(sp.gram==='+'?'POSITIVE (purple) — thick peptidoglycan.':'NEGATIVE (pink) — thin peptidoglycan + outer membrane.')};
       if(sp.kingdomKey==='Archaea') return {clue:'gram', text:'Gram stain fails to hold — the wall is NOT peptidoglycan. Suspect an archaeon.'};
       return {clue:'gram', text:'Gram stain is inconclusive — no peptidoglycan wall here (rules out bacteria).'}; }},
   {id:'pigment', label:'Pigment scan', short:'chlorophyll?', group:'host',
-    run:(sp)=>({clue:'metabolism', text: (sp.autotroph&&!sp.chemo)?'Photosynthetic pigment (chlorophyll) detected → an autotroph.': sp.chemo?'No chlorophyll, but chemosynthetic machinery → a chemoautotroph.':'No photosynthetic pigment → a heterotroph.'})},
+    run:(sp)=>{ if(sp.kingdomKey==='Metallophyte') return {clue:'metabolism', text:'No chlorophyll — but dissolved IRON and MANGANESE are being oxidised for energy. It respires rock.'};
+      if(sp.kingdomKey==='Plasmoid') return {clue:'metabolism', text:'No pigment — it draws energy straight from the ambient magnetic field.'};
+      if(sp.kingdomKey==='Silicoid') return {clue:'metabolism', text:'No pigment and no food intake — it grows by mineral ACCRETION, like a stalactite.'};
+      return {clue:'metabolism', text: (sp.autotroph&&!sp.chemo)?'Photosynthetic pigment (chlorophyll) detected → an autotroph.': sp.chemo?'No chlorophyll, but chemosynthetic machinery → a chemoautotroph.':'No photosynthetic pigment → a heterotroph.'}; }},
   {id:'motility', label:'Motility assay', short:'how it moves', group:'host',
     run:(sp)=>{ const has=id=>sp.parts.some(p=>p.id===id);
       const m= has('flagellum')?'Swims with a whip-like flagellum.': has('cilia')?'Rows along on beating cilia.': has('pseudopod')?'Crawls on pseudopodia (false feet).':'Non-motile.';
       return {clue:'motility', text:m}; }},
   {id:'extremo', label:'Environment probe', short:'temp / pH', group:'host',
-    run:(sp)=>{ const hot=sp.optT>=60, ac=sp.optPH<=3.5, al=sp.optPH>=9.5;
+    run:(sp)=>{ if(sp.kingdomKey==='Ammonoid') return {clue:'extremo', text:'Optimum −40°C — it is ACTIVE far below the freezing point of water. Its solvent cannot be water.'};
+      if(sp.kingdomKey==='Plasmoid') return {clue:'extremo', text:'Reads thousands of degrees — but that is the plasma’s ion temperature, not a habitat. Cold is what threatens it.'};
+      const hot=sp.optT>=60, ac=sp.optPH<=3.5, al=sp.optPH>=9.5;
       return {clue:'extremo', text: (hot||ac||al)?('Thrives at '+sp.optT+'°C / pH '+sp.optPH+' — an EXTREMOPHILE (a hallmark of archaea).'):('Comfortable near '+sp.optT+'°C / pH '+sp.optPH+' — a mesophile.')}; }},
   // pathogen assays (PRESERVE key region only) — reveal BOTH invaders on a co-infection
   {id:'morph', label:'Particle morphology', short:'invader shape', group:'path',
@@ -450,7 +511,9 @@ XS.intruderRecipeMatches=function(sc,items,step){ const tr=sc&&sc.textbookRecipe
 XS.buildScenario=function(objective, tier, forceCell){
   const T=(XS.TIERS&&XS.TIERS[tier])||{margin:1};
   const xp=(XS.progress&&XS.progress.xp)||0;
-  const pool = forceCell ? XS.SPECIES.filter(s=>s.cell===forceCell) : XS.SPECIES.filter(s=>xp>=(s.minXP||0));
+  const fc = ((XS.app&&XS.app.mode)||'quick')==='contact';       // 🛸 First Contact = alien species only
+  const pool = forceCell ? XS.SPECIES.filter(s=>s.cell===forceCell)
+    : XS.SPECIES.filter(s=> (fc? !!s.alien : !s.alien) && xp>=(s.minXP||0));
   const base=pick(pool.length?pool:XS.SPECIES);
   const morph=XS.genMorph(base);
   const A=Object.assign({}, base, {label:base.kingdom, col:morph.col, form:morph.form, size:(base.size||1)*morph.size});
@@ -463,9 +526,10 @@ XS.buildScenario=function(objective, tier, forceCell){
     evidence:[], clues:{}, tests:{}, diagnosed:false, dxWrong:0, assaysSince:0, recon:false }); });
   const key=pick(regions);
   const nm=pick(A.name)+pick(A.epi);
-  const mode=(XS.app&&XS.app.mode)||'quick', ultra=mode==='ultra', alien=mode==='alien';
+  const mode=(XS.app&&XS.app.mode)||'quick', ultra=mode==='ultra', alien=mode==='alien', contact=mode==='contact';
   if(ultra||alien) objective='preserve';          // both are "synthesise the cure" modes
-  const craft=mode==='advanced'||ultra||alien;
+  if(contact) objective='neutralize';             // First Contact = classify and contain the organism
+  const craft=mode==='advanced'||ultra||alien||contact;
   const sc={ objective, archKey:base.cell, A, morph, planet, name:nm,
     regions, keyId:key.id,
     P:0, host:100, resist:0, cured:false, done:false,
@@ -485,7 +549,10 @@ XS.buildScenario=function(objective, tier, forceCell){
   } else {
     sc.agent=XS.killAgentsFor(A.cell)[0]; sc.dxAnswer=XS.KINGDOM_ANSWER[A.cell];
     key.problem={kind:'vital'};
-    sc.brief=`${nm} is an invasive threat. Identify what kind of organism it is, find the tissue it can’t defend, and hit it with the one agent its biology can’t withstand.`;
+    sc.firstContact=contact;
+    sc.brief=contact
+      ? `🛸 <b>FIRST CONTACT</b> — ${nm} is ${A.body}, and it belongs to <b>no kingdom of Earth life</b>. Nothing you know about walls, membranes or metabolism is guaranteed to apply. Run the assays, work out what it is actually <em>made of</em>, then synthesise something its chemistry cannot survive.`
+      : `${nm} is an invasive threat. Identify what kind of organism it is, find the tissue it can’t defend, and hit it with the one agent its biology can’t withstand.`;
     sc.hostDrain=0;
   }
   sc.assayBudget = (tier==='director' && !craft)?6:null;   // Director quick-mode: limited reagents
@@ -526,6 +593,8 @@ XS.INGREDIENTS=[
   {id:'fluorspar',  label:'Fluorspar ore',       glyph:'🔶', col:'#8fe6e0', note:'Calcium fluoride — react it with acid and it gives up fluoride, the one thing that dissolves silicon–oxygen bonds.'},
   {id:'chiral_cat', label:'Chiral catalyst',     glyph:'🔁', col:'#ff9ad5', note:'Flips a molecule into its mirror image — turns an ordinary drug into its enantiomer.'},
   {id:'boron',      label:'Boron mineral',       glyph:'⬜', col:'#b9c6d6', note:'Borax — an exceptional neutron absorber, used for real reactor shielding.'},
+  {id:'cryogen',    label:'Liquid nitrogen',     glyph:'❄️', col:'#cfefff', note:'Boils at −196 °C — the fastest way to pull energy out of anything. Prepared at the very bottom of the dial.'},
+  {id:'citrate',    label:'Citrate / EDTA',      glyph:'🧪', col:'#c8e08a', note:'A chelator: its claw-shaped molecule wraps a metal ion and holds it out of reach.'},
   // --- intermediates you SYNTHESISE, not pick up ---
   {id:'nucleoside', label:'Nucleoside stock',    glyph:'🧬', col:'#61c3ff', made:true,
    note:'A counterfeit genome letter. You must build it: ribose sugar + a modified purine base, coupled at 60 °C.'},
@@ -595,6 +664,10 @@ XS.FORMULATIONS=[
    why:'Purely physical shielding — no reaction needed, so it is prepared at room temperature <b>25 °C</b>.'},
   {items:['pure_water'],       step:'boil',    temp:70, tol:10, agent:'solvent_shock',name:'Aqueous shock', source:'Warm water — an ordinary solvent to us, a violently reactive one to ammonia-based biochemistry.',
    why:'Served warm at <b>70 °C</b>: far above liquid ammonia’s range, so the alien solvent chemistry is destroyed on contact.'},
+  {items:['cryogen'],          step:'filter',  temp:0, tol:6, agent:'quench',        name:'Cryogenic quench', source:'Liquid nitrogen decanted cold — it strips energy fast enough that a plasma’s confining field collapses.',
+   why:'The one recipe at the very bottom of the dial: hold it at <b>0 °C</b> or below. Any warmth and it boils off before it can quench anything.'},
+  {items:['citrate'],          step:'extract', temp:60, tol:10, agent:'chelation',   name:'Chelating agent', source:'Citrate/EDTA drawn into solution — its claw-shaped molecule captures metal ions and holds them.',
+   why:'Extracted warm at <b>60 °C</b> so the chelator dissolves fully without breaking down.'},
 ];
 /* Resolve the current flask (materials + step [+ temperature]) to a formulation.
    Pass a temp to enforce the exact condition; omit it to just match the recipe. */
@@ -684,7 +757,8 @@ XS.runAssay=function(sc, region, id){
 
 /* the classification / diagnosis options for the key threat */
 XS.identifyOptions=function(sc){
-  if(sc.objective!=='preserve') return {kind:'class', prompt:'What kind of organism is this?', options:XS.CLASSIFY.slice()};
+  if(sc.objective!=='preserve') return {kind:'class', prompt:'What kind of organism is this?',
+    options:(sc.firstContact||XS.isAlienCell(sc.A&&sc.A.cell))?XS.XENO_CLASSIFY.slice():XS.CLASSIFY.slice()};
   // XENO cases add the alien afflictions alongside familiar ones — you have to
   // recognise that Earth categories don't apply here.
   const alien=sc.alien||XS.isAlienPath(sc.pathType);
@@ -710,6 +784,10 @@ XS.DX_HALLMARK={
   'Mirror-life':'Looks like a normal cell, but every sugar and amino acid is the MIRROR image of ours.',
   Radiotroph:'Heavily melanised cells that grow FASTER under radiation instead of dying.',
   'Ammono-life':'Thrives at −40 °C — its internal solvent is liquid ammonia, not water.',
+  Silicoid:'A silicon–oxygen crystal. No membrane, no nucleic acid, no water — it grows by accretion, not division.',
+  Plasmoid:'Ionised gas bounded by its own magnetic field. No wall, no membrane, no molecules to stain at all.',
+  Ammonoid:'A true cell with a nucleus — but active at −40 °C, with liquid ammonia as its solvent instead of water.',
+  Metallophyte:'Sheathed in a metal-oxide crust it excretes; respires iron and manganese instead of light or food.',
 };
 
 /* submit a diagnosis for the current region */

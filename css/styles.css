@@ -365,6 +365,8 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border:none;border-ra
 .tierbtn.alien b{color:#7ff0e0}
 .tierbtn.alien.sel{border-color:#7ff0e0;box-shadow:0 0 0 1px #7ff0e0,0 0 22px rgba(127,240,224,.28)}
 .fm-sec-h em.xeno{color:#04201d;background:#7ff0e0}
+.tierbtn.contact b{color:#ffd27a}
+.tierbtn.contact.sel{border-color:#ffd27a;box-shadow:0 0 0 1px #ffd27a,0 0 22px rgba(255,210,122,.28)}
 /* interactive tutorial coach */
 .coach{position:fixed;top:74px;left:50%;transform:translateX(-50%);width:min(600px,94vw);z-index:24;
   background:linear-gradient(180deg,rgba(14,30,34,.97),rgba(9,20,26,.98));border:1px solid var(--aqua);border-radius:16px;

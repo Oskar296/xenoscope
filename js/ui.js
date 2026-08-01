@@ -121,6 +121,7 @@ UI.renderTop=function(){
     `<span class="chip ${O.tone}">${O.label}</span>`+
     (sc.intruder?`<span class="chip ultra">🧬 ${sc.intruder.name}</span>`:'')+
     (sc.alien?`<span class="chip alien">👽 XENO — non-Earth biology</span>`:'')+
+    (sc.firstContact?`<span class="chip alien">🛸 FIRST CONTACT — unknown kingdom</span>`:'')+
     `<span class="titlewrap"><span class="name">${sc.name}</span><span class="obj2">${loc}</span></span>`+
     `<span class="topgap"></span>`+
     `<span class="rankpill"><span class="rk">${rank.name}</span><span class="xp">${XS.progress.xp}</span></span>`+
@@ -527,6 +528,10 @@ UI.showFormulary=function(hi,back){
       `<div class="fm-recipes"><div class="fm-why">👽 ${P.why}</div>`);}).join('');
   const kings=[['Monera','Bacterium'],['Archaea','Archaeon'],['Fungi','Fungus'],['Plantae','Plant'],['Animalia','Animal'],['Protista','Protist']];
   const neut=kings.map(([cell,name])=>entry('neutralize',name,'organism',XS.killAgentsFor(cell))).join('');
+  const xk=[['Silicoid','Silicoid'],['Plasmoid','Plasmoid'],['Ammonoid','Ammonoid'],['Metallophyte','Metallophyte']];
+  const xkRows=xk.map(([cell,name])=>{const why=(XS.WEAKNESS_WHY||{})[XS.killAgentsFor(cell)[0]]||'';
+    return entry('neutralize',name,'alien kingdom',XS.killAgentsFor(cell))
+      .replace('<div class="fm-recipes">',`<div class="fm-recipes"><div class="fm-why">🛸 ${why}</div>`);}).join('');
   const steps=(XS.LAB_STEPS||[]).map(s=>`<span class="fm-step">${s.glyph} <b>${s.label}</b> <small>${s.desc.split(' ').slice(0,6).join(' ')}…</small></span>`).join('');
   card(
     `<div class="sub">Field formulary · how to build any cure</div><h2>Make the right cure</h2>`+
@@ -538,6 +543,8 @@ UI.showFormulary=function(hi,back){
     (alienRows?`<div class="fm-sec-h">Non-Earth biology <em class="xeno">xeno · the rules don’t apply</em></div>`+
       `<p class="muted" style="margin:2px 0 0;font-size:12.5px">Each of these breaks an assumption every Earth cure depends on, so the normal shelf fails and you need chemistry aimed at the new rule.</p>${alienRows}`:'')+
     `<div class="fm-sec-h">Destroying an invader <em class="kill">neutralize · hit the cell’s weakness</em></div>${neut}`+
+    (xkRows?`<div class="fm-sec-h">Alien kingdoms <em class="xeno">first contact · no Earth weakness applies</em></div>`+
+      `<p class="muted" style="margin:2px 0 0;font-size:12.5px">Lifeforms with no Earth ancestry. Walls, membranes and metabolism all work differently, so the usual weaknesses simply do not exist.</p>${xkRows}`:'')+
     `<div class="cta"><button class="btn pri" id="fmClose">${back?'← Back to the bench':'Close'}</button></div>`
   );
   const c=UI.overlay.querySelector('.card'); if(c) c.classList.add('bench-card');
@@ -593,6 +600,7 @@ UI.showMenu=function(){
       `<button class="tierbtn ${XS.app.mode==='advanced'?'sel':''}" data-mode="advanced"><b>⚗ Advanced</b><small>Much more time — and you <b>synthesise the cure yourself</b> at the bench.</small></button>`+
       `<button class="tierbtn ultra ${XS.app.mode==='ultra'?'sel':''}" data-mode="ultra"><b>🧬 Ultra</b><small>Named real diseases — <b>COVID, malaria, MRSA, botulism…</b> Synthesise the actual real drug for each.</small></button>`+
       `<button class="tierbtn alien ${XS.app.mode==='alien'?'sel':''}" data-mode="alien"><b>👽 Xeno</b><small><b>Truly alien biology</b> — silicon lattices, mirror-life, radiation-eaters. Earth's whole shelf fails; you need new chemistry.</small></button>`+
+      `<button class="tierbtn contact ${XS.app.mode==='contact'?'sel':''}" data-mode="contact"><b>🛸 First Contact</b><small><b>Alien species</b>, not alien diseases — crystal spires, plasma wisps, ammonia cryophiles, rock-eaters. Classify a lifeform from <b>no Earth kingdom</b>, then contain it.</small></button>`+
     `</div>`+
     `<div class="muted lbl">DIFFICULTY</div><div class="tiers">${tiers}</div>`+
     `<div class="cta"><button class="btn pri" id="startBtn">▶ Receive Assignment</button>`+

@@ -89,6 +89,18 @@ standalone page:
   nucleoside analogue? You **synthesise the nucleoside stock first** — **ribose sugar + a
   modified purine base, coupled at 60 °C** (too cold and it won't couple; too hot and the
   sugar caramelises) — *then* use it to make the antiviral.
+- 🛸 **First Contact — alien *species*, not alien diseases.** Six organisms from **four
+  kingdoms with no Earth ancestry**, each with its own body plan, anatomy, cell structure
+  and weakness: a **Silicoid** crystal spire that grows by mineral accretion and has no
+  membrane, no genome and no water (only a **fluoride flux** touches it); a **Plasmoid** —
+  ionised gas held in shape by its own magnetic loops, with nothing chemical to poison at
+  all, so you **cryogenically quench** it until the field collapses; an **Ammonoid**
+  cryophile, a real nucleated cell running on liquid ammonia at −40 °C, undone by ordinary
+  **warm water**; and a **Metallophyte** rock-eater armoured in the iron oxide it excretes,
+  which needs a **chelator** to strip the metal ions it respires. Their assays read back
+  alien too — "no lipids: no membrane exists to sample", "reads thousands of degrees, but
+  that is ion temperature, not a habitat" — and they have alien anatomy (growth apex,
+  confinement loops, ammonia reservoir, redox vents) instead of Earth tissues.
 - 👽 **Xeno mode — biology that breaks Earth's rules.** The name finally earns itself:
   afflictions that are *not* carbon-and-water life, where your whole normal shelf fails
   and you need chemistry aimed at the new rule. A **silicate lattice** built from

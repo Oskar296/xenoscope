@@ -139,6 +139,29 @@ XS.ORG = {
    `parts`: [organelleId, count]. `wall`, `wobble`, `aspect` drive looks.
    `autotroph`: null = random, true/false forces it.
 ------------------------------------------------------------ */
+/* ---- XENO organelles: structures no Earth cell has ---- */
+XS.ORG.lattice_node   = {name:'Lattice node', col:'#9ff0ea', shape:'ring',
+  fn:'A junction in a repeating silicon–oxygen framework. It is structural AND metabolic — reactions happen on the crystal faces themselves.',
+  fact:'Silicon sits directly below carbon in the periodic table and also forms four bonds — but Si–O–Si chains are far more rigid, so a silicon organism is built, not grown.'};
+XS.ORG.accretion_face = {name:'Accretion face', col:'#c7fbff', shape:'wall',
+  fn:'The growing edge of the crystal, where dissolved minerals are laid down. This organism gets bigger the way a stalactite does.',
+  fact:'No cell division at all — it extends. "Reproduction" is a fragment breaking off and continuing to grow.'};
+XS.ORG.plasma_core    = {name:'Plasma core', col:'#ff9ad5', shape:'nucleus',
+  fn:'A knot of ionised gas held together by its own magnetic field. There is no membrane — the field IS the boundary.',
+  fact:'Plasma is the fourth state of matter and by far the most common in the universe; a self-organising magnetic structure is the loosest thing that could still be called "a body".'};
+XS.ORG.field_line     = {name:'Confinement loop', col:'#ffd27a', shape:'coil',
+  fn:'A closed magnetic loop that traps charged particles and keeps the organism from dissipating.',
+  fact:'Cool it or short the loop and the whole structure simply disperses — you do not kill it so much as switch it off.'};
+XS.ORG.ammonia_vac    = {name:'Ammonia vacuole', col:'#a9ddff', shape:'bigvac',
+  fn:'The internal reservoir of liquid ammonia that serves as this cell’s solvent, exactly as water does in ours.',
+  fact:'Ammonia stays liquid from −78 °C to −33 °C, so an ammonia biochemistry runs in a temperature range that would freeze us solid.'};
+XS.ORG.metal_crust    = {name:'Metal-oxide crust', col:'#b9a37a', shape:'wall',
+  fn:'An armoured shell of precipitated iron and manganese oxides, laid down as a by-product of respiration.',
+  fact:'Earth has a faint echo of this — iron-oxidising bacteria build rusty sheaths — but here the metal is the whole skeleton.'};
+XS.ORG.redox_vent     = {name:'Redox vent', col:'#ffb454', shape:'contractile',
+  fn:'A pore where dissolved metal ions are oxidised for energy. This organism eats rock, not light or food.',
+  fact:'Chemolithotrophy — literally "rock eating" — needs no sunlight at all, which is why it is a favourite hypothesis for life beneath other worlds’ ice.'};
+
 XS.KINGDOMS = {
   Animalia:{label:'Animal', col:[255,143,163], wall:'none', wobble:.10, aspect:1.1, nucleus:true, virus:false,
     gen:['Xeno','Vermi','Predo','Cnido','Necro'], epi:['zoon','pod','vermis','cnidos','fera'],
@@ -180,12 +203,37 @@ XS.KINGDOMS = {
     autotroph:false,
     parts:[['capsid',1],['genome_rna',1],['spike',6]],
     blurb:'Not a cell at all — just a protein capsid around genetic material. It can only replicate by hijacking a living host.'},
+  /* ---- XENO kingdoms — life that shares no ancestry, and no rules, with ours ---- */
+  Silicoid:{alien:true, label:'Silicoid', col:[159,240,234], wall:'silica', wobble:.0, aspect:1.0, nucleus:false, virus:false,
+    gen:['Crysta','Silico','Quartzo','Litho'], epi:['lith',' prism',' geode',' spire'],
+    autotroph:null, chemo:true,
+    parts:[['accretion_face',1],['lattice_node',7],['metal_crust',1]],
+    blurb:'Not carbon life at all — a silicon–oxygen crystal that grows by accretion instead of dividing. No membrane, no nucleic acid, no water. Carbon-targeted drugs have nothing to bind.'},
+  Plasmoid:{alien:true, label:'Plasmoid', col:[255,154,213], wall:'none', wobble:.16, aspect:1.0, nucleus:false, virus:false,
+    gen:['Pyro','Aurora','Ioni','Corona'], epi:[' wisp',' halo',' flare',' veil'],
+    autotroph:true, chemo:false,
+    parts:[['plasma_core',1],['field_line',5]],
+    blurb:'Ionised gas held in shape by its own magnetic field — there is no membrane, no wall, no chemistry to poison. The field is the body, and cooling it apart is the only way to stop it.'},
+  Ammonoid:{alien:true, label:'Ammonoid', col:[169,221,255], wall:'none', wobble:.10, aspect:1.2, nucleus:true, virus:false,
+    gen:['Cryo','Ammo','Glacio','Boreal'], epi:['morph',' drifter',' bloom',' frond'],
+    autotroph:false, chemo:false, cryophile:true,
+    parts:[['membrane',1],['ammonia_vac',1],['nucleus',1],['ribosome',8]],
+    blurb:'A true cell — but its solvent is liquid ammonia, not water. It runs at −40 °C, and the water that every Earth cell is built around is a violent reagent to it.'},
+  Metallophyte:{alien:true, label:'Metallophyte', col:[185,163,122], wall:'metal', wobble:.02, aspect:1.15, nucleus:false, virus:false,
+    gen:['Ferro','Cupro','Mangano','Oxido'], epi:[' crust',' nodule',' bloom',' vein'],
+    autotroph:true, chemo:true,
+    parts:[['metal_crust',1],['membrane',1],['redox_vent',4],['nucleoid',1],['ribosome',10]],
+    blurb:'A rock-eater sheathed in the iron and manganese oxides it excretes. It needs no light and no food — it respires metal ions, and its armour shrugs off anything that works on a normal wall.'},
 };
-XS.KLIST = ['Animalia','Plantae','Monera','Archaea','Protista','Fungi','Virus','PlantTissue'];
+XS.KLIST = ['Animalia','Plantae','Monera','Archaea','Protista','Fungi','Virus','PlantTissue',
+            'Silicoid','Plasmoid','Ammonoid','Metallophyte'];
 
 /* Kingdom/domain you must pick in the quiz (PlantTissue folds into "Plant") */
 XS.CLASSIFY = ['Animal','Plant','Bacterium','Archaeon','Protist','Fungus','Virus'];
-XS.KINGDOM_ANSWER = {Animalia:'Animal',Plantae:'Plant',PlantTissue:'Plant',Monera:'Bacterium',Archaea:'Archaeon',Protista:'Protist',Fungi:'Fungus',Virus:'Virus'};
+XS.XENO_CLASSIFY = ['Silicoid','Plasmoid','Ammonoid','Metallophyte','Bacterium','Archaeon','Protist'];
+XS.KINGDOM_ANSWER = {Animalia:'Animal',Plantae:'Plant',PlantTissue:'Plant',Monera:'Bacterium',Archaea:'Archaeon',Protista:'Protist',Fungi:'Fungus',Virus:'Virus',
+  Silicoid:'Silicoid',Plasmoid:'Plasmoid',Ammonoid:'Ammonoid',Metallophyte:'Metallophyte'};
+XS.isAlienCell = k => !!(XS.KINGDOMS[k] && XS.KINGDOMS[k].alien);
 
 /* ---------------- SUBSTANCES ----------------
    type 'test'  = investigation reagent (reveals info, no harm)

@@ -488,6 +488,126 @@ function paintPattern(sc,x,y,S,col,acc){ const m=sc.morph; if(!m||m.pattern==='n
 
 /* ================= BODY-PLAN RENDERERS ================= */
 XS.PLANS={
+  /* ---------- XENO body plans: shapes Earth never invented ---------- */
+  // A silicate tower: interlocking mineral prisms, refracting and inert.
+  crystalspire(ccx,ccy,S,t,sc,health){ const col=sc.A.col, acc=sc.planet.accent, gcol=mix(col,acc,0.45);
+    softShadow(ccx,ccy+S*0.86,S*0.8,S*0.13); auraGlow(ccx,ccy,S*1.5,gcol,0.07+0.12*health);
+    const shard=(bx,by,w,h,lean,shade)=>{ ctx.save(); ctx.translate(ccx+bx*S,ccy+by*S); ctx.rotate(lean);
+      const g=ctx.createLinearGradient(-w*S,0,w*S,0);
+      g.addColorStop(0,`rgba(${col.map(c=>Math.round(c*0.42)).join(',')},.95)`);
+      g.addColorStop(0.45,`rgba(${col.join(',')},.95)`);
+      g.addColorStop(1,`rgba(${col.map(c=>Math.min(255,Math.round(c*1.25))).join(',')},.9)`);
+      ctx.fillStyle=g; ctx.beginPath();
+      ctx.moveTo(0,-h*S); ctx.lineTo(w*S,-h*S*0.42); ctx.lineTo(w*S*0.72,h*S);
+      ctx.lineTo(-w*S*0.72,h*S); ctx.lineTo(-w*S,-h*S*0.42); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle=`rgba(255,255,255,${0.30+0.25*shade})`; ctx.lineWidth=1.4; ctx.stroke();
+      ctx.strokeStyle='rgba(255,255,255,.22)'; ctx.beginPath(); ctx.moveTo(0,-h*S); ctx.lineTo(0,h*S); ctx.stroke();
+      ctx.restore(); };
+    shard(-0.36,0.10,0.15,0.52,-0.20,0.2); shard(0.34,0.16,0.13,0.44,0.24,0.2);
+    shard(-0.16,-0.06,0.17,0.72,-0.06,0.5); shard(0.18,-0.02,0.16,0.66,0.08,0.5);
+    shard(0.01,-0.20,0.20,0.92,0.0,1.0);
+    // slow internal refraction glints — it is mineral, so it sparkles rather than breathes
+    for(let i=0;i<7;i++){ const ph=(t*0.5+i*0.9)%3, a=Math.max(0,1-Math.abs(ph-1.2));
+      if(a<=0) continue; ctx.fillStyle=`rgba(255,255,255,${a*0.75})`;
+      ctx.beginPath(); ctx.arc(ccx+Math.sin(i*2.1)*S*0.3, ccy-S*0.6+((i*0.27)%1.5)*S*0.9, S*0.018, 0, 6.3); ctx.fill(); }
+  },
+  // A hollow mineral nodule lined with inward-facing teeth.
+  geodecluster(ccx,ccy,S,t,sc,health){ const col=sc.A.col, acc=sc.planet.accent, gcol=mix(col,acc,0.5);
+    softShadow(ccx,ccy+S*0.72,S*0.85,S*0.14); auraGlow(ccx,ccy,S*1.45,gcol,0.07+0.10*health);
+    [[0,0,0.62],[-0.5,0.24,0.34],[0.52,0.2,0.30]].forEach(([ox,oy,r],n)=>{
+      ctx.save(); ctx.translate(ccx+ox*S,ccy+oy*S);
+      ctx.fillStyle=`rgba(${col.map(c=>Math.round(c*0.34)).join(',')},.95)`;
+      ctx.beginPath(); ctx.arc(0,0,r*S,0,6.3); ctx.fill();
+      ctx.strokeStyle=`rgba(${col.join(',')},.9)`; ctx.lineWidth=3; ctx.stroke();
+      const teeth=Math.round(14*r+8);
+      for(let i=0;i<teeth;i++){ const a=i/teeth*6.283+n; const ir=r*S*0.96, tl=r*S*(0.20+0.14*((i*0.37)%1));
+        ctx.fillStyle=`rgba(${col.map(c=>Math.min(255,Math.round(c*1.1))).join(',')},.85)`;
+        ctx.beginPath(); ctx.moveTo(Math.cos(a)*ir,Math.sin(a)*ir);
+        ctx.lineTo(Math.cos(a-0.11)*(ir-tl),Math.sin(a-0.11)*(ir-tl));
+        ctx.lineTo(Math.cos(a+0.11)*(ir-tl),Math.sin(a+0.11)*(ir-tl)); ctx.closePath(); ctx.fill(); }
+      const gl=ctx.createRadialGradient(0,0,1,0,0,r*S*0.7);
+      gl.addColorStop(0,`rgba(255,255,255,${0.10+0.06*Math.sin(t*0.8+n)})`); gl.addColorStop(1,'rgba(255,255,255,0)');
+      ctx.fillStyle=gl; ctx.beginPath(); ctx.arc(0,0,r*S*0.7,0,6.3); ctx.fill(); ctx.restore(); });
+  },
+  // Plasma held by magnetic loops — no body, only field.
+  plasmawisp(ccx,ccy,S,t,sc,health){ const col=sc.A.col, acc=sc.planet.accent, gcol=mix(col,acc,0.4);
+    auraGlow(ccx,ccy,S*2.0,gcol,0.16+0.20*health);
+    ctx.save(); ctx.globalCompositeOperation='lighter';
+    // closed confinement loops
+    for(let L=0;L<5;L++){ const ph=t*0.6+L*1.25, tilt=Math.sin(ph*0.4+L)*0.5, rx=S*(0.34+L*0.13), ry=rx*(0.34+0.16*Math.sin(ph));
+      ctx.save(); ctx.translate(ccx,ccy); ctx.rotate(tilt);
+      ctx.strokeStyle=`rgba(${col.join(',')},${0.30-L*0.04})`; ctx.lineWidth=2.4-L*0.3;
+      ctx.shadowColor=`rgb(${col.join(',')})`; ctx.shadowBlur=16;
+      ctx.beginPath(); ctx.ellipse(0,0,rx,ry,0,0,6.283); ctx.stroke(); ctx.restore(); }
+    // the core knot
+    const cr=S*(0.22+0.02*Math.sin(t*3));
+    const g=ctx.createRadialGradient(ccx,ccy,1,ccx,ccy,cr*2.4);
+    g.addColorStop(0,'rgba(255,255,255,.95)'); g.addColorStop(0.35,`rgba(${col.join(',')},.8)`);
+    g.addColorStop(1,`rgba(${col.join(',')},0)`);
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(ccx,ccy,cr*2.4,0,6.3); ctx.fill();
+    // discharge filaments
+    for(let i=0;i<9;i++){ const a=i/9*6.283+t*0.9, len=S*(0.5+0.35*Math.abs(Math.sin(t*2+i)));
+      ctx.strokeStyle=`rgba(255,235,255,${0.20+0.30*Math.abs(Math.sin(t*3+i*1.7))})`; ctx.lineWidth=1.3;
+      ctx.beginPath(); ctx.moveTo(ccx,ccy);
+      let px=ccx,py=ccy; for(let k=1;k<=4;k++){ const f=k/4;
+        px=ccx+Math.cos(a+Math.sin(t*2+k+i)*0.35)*len*f; py=ccy+Math.sin(a+Math.cos(t*2+k+i)*0.35)*len*f;
+        ctx.lineTo(px,py); } ctx.stroke(); }
+    ctx.restore();
+  },
+  // An ammonia-solvent cryophile: a soft bell rimed with frost spicules.
+  cryodrifter(ccx,ccy,S,t,sc,health){ const col=sc.A.col, acc=sc.planet.accent, gcol=mix(col,acc,0.5);
+    softShadow(ccx,ccy+S*0.8,S*0.7,S*0.12); auraGlow(ccx,ccy,S*1.6,gcol,0.10+0.12*health);
+    const pulse=1+0.03*Math.sin(t*0.9);
+    ctx.save(); ctx.translate(ccx,ccy); ctx.scale(pulse,1/pulse);
+    const g=ctx.createRadialGradient(0,-S*0.15,S*0.05,0,0,S*0.75);
+    g.addColorStop(0,`rgba(${col.map(c=>Math.min(255,c+40)).join(',')},.85)`);
+    g.addColorStop(1,`rgba(${col.map(c=>Math.round(c*0.5)).join(',')},.55)`);
+    ctx.fillStyle=g; ctx.beginPath(); ctx.ellipse(0,0,S*0.62,S*0.7,0,0,6.283); ctx.fill();
+    ctx.strokeStyle=`rgba(${col.join(',')},.9)`; ctx.lineWidth=2.4; ctx.stroke();
+    // frost spicules — it is colder than its surroundings, so it rimes over
+    for(let i=0;i<20;i++){ const a=i/20*6.283+Math.sin(t*0.4)*0.1, r0=S*0.62, r1=r0+S*(0.10+0.07*((i*0.41)%1));
+      ctx.strokeStyle=`rgba(235,250,255,${0.35+0.30*Math.abs(Math.sin(t+i))})`; ctx.lineWidth=1.6;
+      ctx.beginPath(); ctx.moveTo(Math.cos(a)*r0,Math.sin(a)*r0*1.12); ctx.lineTo(Math.cos(a)*r1,Math.sin(a)*r1*1.12); ctx.stroke(); }
+    // the ammonia reservoir, visible through the wall
+    ctx.fillStyle='rgba(210,240,255,.35)'; ctx.beginPath(); ctx.ellipse(0,S*0.12,S*0.3,S*0.24,0,0,6.283); ctx.fill();
+    ctx.restore();
+  },
+  // A rock-eater: oxide crust plating a low chemosynthetic mound.
+  rustbloom(ccx,ccy,S,t,sc,health){ const col=sc.A.col, acc=sc.planet.accent, gcol=mix(col,acc,0.45);
+    softShadow(ccx,ccy+S*0.7,S*0.9,S*0.16); auraGlow(ccx,ccy+S*0.1,S*1.4,gcol,0.06+0.09*health);
+    // stacked oxide plates
+    for(let L=3;L>=0;L--){ const w=S*(0.78-L*0.14), h=S*(0.20+L*0.03), y=ccy+S*0.34-L*S*0.20;
+      ctx.fillStyle=`rgba(${col.map(c=>Math.round(c*(0.55+L*0.14))).join(',')},.95)`;
+      ctx.beginPath(); ctx.ellipse(ccx,y,w,h,0,0,6.283); ctx.fill();
+      ctx.strokeStyle=`rgba(${col.map(c=>Math.min(255,Math.round(c*1.2))).join(',')},.7)`; ctx.lineWidth=1.6; ctx.stroke();
+      // pitted, corroded texture
+      for(let i=0;i<8;i++){ const a=i/8*6.283+L; ctx.fillStyle=`rgba(40,26,16,${0.18+0.1*((i*0.3)%1)})`;
+        ctx.beginPath(); ctx.arc(ccx+Math.cos(a)*w*0.6, y+Math.sin(a)*h*0.5, S*0.022, 0, 6.3); ctx.fill(); } }
+    // redox vents breathing up from the crust
+    for(let i=0;i<5;i++){ const bx=ccx+(i-2)*S*0.17, ph=(t*0.7+i*0.6)%1;
+      ctx.fillStyle=`rgba(255,190,110,${(1-ph)*0.5})`;
+      ctx.beginPath(); ctx.arc(bx, ccy-S*0.36-ph*S*0.4, S*0.03*(1-ph*0.5), 0, 6.3); ctx.fill(); }
+  },
+  // A branching metallic seam creeping along a redox gradient.
+  ferrovein(ccx,ccy,S,t,sc,health){ const col=sc.A.col, acc=sc.planet.accent, gcol=mix(col,acc,0.45);
+    softShadow(ccx,ccy+S*0.8,S*0.85,S*0.13); auraGlow(ccx,ccy,S*1.5,gcol,0.06+0.10*health);
+    const branch=(x,y,ang,len,depth)=>{ if(depth<=0||len<S*0.05) return;
+      const sway=Math.sin(t*0.5+depth+x*0.01)*0.06;
+      const ex=x+Math.cos(ang+sway)*len, ey=y+Math.sin(ang+sway)*len;
+      ctx.strokeStyle=`rgba(${col.map(c=>Math.min(255,Math.round(c*(0.6+0.12*depth)))).join(',')},.95)`;
+      ctx.lineWidth=depth*1.5; ctx.lineCap='round';
+      ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(ex,ey); ctx.stroke();
+      // metallic specular highlight along the seam
+      ctx.strokeStyle=`rgba(255,240,210,${0.10+0.05*depth})`; ctx.lineWidth=Math.max(0.6,depth*0.5);
+      ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(ex,ey); ctx.stroke();
+      // oxide nodules at the junctions
+      ctx.fillStyle=`rgba(${col.join(',')},.9)`;
+      ctx.beginPath(); ctx.arc(ex,ey,depth*1.1,0,6.3); ctx.fill();
+      branch(ex,ey,ang-0.52,len*0.72,depth-1); branch(ex,ey,ang+0.46,len*0.7,depth-1); };
+    branch(ccx,ccy+S*0.62,-1.571,S*0.34,5);
+    branch(ccx,ccy+S*0.62,-2.30,S*0.22,4); branch(ccx,ccy+S*0.62,-0.84,S*0.22,4);
+  },
+
   /* --- Animalia --- */
   beast(ccx,ccy,S,t,sc,health){ const col=sc.A.col, acc=sc.planet.accent, gcol=mix(col,acc,0.5), F=sc.A.form||{};
     const breath=1+0.015*Math.sin(t*1.3), nleg=F.legs||4;
