@@ -179,9 +179,12 @@ UI.renderRight=function(){
     if(r.symbiont && r.recon){ threat='<div class="th sym">🤝 A beneficial symbiont lives here — treating this tissue would harm the host. Leave it alone.</div>'; }
     else if(r.decoy && r.recon){ threat='<div class="th sym">✖ Necrotic decoy — already-dead debris that only looks infected. This is NOT the active focus.</div>'; }
     else if(r.recon){ threat = isKey
-        ? (preserve?('<div class="th bad">⚠ An invader is multiplying in this tissue.</div>'
-                    + (sc.cures?'<div class="th sym">✚ Mixed infection — a SECOND invader is also present. You will need two cures.</div>':''))
-                   :'<div class="th bad">⚠ Exposed tissue — the organism can’t defend it here. A viable target.</div>')
+        ? (preserve
+            ? ((((r.tests&&r.tests.morph)
+                  ?'<div class="th bad">⚠ An invader is multiplying in this tissue.</div>'
+                  :'<div class="th bad">⚠ Something is multiplying in this tissue — but the particles are an <b>unresolved biosignature</b>. Run <b>Particle morphology</b> to resolve what they actually are.</div>'))
+               + (sc.cures?'<div class="th sym">✚ Mixed infection — a SECOND invader is also present. You will need two cures.</div>':''))
+            :'<div class="th bad">⚠ Exposed tissue — the organism can’t defend it here. A viable target.</div>')
                    + (sc.shielded?'<div class="th sym">🛡 A biofilm shields these cells — strip it with detergent before the real agent will land.</div>':'')
         : '<div class="th good">✓ This tissue is clear — the cause is elsewhere.</div>'; }
     else threat='<div class="th muted">Run a lab assay to survey this tissue.</div>';

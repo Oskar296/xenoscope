@@ -61,7 +61,10 @@ function drawZoom(app,t){ const spec=app.spec; if(!spec) return;
   if(zt<1){ const s=0.5+0.5*ease(zt); ctx.globalAlpha=ease(zt); ctx.translate(cx,cy); ctx.scale(s,s); ctx.translate(-cx,-cy); }
   const da=app;
   if(spec.tissue)drawTissue(da,t); else if(spec.isVirus)drawVirus(da,t); else drawCell(da,t);
-  if(app.zoomPathogen) drawPathogens(app.zoomPathogen,t);
+  // Invaders stay an UNRESOLVED biosignature until the morphology assay is run —
+  // so you can never identify one just by its shape, size or colour.
+  if(app.zoomPathogen){ const rg=app.zoomRegion;
+    drawPathogens(app.zoomPathogen, t, !!(rg&&rg.tests&&rg.tests.morph)); }
   ctx.restore();
   drawScan(app);
 }
@@ -1080,10 +1083,20 @@ XS.PLANS={
 };
 
 /* ---- pathogen particles overlaid on a zoomed infected cell ---- */
-function drawPathogens(kind,t){ ctx.save(); ctx.globalCompositeOperation='lighter';
+function drawPathogens(kind,t,resolved){ ctx.save(); ctx.globalCompositeOperation='lighter';
   const n=10;
   for(let i=0;i<n;i++){ const a=i/n*6.283+t*0.6+i; const rr=R*(0.4+0.55*((i*0.37)%1));
     const x=cx+Math.cos(a)*rr, y=cy+Math.sin(a)*rr, s=R*0.05;
+    if(!resolved){
+      // identical for EVERY invader: same count, size, colour and motion, so the
+      // picture tells you something is there but never what it is
+      const pulse=0.55+0.45*Math.sin(t*2.6+i*1.7);
+      ctx.fillStyle=`rgba(196,208,220,${0.26+0.16*pulse})`; ctx.shadowColor='#b6c4d2'; ctx.shadowBlur=12;
+      ctx.beginPath(); ctx.arc(x,y,s*0.95,0,6.3); ctx.fill();
+      ctx.strokeStyle=`rgba(200,214,228,${0.10+0.10*pulse})`; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.arc(x,y,s*(1.5+0.25*pulse),0,6.3); ctx.stroke();
+      continue;
+    }
     if(kind==='virus'){ ctx.fillStyle='#ff5ec7'; ctx.shadowColor='#ff5ec7'; ctx.shadowBlur=10;
       ctx.beginPath(); for(let k=0;k<6;k++){const aa=k/6*6.283;const px=x+Math.cos(aa)*s,py=y+Math.sin(aa)*s;k?ctx.lineTo(px,py):ctx.moveTo(px,py);} ctx.closePath(); ctx.fill(); }
     else if(kind==='bacterium'){ ctx.fillStyle='#9fd0ff'; ctx.shadowColor='#9fd0ff'; ctx.shadowBlur=8;
