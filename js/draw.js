@@ -545,6 +545,80 @@ function paintPattern(sc,x,y,S,col,acc){ const m=sc.morph; if(!m||m.pattern==='n
 
 /* ================= BODY-PLAN RENDERERS ================= */
 XS.PLANS={
+  /* ---------- CUSTOM · fully parametric body, sculpted by the player ----------
+     Not a preset. Every value below is a slider in the Creator, so the space of
+     shapes is continuous rather than a menu of 35. */
+  custom(ccx,ccy,S,t,sc,health){
+    const F=sc.A.form||{}, col=sc.A.col, acc=sc.planet.accent, gcol=mix(col,acc,0.45);
+    const sym=F.sym|0;                                   // 0 bilateral · 1 radial · 2 spiral
+    const elong=F.elong??1, lobes=F.lobes|0, segs=Math.max(1,F.segs|0);
+    const limbs=F.limbs|0, limbLen=F.limbLen??0.4, limbW=F.limbW??0.06;
+    const spines=F.spines|0, spineLen=F.spineLen??0.12;
+    const crown=F.crown|0, breath=1+0.016*Math.sin(t*1.25);
+    const rx=S*0.46*elong*breath, ry=S*0.46/Math.sqrt(elong)*breath;
+    softShadow(ccx,ccy+S*0.82,S*0.8,S*0.14);
+    auraGlow(ccx,ccy,S*1.55,gcol,0.07+0.11*health);
+    const body=(x,y,sx,sy,rot,fill)=>{                   // lobed organic outline
+      ctx.save(); ctx.translate(x,y); ctx.rotate(rot||0);
+      ctx.beginPath();
+      for(let i=0;i<=64;i++){ const a=i/64*6.283;
+        const w=1+(lobes?0.17*Math.sin(a*lobes+t*0.5):0)+0.03*Math.sin(a*3-t*0.7);
+        const px=Math.cos(a)*sx*w, py=Math.sin(a)*sy*w;
+        i?ctx.lineTo(px,py):ctx.moveTo(px,py); }
+      ctx.closePath();
+      const g=ctx.createLinearGradient(-sx,-sy,sx,sy);
+      g.addColorStop(0,`rgba(${col.map(c=>Math.round(c*0.55)).join(',')},.95)`);
+      g.addColorStop(1,`rgba(${col.join(',')},.95)`);
+      ctx.fillStyle=fill||g; ctx.fill();
+      ctx.strokeStyle=`rgba(${col.map(c=>Math.min(255,Math.round(c*1.3))).join(',')},.85)`;
+      ctx.lineWidth=2.2; ctx.stroke(); ctx.restore(); };
+    // limbs first so they sit behind the body
+    const nl=limbs, sweep = sym===1?6.283:2.4;
+    for(let i=0;i<nl;i++){
+      const f = nl>1? i/(nl-1) : 0.5;
+      let a = sym===1 ? (i/nl)*6.283 + t*(sym===2?0.2:0)
+            : sym===2 ? (i/nl)*6.283 + t*0.35
+            : Math.PI*0.5 + (f-0.5)*sweep;
+      const L=S*limbLen*(0.75+0.35*Math.sin(i*1.7));
+      const ox=Math.cos(a)*rx*0.85, oy=Math.sin(a)*ry*0.85;
+      const wob=Math.sin(t*1.4+i)*0.22;
+      ctx.strokeStyle=`rgba(${mix(col,acc,0.35).map(Math.round).join(',')},.9)`;
+      ctx.lineWidth=Math.max(2,S*limbW); ctx.lineCap='round';
+      ctx.beginPath(); ctx.moveTo(ccx+ox,ccy+oy);
+      ctx.quadraticCurveTo(ccx+ox+Math.cos(a+wob)*L*0.6, ccy+oy+Math.sin(a+wob)*L*0.6,
+                           ccx+ox+Math.cos(a+wob*1.6)*L, ccy+oy+Math.sin(a+wob*1.6)*L);
+      ctx.stroke();
+      ctx.fillStyle=`rgba(${col.join(',')},.85)`;
+      ctx.beginPath(); ctx.arc(ccx+ox+Math.cos(a+wob*1.6)*L, ccy+oy+Math.sin(a+wob*1.6)*L, S*limbW*0.9, 0, 6.3); ctx.fill();
+    }
+    // segmented trunk or single body
+    if(segs>1){ for(let sgi=segs-1;sgi>=0;sgi--){ const f=sgi/(segs-1||1);
+        const sc2=1-0.38*f, off=(f-0.35)*rx*1.7;
+        const dx = sym===0? off : Math.cos(f*6.283)*rx*0.5;
+        const dy = sym===0? Math.sin(t*0.8+f*2)*S*0.02 : Math.sin(f*6.283)*ry*0.5;
+        body(ccx+dx, ccy+dy, rx*0.55*sc2, ry*0.72*sc2, sym===0?0:f*6.283); } }
+    else body(ccx,ccy,rx,ry,0);
+    // surface spines
+    if(spines>0){ ctx.strokeStyle=`rgba(${mix(col,[255,255,255],0.45).map(Math.round).join(',')},.8)`;
+      ctx.lineWidth=Math.max(1.2,S*0.012);
+      for(let i=0;i<spines;i++){ const a=i/spines*6.283+t*0.08;
+        const w=1+(lobes?0.17*Math.sin(a*lobes+t*0.5):0);
+        const x0=ccx+Math.cos(a)*rx*w, y0=ccy+Math.sin(a)*ry*w;
+        const L=S*spineLen*(0.6+0.5*((i*0.37)%1));
+        ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x0+Math.cos(a)*L, y0+Math.sin(a)*L); ctx.stroke(); } }
+    // crown of tendrils / fronds at the apex
+    for(let i=0;i<crown;i++){ const f=crown>1?i/(crown-1):0.5, a=-Math.PI*0.5+(f-0.5)*1.9;
+      const L=S*0.34*(0.7+0.4*Math.sin(i*2.1));
+      ctx.strokeStyle=`rgba(${mix(col,acc,0.55).map(Math.round).join(',')},.85)`;
+      ctx.lineWidth=Math.max(1.6,S*0.022); ctx.lineCap='round';
+      ctx.beginPath(); ctx.moveTo(ccx+Math.cos(a)*rx*0.5, ccy-ry*0.8);
+      let px=ccx+Math.cos(a)*rx*0.5, py=ccy-ry*0.8;
+      for(let k=1;k<=3;k++){ const kk=k/3, sw=Math.sin(t*1.6+i+k)*0.3;
+        px+=Math.cos(a+sw)*L*0.34; py+=Math.sin(a+sw)*L*0.34; ctx.lineTo(px,py); }
+      ctx.stroke();
+      ctx.fillStyle=`rgba(${col.join(',')},.9)`; ctx.beginPath(); ctx.arc(px,py,S*0.018,0,6.3); ctx.fill(); }
+  },
+
   /* ---------- XENO body plans: shapes Earth never invented ---------- */
   // A silicate tower: interlocking mineral prisms, refracting and inert.
   crystalspire(ccx,ccy,S,t,sc,health){ const col=sc.A.col, acc=sc.planet.accent, gcol=mix(col,acc,0.45);

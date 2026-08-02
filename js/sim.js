@@ -47,7 +47,7 @@ const SINGLE=['membrane','wall_cellulose','wall_chitin','wall_pepti','wall_slaye
   'genome_rna','genome_dna','tail_fiber'];
 
 /* ---------------- specimen generation (random alien) ---------------- */
-XS.genSpecimen=function(kingdomKey, tier){
+XS.genSpecimen=function(kingdomKey, tier, extraOrgs){
   const K=XS.KINGDOMS[kingdomKey];
   const T=XS.TIERS[tier]||XS.TIERS.field;
   let autotroph = K.autotroph;
@@ -57,6 +57,11 @@ XS.genSpecimen=function(kingdomKey, tier){
   // clone parts; jitter repeatable organelle counts so every interior is unique
   const parts = K.parts.map(p=>p.slice());
   parts.forEach(p=>{ if(COUNT_JITTER.includes(p[0])) p[1]=Math.max(1,Math.round(p[1]*rnd(0.65,1.5))); });
+  // organelles the player added in the Creator, on top of what the kingdom forces
+  if(extraOrgs && extraOrgs.length) extraOrgs.forEach(o=>{
+    const id=(typeof o==='string')?o:o[0], n=(typeof o==='string')?ri(2,4):(o[1]|0||1);
+    if(!XS.ORG[id]) return;
+    const ex=parts.find(p=>p[0]===id); if(ex) ex[1]=Math.max(ex[1],n); else parts.push([id,n]); });
   if(autotroph && !chemo){
     if(kingdomKey==='Monera') parts.push(['thylakoid',ri(2,3)]);
     else if(kingdomKey==='Protista'){ parts.push(['chloroplast',ri(3,4)]); parts.push(['eyespot',1]); }

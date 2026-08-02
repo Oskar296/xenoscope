@@ -391,6 +391,26 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border:none;border-ra
 .cr-weak{margin-top:8px;padding-top:8px;border-top:1px solid var(--line);font-family:var(--mono);font-size:11.5px;color:var(--dim)}
 .cr-weak b{color:var(--coral)}
 .cr-reroll{width:100%;margin-top:14px}
+.cr-lab{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.cr-val{font-family:var(--mono);font-size:11px;color:var(--aqua);text-transform:none;letter-spacing:0}
+.cr-seg{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:2px}
+.cr-seg button{font-size:11px;padding:7px 4px;border:1px solid var(--line2);border-radius:8px;
+  background:rgba(255,255,255,.03);color:var(--dim);cursor:pointer;transition:.14s}
+.cr-seg button:hover{border-color:var(--aqua);color:var(--ink)}
+.cr-seg button.sel{border-color:var(--aqua);background:rgba(94,242,214,.15);color:var(--ink);font-weight:700}
+.cr-rng{margin-bottom:2px}
+#crOrg.cr-orgwrap{position:fixed;left:50%;transform:translateX(-50%);bottom:132px;z-index:9;
+  width:min(660px,92vw);padding:11px 14px;border-radius:14px;
+  background:linear-gradient(180deg,rgba(10,20,26,.93),rgba(6,14,18,.95));
+  border:1px solid var(--line2);box-shadow:0 14px 40px #000a}
+.cr-orgs{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;max-height:104px;overflow:auto}
+.cr-org{display:flex;align-items:center;gap:6px;font-size:11px;padding:5px 9px;border-radius:999px;
+  border:1px solid var(--line2);background:rgba(255,255,255,.03);color:var(--dim);cursor:pointer;transition:.14s}
+.cr-org:hover{border-color:var(--aqua);color:var(--ink)}
+.cr-org.on{border-color:var(--aqua);background:rgba(94,242,214,.15);color:var(--ink);font-weight:600}
+.cr-org.lock{opacity:.65;cursor:default;border-color:var(--violet);background:rgba(140,110,240,.12);color:#cdbbff}
+.cr-dot{width:8px;height:8px;border-radius:50%;flex:0 0 8px}
+@media(max-width:900px){ #crOrg.cr-orgwrap{display:none!important} }
 .cr-note{margin-top:12px;font-size:11.5px;color:var(--dim);line-height:1.55}
 .cr-rows{display:flex;flex-direction:column;gap:7px;margin:12px 0 4px;max-height:min(50vh,380px);overflow:auto}
 .cr-row{display:flex;align-items:center;gap:8px;border:1px solid var(--line2);border-radius:11px;padding:9px 12px;background:rgba(255,255,255,.03)}

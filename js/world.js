@@ -519,7 +519,12 @@ XS.CREATOR_PLANS=['beast','medusa','arthropod','tentacled','worm','anemone','cri
   'amoeba','ciliate','diatom','radiolarian','urchin','slimemold','foram','colony',
   'crystalspire','geodecluster','plasmawisp','cryodrifter','rustbloom','ferrovein'];
 XS.CREATOR_KINGDOMS=['Animalia','Plantae','Fungi','Protista','Monera','Archaea','Silicoid','Plasmoid','Ammonoid','Metallophyte'];
-XS.newCreatureDef=function(){ return {name:'', plan:'beast', cell:'Animalia', hue:0.5, size:1.0, seed:Math.floor(Math.random()*1e9)}; };
+XS.newCreatureDef=function(){ return {name:'', cell:'Animalia', hue:0.5, size:1.0, seed:Math.floor(Math.random()*1e9),
+  sym:0, elong:1.0, lobes:3, segs:1, limbs:4, limbLen:0.42, limbW:0.06, spines:0, spineLen:0.12, crown:0,
+  orgs:[] }; };
+/* organelles a player may add on top of the ones their kingdom forces */
+XS.OPTIONAL_ORGS=['mitochondrion','chloroplast','vacuole','food_vacuole','lysosome','golgi','er_rough',
+  'flagellum','cilia','pseudopod','pili','eyespot','spore','contractile','capsule','plasmid','centriole'];
 /* turn a creator definition into a species entry the rest of the game accepts */
 XS.customSpecies=function(def){
   const K=XS.KINGDOMS[def.cell]||XS.KINGDOMS.Animalia;
@@ -530,7 +535,11 @@ XS.customSpecies=function(def){
   const nm=(def.name||'Unnamed').trim()||'Unnamed';
   return { id:'custom_'+(def.seed||0), custom:true, alien:!!K.alien,
     name:[nm], epi:[''], kingdom:K.label, body:'an organism of your own design',
-    plan:def.plan, cell:def.cell, col, size:def.size||1, form:{}, minXP:0,
+    plan:'custom', cell:def.cell, col, size:def.size||1, minXP:0,
+    orgs:(def.orgs||[]).slice(),
+    form:{ sym:def.sym|0, elong:def.elong??1, lobes:def.lobes|0, segs:Math.max(1,def.segs|0),
+           limbs:def.limbs|0, limbLen:def.limbLen??0.42, limbW:def.limbW??0.06,
+           spines:def.spines|0, spineLen:def.spineLen??0.12, crown:def.crown|0 },
     blurb:'A species you designed. Its shape is your choice — its biology follows its kingdom, and the assays will say so.' };
 };
 XS.saveCreature=function(def){
@@ -556,7 +565,11 @@ XS.buildScenario=function(objective, tier, forceCell){
   const forced = XS.app && XS.app.forceSpecies;
   const base = forced || pick(pool.length?pool:XS.SPECIES);
   const morph=XS.genMorph(base);
-  const A=Object.assign({}, base, {label:base.kingdom, col:morph.col, form:morph.form, size:(base.size||1)*morph.size});
+  // a player-designed species keeps the exact shape it was sculpted with;
+  // only procedurally-generated ones get random morphology
+  const A=base.custom
+    ? Object.assign({}, base, {label:base.kingdom})
+    : Object.assign({}, base, {label:base.kingdom, col:morph.col, form:morph.form, size:(base.size||1)*morph.size});
   const planet=pick(XS.PLANETS);
   const tmpl=R_BY_PLAN[base.plan]||R_ANIMAL;
   const pos = base.plan==='colony' ? (COLONY_POS[(base.form&&base.form.style)]||null) : (PLAN_POS[base.plan]||null);
@@ -788,7 +801,7 @@ function rollTraits(sc, tier){
 /* lazily build the cell you meet in a region */
 XS.regionCell=function(sc, region){
   if(region.cellSpec) return region.cellSpec;
-  const spec=XS.genSpecimen(region.cell, sc.tier||'field');
+  const spec=XS.genSpecimen(region.cell, sc.tier||'field', (sc.A&&sc.A.orgs)||null);
   spec.task=null; spec.inspected=new Set();
   region.cellSpec=spec;
   return spec;

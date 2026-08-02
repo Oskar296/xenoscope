@@ -762,14 +762,46 @@ UI.showCreator=function(def){
     `<select class="cr-sel" id="crCell">${XS.CREATOR_KINGDOMS.map(k=>`<option value="${k}"${k===D.cell?' selected':''}>${(XS.KINGDOMS[k]||{}).label||k}${(XS.KINGDOMS[k]||{}).alien?' · alien':''}</option>`).join('')}</select>`+
     `<div class="cr-bio"><b>${K.label||D.cell}</b><small>${K.blurb||''}</small>`+
       `<div class="cr-weak">Weakness · <b>${XS.agentName(weak)}</b></div></div>`;
+  const rng=(id,lab,min,max,step,val,hint)=>`<label class="cr-lab">${lab} <b class="cr-val" id="${id}v">${hint?hint(val):val}</b></label>`+
+    `<input type="range" class="cr-rng" id="${id}" min="${min}" max="${max}" step="${step}" value="${val}">`;
+  const SYM=['Bilateral','Radial','Spiral'];
   UI.right.innerHTML=
-    `<div class="cap">Appearance</div>`+
-    `<label class="cr-lab">Body plan <span class="muted">— shape only</span></label>`+
-    `<select class="cr-sel" id="crPlan">${XS.CREATOR_PLANS.map(pl=>`<option value="${pl}"${pl===D.plan?' selected':''}>${pl}</option>`).join('')}</select>`+
-    `<label class="cr-lab">Colour</label><input type="range" class="cr-rng" id="crHue" min="0" max="1" step="0.01" value="${D.hue}">`+
-    `<label class="cr-lab">Size</label><input type="range" class="cr-rng" id="crSize" min="0.7" max="1.4" step="0.01" value="${D.size}">`+
-    `<button class="btn cr-reroll" id="crRoll">🎲 Reroll details</button>`+
-    `<div class="cr-note">Shape and biology are independent — build a crystal that looks like a beast if you like. The assays will still tell the truth about what it is.</div>`;
+    `<div class="cap">Sculpt</div>`+
+    `<label class="cr-lab">Symmetry</label>`+
+    `<div class="cr-seg" id="crSym">${SYM.map((n,i)=>`<button class="${(D.sym|0)===i?'sel':''}" data-sym="${i}">${n}</button>`).join('')}</div>`+
+    rng('crElong','Body — stretch',0.5,2.2,0.01,D.elong,v=>(+v).toFixed(2)+'×')+
+    rng('crLobes','Body — lobes',0,8,1,D.lobes)+
+    rng('crSegs','Segments',1,8,1,D.segs)+
+    rng('crLimbs','Limbs',0,10,1,D.limbs)+
+    rng('crLimbLen','Limb length',0.1,0.85,0.01,D.limbLen,v=>Math.round(v*100)+'%')+
+    rng('crLimbW','Limb thickness',0.02,0.14,0.005,D.limbW,v=>Math.round(v*700)+'')+
+    rng('crSpines','Spines',0,28,1,D.spines)+
+    rng('crSpineLen','Spine length',0.03,0.3,0.01,D.spineLen,v=>Math.round(v*100)+'%')+
+    rng('crCrown','Crown tendrils',0,10,1,D.crown)+
+    rng('crHue','Colour',0,1,0.01,D.hue,()=>'')+
+    rng('crSize','Overall size',0.7,1.4,0.01,D.size,v=>(+v).toFixed(2)+'×')+
+    `<button class="btn cr-reroll" id="crRoll">🎲 Randomise shape</button>`;
+
+  // ORGANELLES — the kingdom forces some; you may add more
+  const forced=(XS.KINGDOMS[D.cell]||{}).parts||[];
+  const forcedIds=forced.map(x=>x[0]);
+  const chips=(XS.OPTIONAL_ORGS||[]).filter(id=>XS.ORG[id]).map(id=>{
+    const on=(D.orgs||[]).includes(id), lock=forcedIds.includes(id);
+    const o=XS.ORG[id];
+    return `<button class="cr-org ${on?'on':''} ${lock?'lock':''}" data-org="${id}" title="${o.fn.replace(/"/g,'')}">`+
+      `<span class="cr-dot" style="background:${o.col}"></span>${o.name}${lock?' 🔒':''}</button>`;}).join('');
+  UI.zlab.classList.remove('on');
+  let orgPanel=document.getElementById('crOrg');
+  if(!orgPanel){ orgPanel=document.createElement('div'); orgPanel.id='crOrg'; orgPanel.className='cr-orgwrap'; document.body.appendChild(orgPanel); }
+  orgPanel.style.display='block';
+  orgPanel.innerHTML=`<div class="cap">Organelles <span class="muted">— 🔒 required by ${(XS.KINGDOMS[D.cell]||{}).label||D.cell}</span></div>`+
+    `<div class="cr-orgs">${chips}</div>`;
+  orgPanel.querySelectorAll('[data-org]').forEach(bt=>bt.onclick=()=>{ const id=bt.dataset.org;
+    if(forcedIds.includes(id)){ sfx('err'); return; }
+    D.orgs=D.orgs||[]; const i=D.orgs.indexOf(id);
+    if(i>=0) D.orgs.splice(i,1); else D.orgs.push(id);
+    sfx('click'); UI.showCreator(D); });
+
   UI.dock.innerHTML=
     `<button class="abtn back" id="crBack"><b>← Menu</b><small>discard</small></button>`+
     `<div class="dsep"></div>`+
@@ -782,16 +814,28 @@ UI.showCreator=function(def){
   const re=()=>{ XS.previewCreature(D); };
   $('crName').oninput=e=>{ D.name=e.target.value; };
   $('crCell').onchange=e=>{ sfx('click'); D.cell=e.target.value; UI.showCreator(D); };
-  $('crPlan').onchange=e=>{ sfx('click'); D.plan=e.target.value; re(); };
-  $('crHue').oninput=e=>{ D.hue=+e.target.value; re(); };
-  $('crSize').oninput=e=>{ D.size=+e.target.value; re(); };
-  $('crRoll').onclick=()=>{ sfx('blip'); D.seed=Math.floor(Math.random()*1e9); re(); };
-  $('crBack').onclick=()=>{ sfx('click'); UI.showMenu(); };
+  UI.overlay.querySelectorAll&&0;
+  document.querySelectorAll('#crSym [data-sym]').forEach(bt=>bt.onclick=()=>{ sfx('click'); D.sym=+bt.dataset.sym;
+    document.querySelectorAll('#crSym [data-sym]').forEach(x=>x.classList.toggle('sel',+x.dataset.sym===D.sym)); re(); });
+  const bind=(id,key,fmt)=>{ const el=$(id); if(!el) return;
+    el.oninput=e=>{ D[key]=+e.target.value; const lab=$(id+'v'); if(lab&&fmt!==null) lab.textContent=fmt?fmt(D[key]):D[key]; re(); }; };
+  bind('crElong','elong',v=>v.toFixed(2)+'×'); bind('crLobes','lobes'); bind('crSegs','segs');
+  bind('crLimbs','limbs'); bind('crLimbLen','limbLen',v=>Math.round(v*100)+'%');
+  bind('crLimbW','limbW',v=>Math.round(v*700)+''); bind('crSpines','spines');
+  bind('crSpineLen','spineLen',v=>Math.round(v*100)+'%'); bind('crCrown','crown');
+  bind('crHue','hue',()=>''); bind('crSize','size',v=>v.toFixed(2)+'×');
+  $('crRoll').onclick=()=>{ sfx('blip'); const R=Math.random;
+    D.seed=Math.floor(R()*1e9); D.sym=Math.floor(R()*3); D.elong=0.6+R()*1.4; D.lobes=Math.floor(R()*7);
+    D.segs=1+Math.floor(R()*5); D.limbs=Math.floor(R()*9); D.limbLen=0.15+R()*0.6;
+    D.limbW=0.03+R()*0.09; D.spines=Math.floor(R()*20); D.spineLen=0.05+R()*0.2; D.crown=Math.floor(R()*8);
+    UI.showCreator(D); };
+  $('crBack').onclick=()=>{ sfx('click'); const op=document.getElementById('crOrg'); if(op) op.style.display='none'; UI.showMenu(); };
   $('crSave').onclick=()=>{ if(!(D.name||'').trim()){ D.name='Unnamed'; $('crName').value='Unnamed'; }
     sfx('ok'); XS.saveCreature(D); UI.showCreator(D);
     UI.showToast({icon:'🧬', name:'Saved', desc:D.name+' added to your catalogue'}); };
-  $('crPlayP').onclick=()=>{ sfx('click'); XS.startCustomMission(D,'preserve'); UI.renderPhase(); };
-  $('crPlayN').onclick=()=>{ sfx('click'); XS.startCustomMission(D,'neutralize'); UI.renderPhase(); };
+  const closeOrg=()=>{ const op=document.getElementById('crOrg'); if(op) op.style.display='none'; };
+  $('crPlayP').onclick=()=>{ sfx('click'); closeOrg(); XS.startCustomMission(D,'preserve'); UI.renderPhase(); };
+  $('crPlayN').onclick=()=>{ sfx('click'); closeOrg(); XS.startCustomMission(D,'neutralize'); UI.renderPhase(); };
   $('crList').onclick=()=>{ sfx('click'); UI.showMySpecies(); };
 };
 UI.showMySpecies=function(){
