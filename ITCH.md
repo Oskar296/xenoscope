@@ -25,52 +25,31 @@ zip root, which itch requires).
 
 ## Page description (paste into the editor)
 
-> ### The answer is hidden.
+> **You're the biologist on a survey ship.** A planet below has something wrong with it.
+> Sometimes an organism is sick and you have to save it. Sometimes it's dangerous and you
+> have to stop it. Either way, nobody tells you what you're dealing with.
 >
-> You are the only xenobiologist aboard the survey vessel **Verity**. Something on the
-> world below is dying, or spreading, or both — and nobody is going to tell you which.
+> You zoom into its tissues and look at the cells. You run lab tests. Each test tells you
+> one real thing: what its wall is made of, whether it has a nucleus, how it moves. Put
+> enough of those together and you can name what's wrong. Then you treat it.
 >
-> Zoom into its tissues. Run the assays. Read what comes back. Then commit.
+> The catch is that the treatment has to match the biology. Antibiotics kill bacteria and
+> do nothing to a virus. Some cells burst in plain water and others shrug it off. If you
+> guess, you usually kill the thing you were trying to save.
 >
-> ---
+> **Story mode** is 14 chapters. It starts with normal biology and slowly gets stranger,
+> until you're dealing with life that isn't made of the same stuff we are. There's a
+> crystal that grows instead of breeding, a cloud of plasma with no body to poison, and
+> something that gets stronger when you irradiate it.
 >
-> **XENOSCOPE** is a deduction game built on real biology. Every case has one correct
-> answer and it is genuinely inferable — but never handed to you. Invaders appear as an
-> unresolved smear until you run the right test. Guess, and the thing in front of you
-> pays for it.
+> **In the harder modes you make the cure yourself**, out of real ingredients. Penicillin
+> comes from mould you have to grow. Quinine comes from bark you have to soak. You also
+> have to get the temperature and the acidity right, or you just ruin it.
 >
-> **📖 A 14-chapter campaign across six acts.** *The Long Survey* starts with biology you
-> recognise and walks outward until nothing applies. Along the way you stop being a
-> monster-hunter and start being what the job actually is: eleven hundred colonists,
-> four hundred days of stored protein, and a crop that will not take.
+> **Outbreak mode** throws cases at you one after another and scores you on how fast and
+> how accurately you solve them.
 >
-> **⚗️ Make the cure yourself.** Not from a menu — from mould, bark, wormwood, egg white,
-> lye and serum. Ferment it, extract it, react it, purify it. Every process has an exact
-> temperature *and* pH and will fail without both: penicillin dies in alkali, artemisinin
-> dies at a boil, prions survive anything short of 134 °C. Some reagents aren't on the
-> shelf at all — you build those first.
->
-> **👽 Then meet things that don't share your chemistry.** A silicon crystal that grows
-> like a stalactite and has no genome to attack. A plasma held together by its own
-> magnetic field — nothing to poison, only a field to collapse. Mirror-life, where every
-> molecule is built the wrong way round and your drugs are the wrong hand. Something that
-> *eats* the radiation you were going to kill it with.
->
-> **🌊 Or just survive.** Outbreak mode chains cases against a collapsing colony, scored
-> on speed and precision, with a combo multiplier and a high score to beat.
->
-> ---
->
-> - **55 species** across **ten kingdoms** — six from Earth, four that never existed here
-> - **10 lab assays** and real organelle inspection
-> - **20 recipes**, **27 reagents**, exact temperature and pH on every one
-> - **Six kinds of affliction** plus four that break the rules, and **8 complications**
->   that recombine onto anything
-> - Three difficulty tiers, a growing Codex, achievements, and a seeded daily case
->
-> Runs in the browser. No install. Works on desktop and mobile.
->
-> *The biology it teaches is real. The organisms are not.*
+> 55 species. Six ways to play. Runs in your browser, nothing to install.
 
 ---
 
