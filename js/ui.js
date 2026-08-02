@@ -37,21 +37,6 @@ UI.init=function(){
   cv.addEventListener('pointerdown',onDown);
   cv.addEventListener('pointerdown',()=>{UI.left.classList.remove('open');UI.right.classList.remove('open');});
   cv.addEventListener('pointerleave',()=>{XS.app.hoverPart=null;XS.app.hoverRegion=null;UI.zlab.classList.remove('on');});
-  /* ---- CREATOR · one tool: drag on the creature to shape it ---- */
-  let sculpting=false;
-  const sculptPoint=(e)=>{ const D=XS.app.sculpt, fr=XS.creatureFrame; if(!D||!fr) return false;
-    const r=cv.getBoundingClientRect();
-    const x=(e.clientX-r.left)*(cv.width/r.width), y=(e.clientY-r.top)*(cv.height/r.height);
-    const dx=x-fr.cx, dy=y-fr.cy, d=Math.hypot(dx,dy);
-    if(d<fr.base*0.10) return false;                       // ignore the dead centre
-    XS.sculptAt(D, Math.atan2(dy,dx), d/fr.base, 0.42);
-    XS.applySculpt(D); return true; };            // live, in-place: no scenario rebuild
-  cv.addEventListener('pointerdown',e=>{ if(!XS.app.sculpt) return;
-    sculpting=sculptPoint(e); if(sculpting){ cv.setPointerCapture&&cv.setPointerCapture(e.pointerId); sfx('blip'); } });
-  cv.addEventListener('pointermove',e=>{ if(sculpting && XS.app.sculpt) sculptPoint(e); });
-  const endSculpt=()=>{ sculpting=false; };
-  cv.addEventListener('pointerup',endSculpt);
-  cv.addEventListener('pointercancel',endSculpt);
   window.addEventListener('keydown',e=>{ if(e.key==='Escape'){ if(XS.app.phase==='zoom'){ XS.exitRegion(); UI.renderPhase(); } else if(UI.overlay.classList.contains('on')&&XS.app.phase!=='menu'&&XS.app.phase!=='result') UI.hideOverlay(); } });
   UI.showMenu();
 };
@@ -71,7 +56,6 @@ function onMove(e){
 }
 function onDown(e){
   const app=XS.app;
-  if(app.sculpt) return;                       // in the creator the canvas is a sculpting surface
   if(app.phase==='survey'){ const r=XS.regionAt(app,e.clientX,e.clientY); if(r){ sfx('scan'); XS.enterRegion(r); UI.renderPhase(); } return; }
   if(app.phase==='zoom'){ if(app.scan) return; const p=XS.partAt(app,e.clientX,e.clientY); if(!p) return;
     sfx('scan'); app.scan={active:true,x:e.clientX,y:e.clientY,start:app.time,dur:850,part:p}; return; }
@@ -781,19 +765,17 @@ UI.showCreator=function(def){
     `<div class="cr-bio"><b>${K.label||D.cell}</b><small>${K.blurb||''}</small>`+
       `<div class="cr-weak">Weakness · <b>${XS.agentName(weak)}</b></div></div>`;
   UI.right.innerHTML=
-    `<div class="cap">Sculpt</div>`+
-    `<div class="cr-tool"><div class="cr-toolh">✋ Shape it with the cursor</div>`+
-      `<div class="cr-toolb">Drag <b>on the body</b> to push or pull its outline.<br>`+
-      `Drag <b>past the edge</b> to draw a limb.<br>That is the whole tool — it is your hands, not settings.</div></div>`+
+    `<div class="cap">Body</div>`+
+    `<label class="cr-lab">Body plan</label>`+
+    `<select class="cr-sel" id="crPlan">${XS.CREATOR_PLANS.map(pl=>`<option value="${pl}"${pl===D.plan?' selected':''}>${pl}</option>`).join('')}</select>`+
+    `<label class="cr-lab">Build <b class="cr-val" id="crBuildv">${Math.round((D.build??0.5)*100)}%</b></label>`+
+    `<input type="range" class="cr-rng" id="crBuild" min="0" max="1" step="0.01" value="${D.build??0.5}">`+
+    `<div class="cr-note" style="margin-top:6px">Build scales limbs, segments and spines together — slender at the left, heavy and many-limbed at the right.</div>`+
     `<label class="cr-lab">Colour</label>`+
     `<input type="range" class="cr-rng" id="crHue" min="0" max="1" step="0.01" value="${D.hue}">`+
     `<label class="cr-lab">Size <b class="cr-val" id="crSizev">${(+(D.size||1)).toFixed(2)}×</b></label>`+
     `<input type="range" class="cr-rng" id="crSize" min="0.6" max="1.6" step="0.01" value="${D.size||1}">`+
-    `<div class="cr-acts">`+
-      `<button class="btn" id="crSmooth">〜 Smooth</button>`+
-      `<button class="btn" id="crReset">↺ Reset shape</button>`+
-    `</div>`+
-    `<div class="cr-note">Nothing here is generated for you. Every bump and limb on that creature is one you made.</div>`;
+    `<button class="btn cr-reroll" id="crRoll">🎲 Surprise me</button>`;
 
   // ORGANELLES — the kingdom forces some; you may add more
   const forced=(XS.KINGDOMS[D.cell]||{}).parts||[];
@@ -829,19 +811,22 @@ UI.showCreator=function(def){
   $('crName').oninput=e=>{ D.name=e.target.value; };
   const kn=$('crKing'); if(kn) kn.oninput=e=>{ D.kingdomName=e.target.value; };
   $('crCell').onchange=e=>{ sfx('click'); D.cell=e.target.value; UI.showCreator(D); };
+  $('crPlan').onchange=e=>{ sfx('click'); D.plan=e.target.value; re(); };
+  $('crBuild').oninput=e=>{ D.build=+e.target.value; const l=$('crBuildv'); if(l) l.textContent=Math.round(D.build*100)+'%'; XS.applySculpt(D); };
   $('crHue').oninput=e=>{ D.hue=+e.target.value; XS.applySculpt(D); };
   $('crSize').oninput=e=>{ D.size=+e.target.value; const l=$('crSizev'); if(l) l.textContent=D.size.toFixed(2)+'×'; XS.applySculpt(D); };
-  $('crSmooth').onclick=()=>{ sfx('blip'); XS.smoothShape(D); re(); };
-  $('crReset').onclick=()=>{ sfx('err'); XS.resetShape(D); re(); };
-  XS.app.sculpt=D;                       // arms the pointer tool on the canvas
-  $('crBack').onclick=()=>{ sfx('click'); XS.app.sculpt=null; const op=document.getElementById('crOrg'); if(op) op.style.display='none'; UI.showMenu(); };
+  $('crRoll').onclick=()=>{ sfx('blip'); const R=Math.random;
+    D.plan=XS.CREATOR_PLANS[Math.floor(R()*XS.CREATOR_PLANS.length)];
+    D.build=R(); D.hue=R(); D.size=0.75+R()*0.6; D.seed=Math.floor(R()*1e9);
+    UI.showCreator(D); };
+  $('crBack').onclick=()=>{ sfx('click'); const op=document.getElementById('crOrg'); if(op) op.style.display='none'; UI.showMenu(); };
   $('crSave').onclick=()=>{ if(!(D.name||'').trim()){ D.name='Unnamed'; $('crName').value='Unnamed'; }
     sfx('ok'); XS.saveCreature(D); UI.showCreator(D);
     UI.showToast({icon:'🧬', name:'Saved', desc:D.name+' added to your catalogue'}); };
-  const closeOrg=()=>{ XS.app.sculpt=null; const op=document.getElementById('crOrg'); if(op) op.style.display='none'; };
+  const closeOrg=()=>{ const op=document.getElementById('crOrg'); if(op) op.style.display='none'; };
   $('crPlayP').onclick=()=>{ sfx('click'); closeOrg(); XS.startCustomMission(D,'preserve'); UI.renderPhase(); };
   $('crPlayN').onclick=()=>{ sfx('click'); closeOrg(); XS.startCustomMission(D,'neutralize'); UI.renderPhase(); };
-  $('crCell').onclick=()=>{ sfx('scan'); XS.app.sculpt=null;
+  $('crCell').onclick=()=>{ sfx('scan');
     const sc=XS.app.sc; sc.regions.forEach(r=>r.cellSpec=null);
     XS.enterRegion(sc.regions[0]); UI.renderPhase();
     UI.dock.innerHTML=`<button class="abtn back" id="crCellBack"><b>← Back to sculpting</b><small>return to the creator</small></button>`;

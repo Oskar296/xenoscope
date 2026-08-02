@@ -520,8 +520,8 @@ XS.CREATOR_PLANS=['beast','medusa','arthropod','tentacled','worm','anemone','cri
   'crystalspire','geodecluster','plasmawisp','cryodrifter','rustbloom','ferrovein'];
 XS.CREATOR_KINGDOMS=['Animalia','Plantae','Fungi','Protista','Monera','Archaea','Silicoid','Plasmoid','Ammonoid','Metallophyte'];
 XS.SHAPE_N=48;                                  // outline resolution you sculpt directly
-XS.newCreatureDef=function(){ return {name:'', cell:'Animalia', hue:0.5, seed:Math.floor(Math.random()*1e9),
-  shape:new Array(XS.SHAPE_N).fill(1), limbs:[], orgs:[] }; };
+XS.newCreatureDef=function(){ return {name:'', kingdomName:'', cell:'Animalia', plan:'beast',
+  hue:0.5, size:1, build:1, seed:Math.floor(Math.random()*1e9), orgs:[] }; };
 /* one tool, used directly on the creature: push/pull the outline, or drag past
    the edge to draw a limb. No parameters — you shape it with your hands. */
 XS.sculptAt=function(def, ang, dist, strength){
@@ -540,13 +540,18 @@ XS.sculptAt=function(def, ang, dist, strength){
 };
 /* Push the sculpt straight into the live species. Rebuilding a whole scenario
    on every pointer-move made dragging unusable; this is the per-frame path. */
+/* One knob shapes the whole silhouette: limb/segment/arm counts all scale
+   together, so a build slider gives real variety without fiddly manual work. */
+XS.buildForm=function(def){
+  const b=Math.max(0,Math.min(1,def.build??0.5)), n=(lo,hi)=>Math.round(lo+(hi-lo)*b);
+  return {legs:n(2,8), arms:n(3,9), segs:n(3,11), spines:n(4,16), fronds:n(3,9), tail:1};
+};
 XS.applySculpt=function(def){
   const sc=XS.app&&XS.app.sc; if(!sc||!sc.A) return;
   XS.migrateCreature(def);
   const K=XS.KINGDOMS[def.cell]||XS.KINGDOMS.Animalia, h=def.hue;
-  sc.A.form=sc.A.form||{};
-  sc.A.form.shape=(def.shape||[]).slice();
-  sc.A.form.limbs=(def.limbs||[]).map(L=>({a:L.a,len:L.len,w:L.w}));
+  sc.A.form=XS.buildForm(def);
+  sc.A.plan=def.plan||'beast';
   sc.A.size=def.size||1;
   sc.A.col=[Math.round(120+120*Math.sin(6.283*h)),
             Math.round(120+120*Math.sin(6.283*h+2.09)),
@@ -572,22 +577,18 @@ XS.customSpecies=function(def){
   return { id:'custom_'+(def.seed||0), custom:true, alien:!!K.alien,
     name:[nm], epi:[''], kingdom:(def.kingdomName||'').trim()||K.label,
     kingdomName:(def.kingdomName||'').trim()||null, body:'an organism of your own design',
-    plan:'custom', cell:def.cell, col, size:1, minXP:0,
+    plan:def.plan||'beast', cell:def.cell, col, size:def.size||1, minXP:0,
     orgs:(def.orgs||[]).slice(),
-    form:{ shape:(def.shape||new Array(XS.SHAPE_N).fill(1)).slice(), limbs:(def.limbs||[]).map(L=>({a:L.a,len:L.len,w:L.w})) },
+    form:XS.buildForm(def),
     blurb:'A species you designed. Its shape is your choice — its biology follows its kingdom, and the assays will say so.' };
 };
 /* creatures saved before the direct-sculpt creator stored numeric parameters;
    bring them forward instead of crashing on them */
 XS.migrateCreature=function(def){
   if(!def) return def;
-  const N=XS.SHAPE_N;
-  if(!Array.isArray(def.shape) || def.shape.length!==N) def.shape=new Array(N).fill(1);
-  if(!Array.isArray(def.limbs)){
-    const n=Math.max(0,Math.min(12, def.limbs|0)), len=(typeof def.limbLen==='number')?def.limbLen:0.4;
-    def.limbs=[]; for(let i=0;i<n;i++) def.limbs.push({a:i/n*Math.PI*2, len:len, w:(typeof def.limbW==='number')?def.limbW:0.05});
-  }
-  def.limbs=def.limbs.filter(L=>L&&typeof L.a==='number');
+  if(!def.plan || !XS.CREATOR_PLANS.includes(def.plan)) def.plan='beast';
+  if(typeof def.build!=='number') def.build=0.5;
+  delete def.shape; delete def.limbs;          // drop the removed sculpt data
   if(!Array.isArray(def.orgs)) def.orgs=[];
   if(typeof def.hue!=='number') def.hue=0.5;
   if(typeof def.size!=='number') def.size=1;
