@@ -310,7 +310,22 @@ XS.STORY=[
    log:'Second failure on the north plots, and the instinct now is to sterilise everything and start again.\n\nDon\u2019t.\n\nSomething is living in the roots of this crop, and the assays will show you it is <b>feeding the plant</b>, not feeding on it. Kill it and you will have a clean, dead field. Six weeks of settlement agriculture has taught us what took Earth ten thousand years: the soil is not a substrate. It is an organism.',
    out:'You treated the disease and left the partner alone. That distinction is most of xenobiology.'},
 
-  {id:'ch8', act:'V · The Question', title:'The Question', mode:'contact', tier:'director',
+  {id:'ch9', act:'V · Deep Field', title:'The Wrong Hand', mode:'alien', tier:'field',
+   obj:'preserve', path:'chiral', teaches:'life built as our mirror image',
+   log:'Something is wrong with the assays and it took us four days to see what.\n\nThe organism is <i>ordinary</i>. Cells, membranes, sugars, amino acids — all of it familiar, all of it correct. And all of it built the wrong way round, like a hand that will not fit any glove we own.\n\nOur drugs are shaped keys. This lock is mirrored. You will have to build the reflection.',
+   out:'Every molecule we make has a handedness. It had never mattered before. It matters here.'},
+
+  {id:'ch10', act:'V · Deep Field', title:'It Eats The Light', mode:'alien', tier:'field',
+   obj:'preserve', path:'radiotroph', teaches:'an organism you cannot kill, only starve',
+   log:'The containment protocol calls for irradiation. We ran it for six hours.\n\nIt grew.\n\nThis thing does not tolerate radiation, it <b>feeds</b> on it — and heat and poison are just more energy arriving. There is no dose. There is no agent. Everything in your kit is a way of giving something energy it cannot survive, and this organism survives all of it.\n\nStop trying to kill it. Take its food away.',
+   out:'You starved it. It is the first time the answer has been to give something less, rather than more.'},
+
+  {id:'ch11', act:'V · Deep Field', title:'Forty Below', mode:'alien', tier:'director',
+   obj:'preserve', path:'ammono', teaches:'that water is not neutral',
+   log:'Minus forty and thriving. Its solvent is liquid ammonia, and by its standards our biochemistry is the exotic one.\n\nHere is what the crew found hard: the cure is <b>water</b>. Warm, ordinary, harmless water — the substance we are mostly made of, the thing we ship across light-years because life needs it.\n\nTo this organism it is a violent reagent. Nothing is universally safe. There is only what a given chemistry can tolerate, and we are not the reference.',
+   out:'Water. We call it the solvent of life because it is the solvent of OUR life. That distinction cost this organism everything.'},
+
+  {id:'ch8', act:'VI · The Question', title:'The Question', mode:'contact', tier:'director',
    obj:'neutralize', cell:'Plasmoid', teaches:'whether understanding obliges mercy', choice:true,
    log:'It has been following the <b>Verity</b> for six days.\n\nA knot of ionised gas that holds its own shape. No cells. No chemistry. Nothing you could call a body. It should not be able to persist and it has persisted, and this morning the magnetometer logged its field oscillating in a pattern that repeats — and then changes when we transmit.\n\nCommand has classified it a hazard and ordered containment. You know how to do that now. You could collapse it inside a minute.\n\nThe order does not require you to be certain. It only requires you to be quick.',
    out:'Whatever it was, it is a decision you made rather than one you were handed.'},

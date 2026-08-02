@@ -242,6 +242,24 @@ XS.SPECIES=[
   {id:'foram', name:['Fora','Globi','Nummu'], epi:[' chamber',' coil',' test'], kingdom:'Protist', body:'a chambered foraminiferan protist', plan:'foram', cell:'Protista', col:[230,215,180], size:1.0, form:{}, minXP:150,
     blurb:'A single-celled protist that builds a many-chambered mineral shell and feeds through a net of fine threads.'},
 
+  // — batch 4: further Earth-kingdom species —
+  {id:'siphon', name:['Sipho','Nekt','Physa'], epi:[' colony',' chain',' float'], kingdom:'Animal', body:'a colonial siphonophore-grade animal', plan:'medusa', cell:'Animalia', col:[190,140,255], size:1.05, form:{arms:11}, minXP:100,
+    blurb:'Not one animal but a chain of specialised bodies living as one — some feed, some sting, some do nothing but drift.'},
+  {id:'burrower', name:['Chela','Scut','Brach'], epi:[' digger',' claw',' delver'], kingdom:'Animal', body:'a burrowing armoured animal', plan:'arthropod', cell:'Animalia', col:[210,170,120], size:1.0, form:{segs:7,legs:6}, minXP:100,
+    blurb:'A plated tunneller that spends its life in the dark, feeling its way with chemical senses instead of eyes.'},
+  {id:'moss', name:['Bryo','Tapeto','Muscis'], epi:[' carpet',' mat',' cushion'], kingdom:'Plant', body:'a low creeping non-vascular plant', plan:'fern', cell:'Plantae', col:[110,200,130], size:0.9, form:{}, minXP:40,
+    blurb:'A carpeting autotroph with no true vessels — it moves water cell to cell and can only grow where it stays wet.'},
+  {id:'liana', name:['Liana','Volu','Tortu'], epi:[' twist',' coil',' climber'], kingdom:'Plant', body:'a climbing woody vine', plan:'vine', cell:'Plantae', col:[150,190,90], size:1.15, form:{}, minXP:100,
+    blurb:'It builds almost no trunk of its own — it borrows height from whatever it can wrap, and races for the light.'},
+  {id:'yeast', name:['Sacchar','Zymo','Budda'], epi:[' bloom',' froth',' colony'], kingdom:'Fungus', body:'a budding single-celled fungus', plan:'puffball', cell:'Fungi', col:[235,205,140], size:0.85, form:{}, minXP:40,
+    blurb:'A fungus that never bothered with threads — it lives as single cells that bud off copies and ferment whatever they land in.'},
+  {id:'stinkhorn', name:['Phall','Fetor','Clathr'], epi:[' lattice',' horn',' cage'], kingdom:'Fungus', body:'a lattice-fruiting fungus', plan:'coral', cell:'Fungi', col:[255,180,150], size:1.0, form:{}, minXP:100,
+    blurb:'It fruits as an open lattice smeared with spore slime, and advertises itself by smell rather than by wind.'},
+  {id:'heliozoan', name:['Helio','Actino','Radi'], epi:[' sun',' star',' bloom'], kingdom:'Protist', body:'a sun-rayed heliozoan protist', plan:'radiolarian', cell:'Protista', col:[255,230,170], size:0.95, form:{}, minXP:100,
+    blurb:'A sphere bristling with stiff needle-like arms that it uses to trap drifting prey on contact.'},
+  {id:'thermophile', name:['Pyro','Igni','Caldo'], epi:[' mat',' crust',' seam'], kingdom:'Archaeon', body:'a heat-loving archaeal mat', plan:'colony', cell:'Archaea', col:[255,150,90], size:1.0, form:{style:'biofilm'}, minXP:100,
+    blurb:'An archaeal mat living where water is near boiling — conditions that would sterilise almost anything else.'},
+
   /* ---- XENO SPECIES — first-contact organisms with no Earth ancestry ---- */
   {id:'crystalspire', alien:true, name:['Crysta','Silico','Quartzo'], epi:[' spire',' prism',' geode'], kingdom:'Silicoid', body:'a self-assembling silicate crystal organism', plan:'crystalspire', cell:'Silicoid', col:[159,240,234], size:1.1, form:{}, minXP:0,
     blurb:'A tower of interlocking silicon–oxygen prisms that grows by laying down dissolved mineral. It never divides, never eats, and has no genome — yet it repairs damage and reproduces by fracture.'},
