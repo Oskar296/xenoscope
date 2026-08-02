@@ -392,6 +392,13 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border:none;border-ra
 .cr-weak b{color:var(--coral)}
 .cr-reroll{width:100%;margin-top:14px}
 .cr-lab{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.cr-tool{border:1px solid rgba(94,242,214,.35);border-radius:12px;padding:11px 13px;
+  background:linear-gradient(180deg,rgba(94,242,214,.09),rgba(94,242,214,.02))}
+.cr-toolh{font-size:13px;font-weight:700;color:var(--aqua);margin-bottom:6px}
+.cr-toolb{font-size:11.5px;color:var(--dim);line-height:1.6}
+.cr-toolb b{color:var(--ink)}
+.cr-acts{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:12px}
+.cr-acts .btn{width:100%;font-size:12px;padding:8px 6px}
 .cr-val{font-family:var(--mono);font-size:11px;color:var(--aqua);text-transform:none;letter-spacing:0}
 .cr-seg{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:2px}
 .cr-seg button{font-size:11px;padding:7px 4px;border:1px solid var(--line2);border-radius:8px;

@@ -318,7 +318,22 @@ XS.STORY=[
    log:'We had a word for the edge of the map and we have crossed it.\n\nThe thing growing across the southern shelf has no membrane. No genome. No water. It grows the way a stalactite grows, and it repairs itself, and by every definition we brought with us it is <i>alive</i>.\n\nEverything in your kit was designed to attack carbon. This is not carbon. Start again — from what it is actually <b>made of</b>.',
    out:'Silicon and oxygen. Nothing we brought could touch it until you stopped assuming it was a variation on us.'},
 
-  {id:'ch8', act:'III · Foreign', title:'The Question', mode:'contact', tier:'director',
+  {id:'ch8a', act:'IV · Taking Root', title:'The Crop Won\u2019t Take', mode:'advanced', tier:'field',
+   obj:'preserve', path:'fungus', teaches:'keeping Earth life alive on a world that isn\u2019t Earth',
+   log:'The <b>Verity</b> is not a warship. It is a seed vault with engines.\n\nBelow us is Kepler-442 b and eleven hundred colonists who will run out of stored protein in about four hundred days. The first plots went in six weeks ago. Something in this soil is eating them.\n\nThis is the actual job, by the way. Not monsters. <i>Agriculture.</i> Work out what is in the crop and stop it, or those people go home hungry — and there is no home to go to.',
+   out:'The plot holds. Eleven hundred people will eat next winter because you read a stain correctly.'},
+
+  {id:'ch8b', act:'IV · Taking Root', title:'Native Ground', mode:'contact', tier:'field',
+   obj:'neutralize', cell:'Metallophyte', teaches:'clearing a native organism out of your fields',
+   log:'The eastern terrace keeps failing and it is not disease this time. Something native is already living there, and it is winning.\n\nIt does not eat light and it does not eat our crops. It eats the <i>rock</i> — and it plates everything it touches in oxide until nothing else can root.\n\nWe were here second. That does not make this easy, and the colonists have stopped asking whether it is fair.',
+   out:'The terrace is clear. You note, in the log, that the organism was here first, and that you cleared it anyway.'},
+
+  {id:'ch8c', act:'IV · Taking Root', title:'Don\u2019t Kill The Soil', mode:'advanced', tier:'director',
+   obj:'preserve', trait:'symbiont', teaches:'that not everything in the field is an enemy',
+   log:'Second failure on the north plots, and the instinct now is to sterilise everything and start again.\n\nDon\u2019t.\n\nSomething is living in the roots of this crop, and the assays will show you it is <b>feeding the plant</b>, not feeding on it. Kill it and you will have a clean, dead field. Six weeks of settlement agriculture has taught us what took Earth ten thousand years: the soil is not a substrate. It is an organism.',
+   out:'You treated the disease and left the partner alone. That distinction is most of xenobiology.'},
+
+  {id:'ch8', act:'V · The Question', title:'The Question', mode:'contact', tier:'director',
    obj:'neutralize', cell:'Plasmoid', teaches:'whether understanding obliges mercy', choice:true,
    log:'It has been following the <b>Verity</b> for six days.\n\nA knot of ionised gas that holds its own shape. No cells. No chemistry. Nothing you could call a body. It should not be able to persist and it has persisted, and this morning the magnetometer logged its field oscillating in a pattern that repeats — and then changes when we transmit.\n\nCommand has classified it a hazard and ordered containment. You know how to do that now. You could collapse it inside a minute.\n\nThe order does not require you to be certain. It only requires you to be quick.',
    out:'Whatever it was, it is a decision you made rather than one you were handed.'},

@@ -37,6 +37,21 @@ UI.init=function(){
   cv.addEventListener('pointerdown',onDown);
   cv.addEventListener('pointerdown',()=>{UI.left.classList.remove('open');UI.right.classList.remove('open');});
   cv.addEventListener('pointerleave',()=>{XS.app.hoverPart=null;XS.app.hoverRegion=null;UI.zlab.classList.remove('on');});
+  /* ---- CREATOR · one tool: drag on the creature to shape it ---- */
+  let sculpting=false;
+  const sculptPoint=(e)=>{ const D=XS.app.sculpt, fr=XS.creatureFrame; if(!D||!fr) return false;
+    const r=cv.getBoundingClientRect();
+    const x=(e.clientX-r.left)*(cv.width/r.width), y=(e.clientY-r.top)*(cv.height/r.height);
+    const dx=x-fr.cx, dy=y-fr.cy, d=Math.hypot(dx,dy);
+    if(d<fr.base*0.10) return false;                       // ignore the dead centre
+    XS.sculptAt(D, Math.atan2(dy,dx), d/fr.base, 0.42);
+    XS.previewCreature(D); return true; };
+  cv.addEventListener('pointerdown',e=>{ if(!XS.app.sculpt) return;
+    sculpting=sculptPoint(e); if(sculpting){ cv.setPointerCapture&&cv.setPointerCapture(e.pointerId); sfx('blip'); } });
+  cv.addEventListener('pointermove',e=>{ if(sculpting && XS.app.sculpt) sculptPoint(e); });
+  const endSculpt=()=>{ sculpting=false; };
+  cv.addEventListener('pointerup',endSculpt);
+  cv.addEventListener('pointercancel',endSculpt);
   window.addEventListener('keydown',e=>{ if(e.key==='Escape'){ if(XS.app.phase==='zoom'){ XS.exitRegion(); UI.renderPhase(); } else if(UI.overlay.classList.contains('on')&&XS.app.phase!=='menu'&&XS.app.phase!=='result') UI.hideOverlay(); } });
   UI.showMenu();
 };
@@ -56,6 +71,7 @@ function onMove(e){
 }
 function onDown(e){
   const app=XS.app;
+  if(app.sculpt) return;                       // in the creator the canvas is a sculpting surface
   if(app.phase==='survey'){ const r=XS.regionAt(app,e.clientX,e.clientY); if(r){ sfx('scan'); XS.enterRegion(r); UI.renderPhase(); } return; }
   if(app.phase==='zoom'){ if(app.scan) return; const p=XS.partAt(app,e.clientX,e.clientY); if(!p) return;
     sfx('scan'); app.scan={active:true,x:e.clientX,y:e.clientY,start:app.time,dur:850,part:p}; return; }
@@ -762,25 +778,18 @@ UI.showCreator=function(def){
     `<select class="cr-sel" id="crCell">${XS.CREATOR_KINGDOMS.map(k=>`<option value="${k}"${k===D.cell?' selected':''}>${(XS.KINGDOMS[k]||{}).label||k}${(XS.KINGDOMS[k]||{}).alien?' · alien':''}</option>`).join('')}</select>`+
     `<div class="cr-bio"><b>${K.label||D.cell}</b><small>${K.blurb||''}</small>`+
       `<div class="cr-weak">Weakness · <b>${XS.agentName(weak)}</b></div></div>`;
-  const rng=(id,lab,min,max,step,val,hint)=>`<label class="cr-lab">${lab} <b class="cr-val" id="${id}v">${hint?hint(val):val}</b></label>`+
-    `<input type="range" class="cr-rng" id="${id}" min="${min}" max="${max}" step="${step}" value="${val}">`;
-  const SYM=['Bilateral','Radial','Spiral'];
   UI.right.innerHTML=
     `<div class="cap">Sculpt</div>`+
-    `<label class="cr-lab">Symmetry</label>`+
-    `<div class="cr-seg" id="crSym">${SYM.map((n,i)=>`<button class="${(D.sym|0)===i?'sel':''}" data-sym="${i}">${n}</button>`).join('')}</div>`+
-    rng('crElong','Body — stretch',0.5,2.2,0.01,D.elong,v=>(+v).toFixed(2)+'×')+
-    rng('crLobes','Body — lobes',0,8,1,D.lobes)+
-    rng('crSegs','Segments',1,8,1,D.segs)+
-    rng('crLimbs','Limbs',0,10,1,D.limbs)+
-    rng('crLimbLen','Limb length',0.1,0.85,0.01,D.limbLen,v=>Math.round(v*100)+'%')+
-    rng('crLimbW','Limb thickness',0.02,0.14,0.005,D.limbW,v=>Math.round(v*700)+'')+
-    rng('crSpines','Spines',0,28,1,D.spines)+
-    rng('crSpineLen','Spine length',0.03,0.3,0.01,D.spineLen,v=>Math.round(v*100)+'%')+
-    rng('crCrown','Crown tendrils',0,10,1,D.crown)+
-    rng('crHue','Colour',0,1,0.01,D.hue,()=>'')+
-    rng('crSize','Overall size',0.7,1.4,0.01,D.size,v=>(+v).toFixed(2)+'×')+
-    `<button class="btn cr-reroll" id="crRoll">🎲 Randomise shape</button>`;
+    `<div class="cr-tool"><div class="cr-toolh">✋ Shape it with the cursor</div>`+
+      `<div class="cr-toolb">Drag <b>on the body</b> to push or pull its outline.<br>`+
+      `Drag <b>past the edge</b> to draw a limb.<br>That is the whole tool — it is your hands, not settings.</div></div>`+
+    `<label class="cr-lab">Colour</label>`+
+    `<input type="range" class="cr-rng" id="crHue" min="0" max="1" step="0.01" value="${D.hue}">`+
+    `<div class="cr-acts">`+
+      `<button class="btn" id="crSmooth">〜 Smooth</button>`+
+      `<button class="btn" id="crReset">↺ Reset shape</button>`+
+    `</div>`+
+    `<div class="cr-note">Nothing here is generated for you. Every bump and limb on that creature is one you made.</div>`;
 
   // ORGANELLES — the kingdom forces some; you may add more
   const forced=(XS.KINGDOMS[D.cell]||{}).parts||[];
@@ -814,26 +823,15 @@ UI.showCreator=function(def){
   const re=()=>{ XS.previewCreature(D); };
   $('crName').oninput=e=>{ D.name=e.target.value; };
   $('crCell').onchange=e=>{ sfx('click'); D.cell=e.target.value; UI.showCreator(D); };
-  UI.overlay.querySelectorAll&&0;
-  document.querySelectorAll('#crSym [data-sym]').forEach(bt=>bt.onclick=()=>{ sfx('click'); D.sym=+bt.dataset.sym;
-    document.querySelectorAll('#crSym [data-sym]').forEach(x=>x.classList.toggle('sel',+x.dataset.sym===D.sym)); re(); });
-  const bind=(id,key,fmt)=>{ const el=$(id); if(!el) return;
-    el.oninput=e=>{ D[key]=+e.target.value; const lab=$(id+'v'); if(lab&&fmt!==null) lab.textContent=fmt?fmt(D[key]):D[key]; re(); }; };
-  bind('crElong','elong',v=>v.toFixed(2)+'×'); bind('crLobes','lobes'); bind('crSegs','segs');
-  bind('crLimbs','limbs'); bind('crLimbLen','limbLen',v=>Math.round(v*100)+'%');
-  bind('crLimbW','limbW',v=>Math.round(v*700)+''); bind('crSpines','spines');
-  bind('crSpineLen','spineLen',v=>Math.round(v*100)+'%'); bind('crCrown','crown');
-  bind('crHue','hue',()=>''); bind('crSize','size',v=>v.toFixed(2)+'×');
-  $('crRoll').onclick=()=>{ sfx('blip'); const R=Math.random;
-    D.seed=Math.floor(R()*1e9); D.sym=Math.floor(R()*3); D.elong=0.6+R()*1.4; D.lobes=Math.floor(R()*7);
-    D.segs=1+Math.floor(R()*5); D.limbs=Math.floor(R()*9); D.limbLen=0.15+R()*0.6;
-    D.limbW=0.03+R()*0.09; D.spines=Math.floor(R()*20); D.spineLen=0.05+R()*0.2; D.crown=Math.floor(R()*8);
-    UI.showCreator(D); };
-  $('crBack').onclick=()=>{ sfx('click'); const op=document.getElementById('crOrg'); if(op) op.style.display='none'; UI.showMenu(); };
+  $('crHue').oninput=e=>{ D.hue=+e.target.value; re(); };
+  $('crSmooth').onclick=()=>{ sfx('blip'); XS.smoothShape(D); re(); };
+  $('crReset').onclick=()=>{ sfx('err'); XS.resetShape(D); re(); };
+  XS.app.sculpt=D;                       // arms the pointer tool on the canvas
+  $('crBack').onclick=()=>{ sfx('click'); XS.app.sculpt=null; const op=document.getElementById('crOrg'); if(op) op.style.display='none'; UI.showMenu(); };
   $('crSave').onclick=()=>{ if(!(D.name||'').trim()){ D.name='Unnamed'; $('crName').value='Unnamed'; }
     sfx('ok'); XS.saveCreature(D); UI.showCreator(D);
     UI.showToast({icon:'🧬', name:'Saved', desc:D.name+' added to your catalogue'}); };
-  const closeOrg=()=>{ const op=document.getElementById('crOrg'); if(op) op.style.display='none'; };
+  const closeOrg=()=>{ XS.app.sculpt=null; const op=document.getElementById('crOrg'); if(op) op.style.display='none'; };
   $('crPlayP').onclick=()=>{ sfx('click'); closeOrg(); XS.startCustomMission(D,'preserve'); UI.renderPhase(); };
   $('crPlayN').onclick=()=>{ sfx('click'); closeOrg(); XS.startCustomMission(D,'neutralize'); UI.renderPhase(); };
   $('crList').onclick=()=>{ sfx('click'); UI.showMySpecies(); };

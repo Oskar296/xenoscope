@@ -519,14 +519,34 @@ XS.CREATOR_PLANS=['beast','medusa','arthropod','tentacled','worm','anemone','cri
   'amoeba','ciliate','diatom','radiolarian','urchin','slimemold','foram','colony',
   'crystalspire','geodecluster','plasmawisp','cryodrifter','rustbloom','ferrovein'];
 XS.CREATOR_KINGDOMS=['Animalia','Plantae','Fungi','Protista','Monera','Archaea','Silicoid','Plasmoid','Ammonoid','Metallophyte'];
-XS.newCreatureDef=function(){ return {name:'', cell:'Animalia', hue:0.5, size:1.0, seed:Math.floor(Math.random()*1e9),
-  sym:0, elong:1.0, lobes:3, segs:1, limbs:4, limbLen:0.42, limbW:0.06, spines:0, spineLen:0.12, crown:0,
-  orgs:[] }; };
+XS.SHAPE_N=48;                                  // outline resolution you sculpt directly
+XS.newCreatureDef=function(){ return {name:'', cell:'Animalia', hue:0.5, seed:Math.floor(Math.random()*1e9),
+  shape:new Array(XS.SHAPE_N).fill(1), limbs:[], orgs:[] }; };
+/* one tool, used directly on the creature: push/pull the outline, or drag past
+   the edge to draw a limb. No parameters — you shape it with your hands. */
+XS.sculptAt=function(def, ang, dist, strength){
+  const N=XS.SHAPE_N; def.shape=def.shape||new Array(N).fill(1);
+  if(dist>1.34){                                 // beyond the body → draw a limb
+    def.limbs=def.limbs||[];
+    const near=def.limbs.find(L=>Math.abs(((L.a-ang+Math.PI*3)%(Math.PI*2))-Math.PI)<0.30);
+    if(near){ near.len=dist-1; near.w=Math.min(0.11,Math.max(0.025,near.w||0.05)); }
+    else if(def.limbs.length<14) def.limbs.push({a:ang, len:dist-1, w:0.05});
+    return;
+  }
+  const idx=((Math.round(ang/(Math.PI*2)*N))%N+N)%N;   // pull the outline toward the cursor
+  const target=Math.max(0.35,Math.min(1.65,dist));
+  for(let k=-4;k<=4;k++){ const i=((idx+k)%N+N)%N, fall=Math.cos(k/4*Math.PI*0.5)**2;
+    def.shape[i]+= (target-def.shape[i])*(strength||0.5)*fall; }
+};
+XS.smoothShape=function(def){ const N=XS.SHAPE_N, s=def.shape||[]; const o=s.slice();
+  for(let i=0;i<N;i++){ o[i]=(s[(i-1+N)%N]+s[i]*2+s[(i+1)%N])/4; } def.shape=o; };
+XS.resetShape=function(def){ def.shape=new Array(XS.SHAPE_N).fill(1); def.limbs=[]; };
 /* organelles a player may add on top of the ones their kingdom forces */
 XS.OPTIONAL_ORGS=['mitochondrion','chloroplast','vacuole','food_vacuole','lysosome','golgi','er_rough',
   'flagellum','cilia','pseudopod','pili','eyespot','spore','contractile','capsule','plasmid','centriole'];
 /* turn a creator definition into a species entry the rest of the game accepts */
 XS.customSpecies=function(def){
+  XS.migrateCreature(def);
   const K=XS.KINGDOMS[def.cell]||XS.KINGDOMS.Animalia;
   const h=def.hue, col=[
     Math.round(120+120*Math.sin(6.283*h)),
@@ -535,12 +555,25 @@ XS.customSpecies=function(def){
   const nm=(def.name||'Unnamed').trim()||'Unnamed';
   return { id:'custom_'+(def.seed||0), custom:true, alien:!!K.alien,
     name:[nm], epi:[''], kingdom:K.label, body:'an organism of your own design',
-    plan:'custom', cell:def.cell, col, size:def.size||1, minXP:0,
+    plan:'custom', cell:def.cell, col, size:1, minXP:0,
     orgs:(def.orgs||[]).slice(),
-    form:{ sym:def.sym|0, elong:def.elong??1, lobes:def.lobes|0, segs:Math.max(1,def.segs|0),
-           limbs:def.limbs|0, limbLen:def.limbLen??0.42, limbW:def.limbW??0.06,
-           spines:def.spines|0, spineLen:def.spineLen??0.12, crown:def.crown|0 },
+    form:{ shape:(def.shape||new Array(XS.SHAPE_N).fill(1)).slice(), limbs:(def.limbs||[]).map(L=>({a:L.a,len:L.len,w:L.w})) },
     blurb:'A species you designed. Its shape is your choice — its biology follows its kingdom, and the assays will say so.' };
+};
+/* creatures saved before the direct-sculpt creator stored numeric parameters;
+   bring them forward instead of crashing on them */
+XS.migrateCreature=function(def){
+  if(!def) return def;
+  const N=XS.SHAPE_N;
+  if(!Array.isArray(def.shape) || def.shape.length!==N) def.shape=new Array(N).fill(1);
+  if(!Array.isArray(def.limbs)){
+    const n=Math.max(0,Math.min(12, def.limbs|0)), len=(typeof def.limbLen==='number')?def.limbLen:0.4;
+    def.limbs=[]; for(let i=0;i<n;i++) def.limbs.push({a:i/n*Math.PI*2, len:len, w:(typeof def.limbW==='number')?def.limbW:0.05});
+  }
+  def.limbs=def.limbs.filter(L=>L&&typeof L.a==='number');
+  if(!Array.isArray(def.orgs)) def.orgs=[];
+  if(typeof def.hue!=='number') def.hue=0.5;
+  return def;
 };
 XS.saveCreature=function(def){
   if(!XS.progress.custom) XS.progress.custom=[];
