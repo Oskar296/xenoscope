@@ -215,6 +215,63 @@ function drawPart(app,p,rad,asp,t){
     case 'spore': ell(x,y,s,s*1.3,p.ang);ctx.fillStyle='rgba(255,210,140,.8)';ctx.fill();ctx.strokeStyle='rgba(140,90,30,.8)';ctx.lineWidth=1.6;ctx.stroke();ctx.fillStyle='rgba(120,70,20,.5)';ctx.beginPath();ctx.arc(x,y,s*.3,0,6.3);ctx.fill(); break;
     case 'eyespot': ctx.globalCompositeOperation='lighter';ctx.fillStyle='#ff9a5c';ctx.shadowColor='#ff9a5c';ctx.shadowBlur=10;ctx.beginPath();ctx.arc(x,y,s,0,6.3);ctx.fill(); break;
     case 'halo': ctx.strokeStyle='rgba(191,224,255,.35)';ctx.lineWidth=cl(rad*.03,2,5);ctx.beginPath();ctx.arc(cx,cy,rad*1.02,0,6.3);ctx.stroke(); p._x=cx;p._y=cy-rad;p._r=rad*.2; break;
+    /* ---- XENO structures: nothing Earth-shaped ---- */
+    case 'lattice': {                       // silicate lattice node — a hard refracting prism
+      ctx.save(); ctx.translate(x,y); ctx.rotate(p.ang*0.5);
+      ctx.fillStyle='rgba(159,240,234,.45)'; ctx.strokeStyle='rgba(199,251,255,.95)'; ctx.lineWidth=1.5;
+      const S6=s*2.1; ctx.beginPath(); for(let k=0;k<6;k++){ const a=k/6*6.283, px=Math.cos(a)*S6, py=Math.sin(a)*S6*.86; k?ctx.lineTo(px,py):ctx.moveTo(px,py); }
+      ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.strokeStyle='rgba(255,255,255,.5)'; ctx.lineWidth=1;
+      for(let k=0;k<3;k++){ const a=k/3*3.14; ctx.beginPath(); ctx.moveTo(Math.cos(a)*S6,Math.sin(a)*S6*.86); ctx.lineTo(-Math.cos(a)*S6,-Math.sin(a)*S6*.86); ctx.stroke(); }
+      const gl=0.35+0.35*Math.sin(t*1.4+p.ph); ctx.fillStyle=`rgba(255,255,255,${gl*0.5})`;
+      ctx.beginPath(); ctx.arc(0,0,S6*0.26,0,6.3); ctx.fill(); ctx.restore(); p._r=Math.max(p._r,S6*0.8); break; }
+    case 'accretion': {                     // growth front — banded mineral layers at the rim
+      ctx.strokeStyle='rgba(199,251,255,.55)'; ctx.lineWidth=1.3;
+      for(let k=0;k<4;k++){ ctx.globalAlpha=0.75-k*0.15; ctx.beginPath();
+        ctx.ellipse(cx,cy,rad*(1.0-k*0.055)*asp,rad*(1.0-k*0.055),0,0,6.29); ctx.stroke(); }
+      ctx.globalAlpha=1; p._x=cx;p._y=cy-rad;p._r=rad*.25; break; }
+    case 'plasmacore': {                    // ionised knot — no membrane, pure light
+      ctx.globalCompositeOperation='lighter';
+      const cr=s*1.7*(1+0.10*Math.sin(t*4+p.ph));
+      const g=ctx.createRadialGradient(x,y,0,x,y,cr*2.2);
+      g.addColorStop(0,'rgba(255,255,255,.95)'); g.addColorStop(.3,'rgba(255,154,213,.75)'); g.addColorStop(1,'rgba(255,154,213,0)');
+      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,cr*2.2,0,6.3); ctx.fill();
+      for(let k=0;k<7;k++){ const a=k/7*6.283+t*1.4; ctx.strokeStyle=`rgba(255,220,245,${0.25+0.35*Math.abs(Math.sin(t*3+k))})`;
+        ctx.lineWidth=1.1; ctx.beginPath(); ctx.moveTo(x,y);
+        ctx.lineTo(x+Math.cos(a)*cr*2.1, y+Math.sin(a)*cr*2.1); ctx.stroke(); }
+      break; }
+    case 'fieldloop': {                     // magnetic confinement loop — the actual boundary
+      ctx.globalCompositeOperation='lighter';
+      ctx.strokeStyle=`rgba(255,210,122,${0.30+0.20*Math.sin(t*1.8+p.ph)})`; ctx.lineWidth=1.8;
+      ctx.shadowColor='#ffd27a'; ctx.shadowBlur=10;
+      ctx.beginPath(); ctx.ellipse(cx,cy,s*2.4,s*0.9,p.ang+t*0.25,0,6.283); ctx.stroke();
+      p._x=cx+Math.cos(p.ang)*s*2.4; p._y=cy+Math.sin(p.ang)*s*0.9; p._r=s*0.7; break; }
+    case 'ammoniavac': {                    // supercooled solvent reservoir, rimed with frost
+      ell(cx,cy,rad*p.sz,rad*p.sz*.92,0);
+      const g=ctx.createRadialGradient(cx,cy,1,cx,cy,rad*p.sz);
+      g.addColorStop(0,'rgba(200,240,255,.20)'); g.addColorStop(1,'rgba(120,190,235,.05)');
+      ctx.fillStyle=g; ctx.fill(); ctx.strokeStyle='rgba(210,245,255,.55)'; ctx.lineWidth=1.6; ctx.stroke();
+      for(let k=0;k<16;k++){ const a=k/16*6.283+Math.sin(t*.3)*.1, r0=rad*p.sz;
+        ctx.strokeStyle=`rgba(235,250,255,${0.25+0.25*Math.abs(Math.sin(t+k))})`; ctx.lineWidth=1.1;
+        ctx.beginPath(); ctx.moveTo(cx+Math.cos(a)*r0,cy+Math.sin(a)*r0*.92);
+        ctx.lineTo(cx+Math.cos(a)*r0*1.12,cy+Math.sin(a)*r0*1.03); ctx.stroke(); }
+      p._x=cx;p._y=cy;p._r=rad*p.sz*.7; break; }
+    case 'oxidecrust': {                    // precipitated metal armour — pitted, non-living
+      ctx.strokeStyle='rgba(185,163,122,.95)'; ctx.lineWidth=cl(rad*.05,3,7);
+      ctx.beginPath(); ctx.ellipse(cx,cy,rad*1.01*asp,rad*1.01,0,0,6.29); ctx.stroke();
+      for(let k=0;k<18;k++){ const a=k/18*6.283+p.ph; const rr=rad*(0.99+0.02*Math.sin(k*2.3));
+        ctx.fillStyle=`rgba(60,42,26,${0.25+0.2*((k*0.37)%1)})`;
+        ctx.beginPath(); ctx.arc(cx+Math.cos(a)*rr*asp, cy+Math.sin(a)*rr, rad*0.022, 0, 6.3); ctx.fill(); }
+      p._x=cx;p._y=cy-rad;p._r=rad*.25; break; }
+    case 'redoxvent': {                     // pore respiring metal ions
+      const SV=s*1.7; ctx.fillStyle='rgba(30,20,12,.85)'; ctx.beginPath(); ctx.arc(x,y,SV,0,6.3); ctx.fill();
+      ctx.strokeStyle='rgba(255,180,84,.85)'; ctx.lineWidth=1.5; ctx.stroke();
+      ctx.globalCompositeOperation='lighter';
+      for(let k=0;k<3;k++){ const ph=((t*0.8)+k/3)%1;
+        ctx.fillStyle=`rgba(255,190,110,${(1-ph)*0.65})`;
+        ctx.beginPath(); ctx.arc(x, y-ph*SV*2.6, SV*0.3*(1-ph*0.4), 0, 6.3); ctx.fill(); }
+      p._r=Math.max(p._r,SV);
+      break; }
     case 'wall': p._x=cx;p._y=cy-rad;p._r=rad*.25; break;   // handled by membrane stroke; hotspot at rim
     case 'membrane': p._x=cx+rad*asp;p._y=cy;p._r=rad*.22; break;
     default: ctx.fillStyle='rgba(220,240,255,.55)';ctx.beginPath();ctx.arc(x,y,Math.max(1,s),0,6.3);ctx.fill();

@@ -528,6 +528,17 @@ UI.showFormulary=function(hi,back){
     const phc=(f.ph!=null)?`<span class="fm-chip ph">⚗ pH ${f.ph}</span>`:'';
     return `${mats}<span class="fm-op">+</span><span class="fm-chip step">${st.glyph||''} ${st.label||f.step}</span>${tmp}${phc}`+
       `<span class="fm-op">→</span><span class="fm-chip drug">${XS.agentName(f.agent)}</span>`; };
+  /* HINT MODE · say what the drug must DO and where such things come from —
+     never the shopping list. You still have to work the bench out yourself. */
+  const hintRow=f=>{
+    const src=(f.source||'').replace(/<[^>]+>/g,'');
+    const heat = f.temp<=10?'somewhere near freezing' : f.temp<30?'barely warm — body-cool at most'
+      : f.temp<60?'gently warm' : f.temp<100?'hot, but never boiling' : f.temp<=110?'a rolling boil'
+      : 'hotter than boiling water can go';
+    const acid = f.ph==null?'' : f.ph<=2?', in something savagely acidic' : f.ph<5?', on the acid side'
+      : f.ph<=7.8?', close to neutral' : f.ph<11?', on the alkaline side' : ', in something caustic';
+    return `<div class="fm-hint"><b>${XS.agentName(f.agent)}</b> — ${src}`+
+      `<div class="fm-hintcond">🌡 Prepared ${heat}${acid}.</div></div>`; };
   // intermediates you must build first, shown as their own sub-recipes
   const preRows=(XS.PRECURSORS||[]).map(p=>{ const st=(XS.LAB_STEPS||[]).find(s=>s.id===p.step)||{};
     const mats=p.items.map(id=>{const x=(XS.INGREDIENTS||[]).find(i=>i.id===id)||{label:id,col:'#888'};
@@ -539,9 +550,10 @@ UI.showFormulary=function(hi,back){
       (p.ph!=null?`<span class="fm-chip ph">⚗ pH ${p.ph}</span>`:'')+`<span class="fm-op">→</span>`+
       `<span class="fm-chip mat"><span class="fm-d" style="background:${out.col}"></span>${out.label}</span></div>`+
       `<div class="fm-why">${p.how}</div></div></div>`; }).join('');
+  const showAll = !!UI._fmReveal;         // hints by default; full recipes only on request
   const entry=(section,name,sub,agents)=>{ const fs=[]; agents.forEach(a=>(XS.recipesFor(a)||[]).forEach(f=>fs.push(f)));
     const match = hi && hi.objective===section && agents.some(a=>a===hi.agent);
-    const rows=fs.map(f=>`<div class="fm-recipe">${recipeRow(f)}</div>`).join('');
+    const rows=fs.map(f=>showAll?`<div class="fm-recipe">${recipeRow(f)}</div>`:hintRow(f)).join('');
     return `<div class="fm-row${section==='neutralize'?' kill':''}${match?' match':''}"><div class="fm-target">${name}`+
       `<span>${sub}</span>${match?'<em class="fm-tag">◀ your case</em>':''}</div><div class="fm-recipes">${rows}</div></div>`; };
   const pres=(XS.EARTH_PATHS?XS.EARTH_PATHS():Object.keys(XS.PATHOGENS))
@@ -558,7 +570,7 @@ UI.showFormulary=function(hi,back){
   const steps=(XS.LAB_STEPS||[]).map(s=>`<span class="fm-step">${s.glyph} <b>${s.label}</b> <small>${s.desc.split(' ').slice(0,6).join(' ')}…</small></span>`).join('');
   card(
     `<div class="sub">Field formulary · how to build any cure</div><h2>Make the right cure</h2>`+
-    `<p class="muted">Pick a <b>raw material</b> + a <b>preparation step</b> + the <b>exact temperature</b>. The material decides <em>which</em> drug you get, the step is the correct method, and the heat has to be right — a real process only runs in its own narrow window.</p>`+
+    `<p class="muted">Pick a <b>raw material</b> + a <b>preparation step</b> + the <b>exact temperature and pH</b>. These are <b>clues, not answers</b> — each entry tells you what the drug must <em>do</em> and roughly what conditions it wants. Working out which jar on the shelf that means is your job.</p>`+
     `<div class="fm-steps">${steps}</div>`+
     (preRows?`<div class="fm-sec-h">Reagents you must build first <em class="pre">intermediates</em></div>`+
       `<p class="muted" style="margin:2px 0 0;font-size:12.5px">Some things aren’t on the shelf — you synthesise them from their own chemical precursors, then use them in a drug recipe.</p>${preRows}`:'')+
@@ -568,10 +580,12 @@ UI.showFormulary=function(hi,back){
     `<div class="fm-sec-h">Destroying an invader <em class="kill">neutralize · hit the cell’s weakness</em></div>${neut}`+
     (xkRows?`<div class="fm-sec-h">Alien kingdoms <em class="xeno">first contact · no Earth weakness applies</em></div>`+
       `<p class="muted" style="margin:2px 0 0;font-size:12.5px">Lifeforms with no Earth ancestry. Walls, membranes and metabolism all work differently, so the usual weaknesses simply do not exist.</p>${xkRows}`:'')+
-    `<div class="cta"><button class="btn pri" id="fmClose">${back?'← Back to the bench':'Close'}</button></div>`
+    `<div class="cta"><button class="btn pri" id="fmClose">${back?'← Back to the bench':'Close'}</button>`+
+      `<button class="btn ${showAll?'':'help'}" id="fmReveal">${showAll?'🙈 Hide exact recipes':'🔍 Reveal exact recipes'}</button></div>`
   );
   const c=UI.overlay.querySelector('.card'); if(c) c.classList.add('bench-card');
   $('fmClose').onclick=()=>{ sfx('click'); if(back){ UI.showSynthesis(); } else { UI.hideOverlay(); if(XS.app.phase==='menu') UI.showMenu(); } };
+  $('fmReveal').onclick=()=>{ sfx('click'); UI._fmReveal=!UI._fmReveal; UI.showFormulary(hi,back); };
 };
 
 /* diagnosis (classify) overlay */

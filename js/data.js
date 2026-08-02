@@ -140,25 +140,25 @@ XS.ORG = {
    `autotroph`: null = random, true/false forces it.
 ------------------------------------------------------------ */
 /* ---- XENO organelles: structures no Earth cell has ---- */
-XS.ORG.lattice_node   = {name:'Lattice node', col:'#9ff0ea', shape:'ring',
+XS.ORG.lattice_node   = {name:'Lattice node', col:'#9ff0ea', shape:'lattice',
   fn:'A junction in a repeating silicon–oxygen framework. It is structural AND metabolic — reactions happen on the crystal faces themselves.',
   fact:'Silicon sits directly below carbon in the periodic table and also forms four bonds — but Si–O–Si chains are far more rigid, so a silicon organism is built, not grown.'};
-XS.ORG.accretion_face = {name:'Accretion face', col:'#c7fbff', shape:'wall',
+XS.ORG.accretion_face = {name:'Accretion face', col:'#c7fbff', shape:'accretion',
   fn:'The growing edge of the crystal, where dissolved minerals are laid down. This organism gets bigger the way a stalactite does.',
   fact:'No cell division at all — it extends. "Reproduction" is a fragment breaking off and continuing to grow.'};
-XS.ORG.plasma_core    = {name:'Plasma core', col:'#ff9ad5', shape:'nucleus',
+XS.ORG.plasma_core    = {name:'Plasma core', col:'#ff9ad5', shape:'plasmacore',
   fn:'A knot of ionised gas held together by its own magnetic field. There is no membrane — the field IS the boundary.',
   fact:'Plasma is the fourth state of matter and by far the most common in the universe; a self-organising magnetic structure is the loosest thing that could still be called "a body".'};
-XS.ORG.field_line     = {name:'Confinement loop', col:'#ffd27a', shape:'coil',
+XS.ORG.field_line     = {name:'Confinement loop', col:'#ffd27a', shape:'fieldloop',
   fn:'A closed magnetic loop that traps charged particles and keeps the organism from dissipating.',
   fact:'Cool it or short the loop and the whole structure simply disperses — you do not kill it so much as switch it off.'};
-XS.ORG.ammonia_vac    = {name:'Ammonia vacuole', col:'#a9ddff', shape:'bigvac',
+XS.ORG.ammonia_vac    = {name:'Ammonia vacuole', col:'#a9ddff', shape:'ammoniavac',
   fn:'The internal reservoir of liquid ammonia that serves as this cell’s solvent, exactly as water does in ours.',
   fact:'Ammonia stays liquid from −78 °C to −33 °C, so an ammonia biochemistry runs in a temperature range that would freeze us solid.'};
-XS.ORG.metal_crust    = {name:'Metal-oxide crust', col:'#b9a37a', shape:'wall',
+XS.ORG.metal_crust    = {name:'Metal-oxide crust', col:'#b9a37a', shape:'oxidecrust',
   fn:'An armoured shell of precipitated iron and manganese oxides, laid down as a by-product of respiration.',
   fact:'Earth has a faint echo of this — iron-oxidising bacteria build rusty sheaths — but here the metal is the whole skeleton.'};
-XS.ORG.redox_vent     = {name:'Redox vent', col:'#ffb454', shape:'contractile',
+XS.ORG.redox_vent     = {name:'Redox vent', col:'#ffb454', shape:'redoxvent',
   fn:'A pore where dissolved metal ions are oxidised for energy. This organism eats rock, not light or food.',
   fact:'Chemolithotrophy — literally "rock eating" — needs no sunlight at all, which is why it is a favourite hypothesis for life beneath other worlds’ ice.'};
 
