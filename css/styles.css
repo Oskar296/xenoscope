@@ -431,7 +431,7 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border:none;border-ra
   .pk-list.tiers{grid-template-columns:1fr}
   .card h1{font-size:26px;letter-spacing:3px}
 }
-/* story · the long survey — a ship's log, not a task list */
+/* story · the long survey, a ship's log, not a task list */
 .vy-card,.ch-card{width:min(660px,94vw)!important}
 .vy-head{border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:6px}
 .vy-ship{font-family:var(--mono);font-size:10.5px;letter-spacing:.28em;color:var(--dim)}

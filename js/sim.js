@@ -10,7 +10,7 @@ const rnd=(a,b)=>a+Math.random()*(b-a), ri=(a,b)=>Math.floor(rnd(a,b+1));
 const cl=(v,a,b)=>v<a?a:v>b?b:v, pick=a=>a[Math.floor(Math.random()*a.length)];
 XS.rnd=rnd; XS.ri=ri; XS.cl=cl; XS.pick=pick;
 
-/* per-cell cosmetic uniqueness — never changes the biology used to identify a cell */
+/* per-cell cosmetic uniqueness, never changes the biology used to identify a cell */
 const COUNT_JITTER=['mitochondrion','lysosome','chloroplast','ribosome','vacuole','spore','plasmid','food_vacuole','thylakoid','er_rough','golgi'];
 function rgb2hsl(c){ let r=c[0]/255,g=c[1]/255,b=c[2]/255; const mx=Math.max(r,g,b),mn=Math.min(r,g,b); let h,s,l=(mx+mn)/2;
   if(mx===mn){h=s=0;} else { const d=mx-mn; s=l>0.5?d/(2-mx-mn):d/(mx+mn);
@@ -79,7 +79,7 @@ XS.genSpecimen=function(kingdomKey, tier, extraOrgs){
     optPH:+rnd(4,9).toFixed(1), phBand:rnd(2.0,2.6)*T.margin,
     optT:Math.round(rnd(12,46)), tBand:rnd(12,17)*T.margin,
   };
-  // archaea are extremophiles — an important classification clue
+  // archaea are extremophiles, an important classification clue
   if(kingdomKey==='Archaea'){
     const r=Math.random();
     if(r<0.55) spec.optT=Math.round(rnd(66,92));
@@ -226,20 +226,20 @@ XS.simStep=function(spec,S,dt,tier){
 XS.TASKS={
   cultivate:{name:'CULTIVATE',tone:'good',winT:'SPECIMEN CULTIVATED',need:0,
     obj:s=> s.isVirus?'Culture the virus to 100% titre':'Raise Vitality to 100%',
-    hint:s=> s.isVirus?'A virus needs a HOST CELL CULTURE to replicate — nutrients alone do nothing.'
-            : s.chemo?'A chemoautotroph — it draws energy from MINERALS/chemicals, not light or sugar.'
-            : s.autotroph?'This autotroph feeds by photosynthesis — give it LIGHT (and minerals), not sugar.'
-            : 'A heterotroph — feed it GLUCOSE. Keep pH & temperature in its comfort band.',
+    hint:s=> s.isVirus?'A virus needs a HOST CELL CULTURE to replicate, nutrients alone do nothing.'
+            : s.chemo?'A chemoautotroph, it draws energy from MINERALS/chemicals, not light or sugar.'
+            : s.autotroph?'This autotroph feeds by photosynthesis, give it LIGHT (and minerals), not sugar.'
+            : 'A heterotroph, feed it GLUCOSE. Keep pH & temperature in its comfort band.',
     win:(s,S)=>S.vitality>=100, lose:(s,S)=>S.vitality<=0||S.integrity<=0,
     init:(s,S)=>{ S.vitality=38; S.ph=badPH(s); S.temp=Math.round(s.optT - s.tBand*1.4); }},
   neutralize:{name:'NEUTRALIZE',tone:'bad',winT:'SPECIMEN NEUTRALIZED',need:0,
     obj:s=> s.isVirus?'Inactivate the virus (titre → 0)':'Reduce Vitality to 0%',
-    hint:s=> 'Use the agent this organism is vulnerable to — the wrong drug barely works. '+killHint(s),
+    hint:s=> 'Use the agent this organism is vulnerable to, the wrong drug barely works. '+killHint(s),
     win:(s,S)=>S.vitality<=0||S.integrity<=0, lose:(s,S)=>S.vitality>=100,
     init:(s,S)=>{ S.vitality=78; feed(s,S,45); }},
   stabilize:{name:'STABILIZE',tone:'neutral',winT:'HOMEOSTASIS HELD',need:6,
     obj:s=>'Hold Vitality 40–70% for 6s',
-    hint:s=>'Keep it comfortable but not thriving — nudge conditions until Vitality settles mid-range.',
+    hint:s=>'Keep it comfortable but not thriving, nudge conditions until Vitality settles mid-range.',
     hold:(s,S)=>S.vitality>=40&&S.vitality<=70, lose:(s,S)=>S.vitality<=0||S.vitality>=100,
     init:(s,S)=>{ S.vitality=42; S.ph=badPH(s,0.9); }},
   bloom:{name:'FORCE BLOOM',tone:'good',winT:'CULTURE BLOOMED',need:5,
@@ -248,7 +248,7 @@ XS.TASKS={
     hold:(s,S)=>S.vitality>=90, lose:(s,S)=>S.vitality<=0||S.integrity<=0,
     init:(s,S)=>{ S.vitality=45; S.ph=badPH(s,0.8); }},
   quarantine:{name:'QUARANTINE',tone:'neutral',winT:'SPECIMEN CONTAINED',need:6,
-    obj:s=>'Hold Vitality below 35% for 6s — keep it alive',
+    obj:s=>'Hold Vitality below 35% for 6s, keep it alive',
     hint:s=>'Stress it toward dormancy without killing it. Starve it or nudge conditions off-optimum.',
     hold:(s,S)=>S.vitality<35&&S.vitality>0, lose:(s,S)=>S.vitality<=0||S.vitality>=100,
     init:(s,S)=>{ S.vitality=72; feed(s,S,40); }},

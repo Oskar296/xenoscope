@@ -1,4 +1,4 @@
-# itch.io release — XENOSCOPE
+# itch.io release: XENOSCOPE
 
 Everything needed to publish. Upload `xenoscope-itch.zip` (index.html sits at the
 zip root, which itch requires).
@@ -62,22 +62,21 @@ zip root, which itch requires).
 5. Add screenshots (see below) and a cover image.
 6. Set visibility to **Public** and **Save**.
 
-## Screenshots worth taking
+## Screenshots (ready to upload)
 
-Take these at 1280×800 with the browser chrome hidden:
+Five captures at 1280×800, in this order:
 
-1. **The voyage log** — Story screen with a few chapters logged (shows scope and polish)
-2. **A chapter page** — e.g. *The Question* (shows the writing)
-3. **The synthesis bench** mid-craft, flask glowing, with the temperature/pH dials visible
-4. **A zoomed cell** with organelles labelled
-5. **A First Contact organism** — the plasma wisp or crystal spire, on its planet
-6. **Outbreak** mid-run with the combo HUD
+1. `1-story.png` **The voyage log**. The story screen with chapters logged, so the
+   page shows scope straight away.
+2. `2-chapter.png` **A chapter page**. Shows the writing and the framing.
+3. `3-organism.png` **An organism on its planet**. The survey view with region markers.
+4. `4-cell.png` **A zoomed cell** with its organelles.
+5. `5-bench.png` **The synthesis bench** mid-craft, with the temperature and pH dials.
 
-**Cover image (630×500):** the plasma wisp on its dark planet with the XENOSCOPE
-wordmark — it is the most striking thing in the game and reads instantly as "alien".
+**Cover image (630×500):** `xenoscope-thumb.png`, a survey ship over a dark world.
 
 ## Before you hit publish
 
 - Play one full chapter in the itch preview to confirm saving works in the iframe.
-- Check the page on a phone — the layout is responsive but see it yourself.
+- Check the page on a phone, the layout is responsive but see it yourself.
 - The `LICENSE` (All Rights Reserved) ships inside the zip.

@@ -1,5 +1,5 @@
 /* =====================================================================
-   XENOSCOPE · main.js — bootstrap + game loop
+   XENOSCOPE · main.js, bootstrap + game loop
 ===================================================================== */
 (function(XS){
 "use strict";

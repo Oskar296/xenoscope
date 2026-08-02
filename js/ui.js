@@ -14,16 +14,16 @@ function learn(url){ return url?` <a class="learn" href="${url}" target="_blank"
 /* inspecting these structures adds a diagnostic clue to the region's evidence */
 const STRUCT_CLUE={
   wall_cellulose:'Rigid cellulose cell wall seen.', wall_chitin:'Chitin cell wall seen.',
-  wall_pepti:'Peptidoglycan cell wall seen.', wall_slayer:'Protein S-layer wall — no peptidoglycan.',
+  wall_pepti:'Peptidoglycan cell wall seen.', wall_slayer:'Protein S-layer wall, no peptidoglycan.',
   nucleus:'A true nucleus is present (eukaryote).', nucleoid:'DNA loose as a nucleoid (prokaryote).',
   chloroplast:'Chloroplasts present (photo-autotroph).', thylakoid:'Photosynthetic membranes present.',
-  flagellum:'A flagellum for swimming.', cilia:'Cilia for movement.', pseudopod:'Pseudopodia — crawls & engulfs.',
-  contractile:'A contractile vacuole — a wall-less freshwater cell.', capsid:'A viral capsid — not a cell at all.', envelope:'A lipid envelope (soap-sensitive).',
+  flagellum:'A flagellum for swimming.', cilia:'Cilia for movement.', pseudopod:'Pseudopodia, crawls & engulfs.',
+  contractile:'A contractile vacuole, a wall-less freshwater cell.', capsid:'A viral capsid, not a cell at all.', envelope:'A lipid envelope (soap-sensitive).',
 };
 function sfx(n){ if(XS.sfx) XS.sfx.play(n); }
 function readoutBlock(){
   return `<div class="cap notes-cap">🔎 Notes</div>`+
-    `<div class="readout" id="roLeft">${readoutHTML||'<span class="muted">Zoom into a tissue and inspect its structures — what you learn is kept here.</span>'}</div>`+
+    `<div class="readout" id="roLeft">${readoutHTML||'<span class="muted">Zoom into a tissue and inspect its structures, what you learn is kept here.</span>'}</div>`+
     `<div class="rl-sep"></div>`;
 }
 
@@ -86,9 +86,9 @@ UI.updateCoach=function(){ const T=XS.app.tutorial; if(!T){ UI.coach.style.displ
     ? 'Since something is <i>infecting</i> it, use <b>Particle morphology</b> and <b>Invader coat</b> to examine the invader.'
     : 'Use <b>Wall analysis</b>, <b>Gram stain</b> and <b>Nuclear stain</b> to work out what kind of cell it is.';
   const steps=[
-    {t:`Lesson ${T.lesson+1} of ${n} · ${L.name}`, d:`<b>${verb} this organism.</b> Its tissues are the glowing rings — <b>click one</b> to zoom into a tissue.`},
+    {t:`Lesson ${T.lesson+1} of ${n} · ${L.name}`, d:`<b>${verb} this organism.</b> Its tissues are the glowing rings, <b>click one</b> to zoom into a tissue.`},
     {t:`Analyse`, d:`Run a couple of <b>Lab assays</b> from the dock (① group). ${idHint} <span class="muted">${L.assayHint||''}</span> Each clue appears in the <b>Evidence</b> panel on the right.`},
-    {t:`Diagnose`, d:`Open <b>⌖ Identify</b> (② group). Match your evidence to the options — each lists its give-away feature. This one is ${art} <b>${L.name}</b>; pick it.`},
+    {t:`Diagnose`, d:`Open <b>⌖ Identify</b> (② group). Match your evidence to the options, each lists its give-away feature. This one is ${art} <b>${L.name}</b>; pick it.`},
     {t:`Treat`, d:`${art.charAt(0).toUpperCase()+art.slice(1)} <b>${L.name}</b> is beaten by <b>${agentLabel}</b>. ${L.why} Apply it (③ group).`},
     {t:`✓ Learned: ${L.name} → ${agentLabel}`, d:`${L.why}`},
   ];
@@ -104,7 +104,7 @@ UI.updateCoach=function(){ const T=XS.app.tutorial; if(!T){ UI.coach.style.displ
   const nx=$('coachNext'); if(nx) nx.onclick=()=>{ sfx('click'); XS.loadLesson(T.lesson+1); UI.renderPhase(); UI.updateCoach(); };
 };
 UI.showToast=function(t){ sfx('rank');
-  const d=el('div','toast',`<div class="t-ico">${t.icon}</div><div><div class="t-t">🏆 Achievement — ${t.title}</div><div class="t-d">${t.desc}</div></div>`);
+  const d=el('div','toast',`<div class="t-ico">${t.icon}</div><div><div class="t-t">🏆 Achievement, ${t.title}</div><div class="t-d">${t.desc}</div></div>`);
   UI.toastWrap.appendChild(d); requestAnimationFrame(()=>d.classList.add('in'));
   setTimeout(()=>{ d.classList.remove('in'); setTimeout(()=>d.remove(),400); },4400);
 };
@@ -120,8 +120,8 @@ UI.renderTop=function(){
   UI.top.innerHTML=
     `<span class="chip ${O.tone}">${O.label}</span>`+
     (sc.intruder?`<span class="chip ultra">🧬 ${sc.intruder.name}</span>`:'')+
-    (sc.alien?`<span class="chip alien">👽 XENO — non-Earth biology</span>`:'')+
-    (sc.firstContact?`<span class="chip alien">🛸 FIRST CONTACT — unknown kingdom</span>`:'')+
+    (sc.alien?`<span class="chip alien">👽 XENO, non-Earth biology</span>`:'')+
+    (sc.firstContact?`<span class="chip alien">🛸 FIRST CONTACT, unknown kingdom</span>`:'')+
     `<span class="titlewrap"><span class="name">${sc.name}</span><span class="obj2">${loc}</span></span>`+
     `<span class="topgap"></span>`+
     `<span class="rankpill"><span class="rk">${rank.name}</span><span class="xp">${XS.progress.xp}</span></span>`+
@@ -162,7 +162,7 @@ UI.updateVitals=function(){
 UI.renderRight=function(){
   const app=XS.app, sc=app.sc; if(!sc) return;
   if(app.phase==='survey'){
-    const regions=sc.regions.map(r=>{ const st=r.recon?(r.id===sc.keyId?'target':'clear'):(r.scanned?'seen':'—');
+    const regions=sc.regions.map(r=>{ const st=r.recon?(r.id===sc.keyId?'target':'clear'):(r.scanned?'seen':', ');
       const ico=r.recon?(r.id===sc.keyId?'⚠':'✓'):'◦';
       return `<div class="dl-row"><span>${ico} ${r.name}</span><b>${st}</b></div>`; }).join('');
     const cmp=(sc.traits&&sc.traits.length)?`<div class="cap" style="margin-top:12px">⚠ Complications</div>`+
@@ -173,31 +173,31 @@ UI.renderRight=function(){
       `<div class="cap" style="margin-top:12px">Tissues analysed ${sc.regions.filter(r=>r.recon).length}/${sc.regions.length}</div>`+
       `<div class="dossier">${regions}</div>`+
       `<div class="hintbox">💡 Click the glowing markers to zoom into each tissue, then run <b>lab assays</b> to work out what you’re dealing with.</div>`;
-  } else { // zoom — Field Analysis (deduction, no free answer)
+  } else { // zoom. Field Analysis (deduction, no free answer)
     const r=app.zoomRegion, isKey=r.id===sc.keyId, preserve=sc.objective==='preserve';
     const internHint=(XS.TIERS[app.tier]||{}).hint && app.tier==='intern';
     let threat;
-    if(r.symbiont && r.recon){ threat='<div class="th sym">🤝 A beneficial symbiont lives here — treating this tissue would harm the host. Leave it alone.</div>'; }
-    else if(r.decoy && r.recon){ threat='<div class="th sym">✖ Necrotic decoy — already-dead debris that only looks infected. This is NOT the active focus.</div>'; }
+    if(r.symbiont && r.recon){ threat='<div class="th sym">🤝 A beneficial symbiont lives here, treating this tissue would harm the host. Leave it alone.</div>'; }
+    else if(r.decoy && r.recon){ threat='<div class="th sym">✖ Necrotic decoy, already-dead debris that only looks infected. This is NOT the active focus.</div>'; }
     else if(r.recon){ threat = isKey
         ? (preserve
             ? ((((r.tests&&r.tests.morph)
                   ?'<div class="th bad">⚠ An invader is multiplying in this tissue.</div>'
-                  :'<div class="th bad">⚠ Something is multiplying in this tissue — but the particles are an <b>unresolved biosignature</b>. Run <b>Particle morphology</b> to resolve what they actually are.</div>'))
-               + (sc.cures?'<div class="th sym">✚ Mixed infection — a SECOND invader is also present. You will need two cures.</div>':''))
-            :'<div class="th bad">⚠ Exposed tissue — the organism can’t defend it here. A viable target.</div>')
-                   + (sc.shielded?'<div class="th sym">🛡 A biofilm shields these cells — strip it with detergent before the real agent will land.</div>':'')
-        : '<div class="th good">✓ This tissue is clear — the cause is elsewhere.</div>'; }
+                  :'<div class="th bad">⚠ Something is multiplying in this tissue, but the particles are an <b>unresolved biosignature</b>. Run <b>Particle morphology</b> to resolve what they actually are.</div>'))
+               + (sc.cures?'<div class="th sym">✚ Mixed infection, a SECOND invader is also present. You will need two cures.</div>':''))
+            :'<div class="th bad">⚠ Exposed tissue, the organism can’t defend it here. A viable target.</div>')
+                   + (sc.shielded?'<div class="th sym">🛡 A biofilm shields these cells, strip it with detergent before the real agent will land.</div>':'')
+        : '<div class="th good">✓ This tissue is clear, the cause is elsewhere.</div>'; }
     else threat='<div class="th muted">Run a lab assay to survey this tissue.</div>';
     const ev = r.evidence.length? r.evidence.map(e=>`<div class="ev-row">• ${e}</div>`).join('')
       : '<div class="muted" style="font-size:11.5px;line-height:1.5">No findings yet. Run the lab assays below, and click the cell’s structures to inspect them.</div>';
     let concl='';
     if(r.diagnosed){ const why=preserve?XS.PATHOGENS[sc.pathType].why:XS.WEAKNESS_WHY[sc.agent];
       const mixed=!!sc.cures, title=mixed?'MIXED INFECTION · two invaders':sc.dxAnswer;
-      const rx=mixed?`Apply the cure for <b>both</b> invaders — run <b>Particle morphology</b> to see both.`:'Now apply the matching treatment.';
+      const rx=mixed?`Apply the cure for <b>both</b> invaders, run <b>Particle morphology</b> to see both.`:'Now apply the matching treatment.';
       concl=`<div class="diag good"><div class="diag-t">✓ DIAGNOSIS · ${title}</div><div class="diag-why">${why}</div><div class="diag-rx">${rx}</div></div>`;
     } else if(internHint && r.recon && isKey){
-      concl=`<div class="diag bad"><div class="diag-t">Intern hint</div><div class="diag-b">${preserve?XS.PATHOGENS[sc.pathType].tell:'Its wall material and metabolism point to a single weakness — read the evidence.'}</div></div>`;
+      concl=`<div class="diag bad"><div class="diag-t">Intern hint</div><div class="diag-b">${preserve?XS.PATHOGENS[sc.pathType].tell:'Its wall material and metabolism point to a single weakness, read the evidence.'}</div></div>`;
     }
     const tagRow=(sc.traits&&sc.traits.length)?`<div class="cmp-tags">${sc.traits.map(tr=>`<span class="cmp-tag">${tr.tag}</span>`).join('')}</div>`:'';
     UI.right.innerHTML=`<div class="cap">Field Analysis · ${r.name}</div>`+ tagRow + threat +
@@ -233,7 +233,7 @@ UI.renderDock=function(){
   const active = dxDone?3:(r.recon?2:1);
   const idGroup = dxDone
     ? `<div class="dock-group idgroup"><div class="dock-lab">② Diagnose</div><div class="dx-done">✓ ${sc.dxAnswer}</div></div>`
-    : `<div class="dock-group idgroup ${active===2?'active':''}"><div class="dock-lab">② Diagnose</div><button class="abtn identify" id="idBtn"><b>⌖ Identify</b><small>${active===2?'ready — name the cause':'gather evidence first'}</small></button></div>`;
+    : `<div class="dock-group idgroup ${active===2?'active':''}"><div class="dock-lab">② Diagnose</div><button class="abtn identify" id="idBtn"><b>⌖ Identify</b><small>${active===2?'ready, name the cause':'gather evidence first'}</small></button></div>`;
   let treatGroup='';
   if(canTreat && sc.craft){                     // ADVANCED · open the synthesis lab
     treatGroup=`<div class="dsep"></div><div class="dock-group ${active===3?'active':''}"><div class="dock-lab">③ Treat · ${r.name}</div>`+
@@ -274,7 +274,7 @@ UI.renderDock=function(){
   const so=$('synthOpen'); if(so) so.onclick=()=>{ sfx('click'); UI.showSynthesis(); };
 };
 
-/* ADVANCED · the synthesis bench — MAKE a cure from raw materials (modal) */
+/* ADVANCED · the synthesis bench. MAKE a cure from raw materials (modal) */
 function hexRGB(h){ h=h.replace('#',''); if(h.length===3) h=h.split('').map(c=>c+c).join('');
   return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)]; }
 function blendCols(cols){ if(!cols.length) return [70,120,120];
@@ -293,12 +293,12 @@ UI.showSynthesis=function(){ const sc=XS.app.sc, r=XS.app.zoomRegion; if(!sc||!r
   if(cr.ph==null) cr.ph=7;                            // bench dial, pH
   cr.stock=cr.stock||{};                              // intermediates you've synthesised
   const dxLine = sc.alien
-    ? `👽 Diagnosis: <b>${sc.dxAnswer}</b> — non-Earth biology. ${(XS.PATHOGENS[sc.pathType]||{}).why||''}`
+    ? `👽 Diagnosis: <b>${sc.dxAnswer}</b>, non-Earth biology. ${(XS.PATHOGENS[sc.pathType]||{}).why||''}`
     : sc.intruder
-    ? `🧬 Case: <b>${sc.intruder.name}</b> <span class="muted">(${sc.intruder.aka})</span> — a <b>${sc.dxAnswer}</b>. Its real cure is <b>${sc.intruder.drug}</b> — synthesise it.`
+    ? `🧬 Case: <b>${sc.intruder.name}</b> <span class="muted">(${sc.intruder.aka})</span>, a <b>${sc.dxAnswer}</b>. Its real cure is <b>${sc.intruder.drug}</b>, synthesise it.`
     : sc.objective==='neutralize'
-    ? `Target organism: <b>${sc.dxAnswer}</b> — make something its biology cannot withstand.`
-    : `Diagnosis: <b>${sc.dxAnswer}</b> — make the cure that destroys it, and nothing else.`;
+    ? `Target organism: <b>${sc.dxAnswer}</b>, make something its biology cannot withstand.`
+    : `Diagnosis: <b>${sc.dxAnswer}</b>, make the cure that destroys it, and nothing else.`;
   const ingTile = x=>{ const locked = x.made && !cr.stock[x.id];
     return `<button class="ingt${locked?' locked':''}" data-ing="${x.id}"><span class="ingsw" style="background:${x.col}"></span>`+
     `<span class="ingglyph">${x.glyph}</span><span class="ingtx"><b>${x.label}</b>`+
@@ -311,7 +311,7 @@ UI.showSynthesis=function(){ const sc=XS.app.sc, r=XS.app.zoomRegion; if(!sc||!r
   card(`<div class="sub">Synthesis bench · ${r.name}</div><h2>Develop a cure</h2>`+
     `<div class="bench-dx">${dxLine}</div>`+
     `<div class="benchwrap">`+
-      `<div class="bench-col shelf"><div class="cap">① Raw material — tap to add</div><div class="ing-grid">${ingTiles}</div></div>`+
+      `<div class="bench-col shelf"><div class="cap">① Raw material, tap to add</div><div class="ing-grid">${ingTiles}</div></div>`+
       `<div class="bench-col flaskcol"><canvas id="benchCv" width="240" height="272"></canvas>`+
         `<div class="flask-label" id="flaskLabel">Empty flask</div></div>`+
       `<div class="bench-col stepcol"><div class="cap">② Prepare it</div><div class="step-grid">${stepTiles}</div>`+
@@ -360,11 +360,11 @@ UI.showSynthesis=function(){ const sc=XS.app.sc, r=XS.app.zoomRegion; if(!sc||!r
     // guidance: only reveal the targets once the inputs+method are right
     const want = madeLoose||(pre&&pre.p);
     if(hint){ if(want){ const t=want.temp, d=cr.temp-t;
-        hint.innerHTML = Math.abs(d)<=(want.tol||8) ? `<span class="ok">✓ on target — ${t} °C</span>`
+        hint.innerHTML = Math.abs(d)<=(want.tol||8) ? `<span class="ok">✓ on target, ${t} °C</span>`
           : `<span class="bad">${d<0?'🔻 too cold':'🔺 too hot'}</span> · this process needs <b>${t} °C</b>`;
       } else hint.innerHTML='Every process has one right temperature.'; }
     if(phHint){ if(want && want.ph!=null){ const q=want.ph, d=cr.ph-q;
-        phHint.innerHTML = Math.abs(d)<=(want.phTol||1.5) ? `<span class="ok">✓ on target — pH ${q}</span>`
+        phHint.innerHTML = Math.abs(d)<=(want.phTol||1.5) ? `<span class="ok">✓ on target, pH ${q}</span>`
           : `<span class="bad">${d<0?'🔻 too acidic':'🔺 too alkaline'}</span> · this process needs <b>pH ${q}</b>`;
       } else if(want) phHint.innerHTML='<span class="ok">✓ pH is not critical here</span>';
       else phHint.innerHTML='Acid or alkali decides whether a reaction runs at all.'; }
@@ -372,16 +372,16 @@ UI.showSynthesis=function(){ const sc=XS.app.sc, r=XS.app.zoomRegion; if(!sc||!r
     else if(cr.items.length){ lbl.textContent=cr.items.map(id=>XS.INGREDIENTS.find(i=>i.id===id).label).join(' + '); lbl.className='flask-label'; }
     else { lbl.textContent='Empty flask'; lbl.className='flask-label muted'; }
     if(!cr.items.length) read.innerHTML='Pick a raw material to begin.';
-    else if(!cr.step) read.innerHTML='Now choose how to <b>prepare</b> it — then dial in the exact temperature.';
+    else if(!cr.step) read.innerHTML='Now choose how to <b>prepare</b> it, then dial in the exact temperature.';
     else if(pre){ read.innerHTML = pre.ok
-        ? `⚗ <b>${pre.p.name}</b> synthesised — it’s on the shelf now. <div class="muted">${pre.p.how}</div>`
+        ? `⚗ <b>${pre.p.name}</b> synthesised, it’s on the shelf now. <div class="muted">${pre.p.how}</div>`
         : `Right precursors for <b>${pre.p.name}</b>, wrong heat. <div class="muted">${pre.p.how}</div>`; }
     else if(made){ const an=XS.agentName(made.agent).toLowerCase(), art=/^[aeiou]/.test(an)?'an':'a';
-      read.innerHTML=`✔ You made <b>${made.name}</b> — ${art} <b>${an}</b>.<div class="muted">${made.source}</div>`+
+      read.innerHTML=`✔ You made <b>${made.name}</b>, ${art} <b>${an}</b>.<div class="muted">${made.source}</div>`+
         (made.why?`<div class="muted">🌡 ${made.why}</div>`:''); }
     else if(madeLoose){ const dT=Math.abs(cr.temp-madeLoose.temp)>(madeLoose.tol||8);
       const dP=madeLoose.ph!=null && Math.abs(cr.ph-madeLoose.ph)>(madeLoose.phTol||1.5);
-      read.innerHTML=`Right ingredients and method for <b>${madeLoose.name}</b> — but the ${dT&&dP?'temperature <em>and</em> pH are':dP?'pH is':'temperature is'} wrong, so nothing usable forms.`+
+      read.innerHTML=`Right ingredients and method for <b>${madeLoose.name}</b>, but the ${dT&&dP?'temperature <em>and</em> pH are':dP?'pH is':'temperature is'} wrong, so nothing usable forms.`+
         (madeLoose.why?`<div class="muted">🌡 ${madeLoose.why}</div>`:''); }
     else read.innerHTML='✗ Nothing usable forms this way. Try different materials, another method, or a different temperature.';
     read.className='bench-read '+((made||(pre&&pre.ok))?'ok':(cr.items.length&&cr.step?'bad':''));
@@ -393,10 +393,10 @@ UI.showSynthesis=function(){ const sc=XS.app.sc, r=XS.app.zoomRegion; if(!sc||!r
 
   UI.overlay.querySelectorAll('[data-ing]').forEach(b=>b.onclick=()=>{ const id=b.dataset.ing;
     const x=XS.INGREDIENTS.find(i=>i.id===id);
-    if(x&&x.made&&!cr.stock[id]&&!cr.items.includes(id)){    // locked intermediate — must be built first
+    if(x&&x.made&&!cr.stock[id]&&!cr.items.includes(id)){    // locked intermediate, must be built first
       sfx('err'); const read=$('benchRead');
       read.className='bench-read bad';
-      read.innerHTML=`🔒 <b>${x.label}</b> isn’t on the shelf — you have to <b>synthesise</b> it first.<div class="muted">${x.note}</div>`;
+      read.innerHTML=`🔒 <b>${x.label}</b> isn’t on the shelf, you have to <b>synthesise</b> it first.<div class="muted">${x.note}</div>`;
       return; }
     if(cr.items.includes(id)) cr.items=cr.items.filter(y=>y!==id);
     else if(cr.items.length<3) cr.items.push(id); else return;
@@ -418,14 +418,14 @@ UI.showSynthesis=function(){ const sc=XS.app.sc, r=XS.app.zoomRegion; if(!sc||!r
     if(!XS.progress.reagents.includes(pre.p.makes)){ XS.progress.reagents.push(pre.p.makes); XS.award(8,'Synthesised: '+pre.p.name); XS.saveProgress(); }
     cr.items=[]; cr.step=null; st.flash=1; refresh();
     const read=$('benchRead'); read.className='bench-read ok';
-    read.innerHTML=`⚗ <b>${pre.p.name}</b> is on the shelf — now use it to build the drug.<div class="muted">${pre.p.how}</div>`; };
+    read.innerHTML=`⚗ <b>${pre.p.name}</b> is on the shelf, now use it to build the drug.<div class="muted">${pre.p.how}</div>`; };
   $('benchCancel').onclick=()=>{ UI.hideOverlay(); };
   $('benchTestBtn').onclick=()=>{ if(!cr.made) return; const eff=benchEffective(cr.made.agent);
     sfx(eff?'ok':'err'); const tp=$('benchTest'); tp.style.display=''; const tx=$('benchTestTx');
     const nm=sc.objective==='neutralize'?sc.dxAnswer.toLowerCase():(XS.PATHOGENS[sc.pathType]?XS.PATHOGENS[sc.pathType].dx.toLowerCase():'invader');
     tx.innerHTML=eff
-      ? `<b class="ok">✓ Effective.</b> On the cultured sample the ${nm} cells rupture and clear. This should work — administer it.`
-      : `<b class="bad">✗ No effect.</b> The sample shrugs it off. <b>${cr.made.name}</b> is the wrong weapon here — rework the flask.`;
+      ? `<b class="ok">✓ Effective.</b> On the cultured sample the ${nm} cells rupture and clear. This should work, administer it.`
+      : `<b class="bad">✗ No effect.</b> The sample shrugs it off. <b>${cr.made.name}</b> is the wrong weapon here, rework the flask.`;
     // spawn sample particles for the little dish animation
     const parts=[]; for(let i=0;i<14;i++) parts.push({x:40+Math.random()*220,y:14+Math.random()*58,r:5+Math.random()*4,ph:Math.random()*6});
     sample={parts, t0:performance.now(), eff}; };
@@ -433,14 +433,14 @@ UI.showSynthesis=function(){ const sc=XS.app.sc, r=XS.app.zoomRegion; if(!sc||!r
     // ULTRA · did they build the exact textbook drug for this named pathogen?
     const textbook = XS.intruderRecipeMatches(sc, cr.items, cr.step);   // temp already enforced to make the drug
     let res=XS.treatRegion(made.agent);
-    // a cure you synthesised yourself is administered as a full course — if it's
+    // a cure you synthesised yourself is administered as a full course, if it's
     // landing (and this isn't a co-infection, which needs a second, DIFFERENT
     // cure), finish the dosing so one correct build treats the patient
     if(res && res.ok && !sc.cures && !sc.cured){ let g=0; while(sc.P<100 && res.ok && g++<8){ const nx=XS.treatRegion(made.agent); if(!nx) break; res=nx; } }
     if(res && res.ok && textbook && !sc._tbAwarded){ sc._tbAwarded=true; sc.textbookMatch=true; XS.award(20,'Textbook drug: '+(sc.intruder?sc.intruder.name:made.name)); }
     UI.hideOverlay(); if(!res) return; sfx(res.ok?'ok':'err');
     const tbTag = res.ok&&textbook&&sc.intruder?` <span style="color:var(--aqua)">· ✓ textbook drug of choice</span>`:'';
-    readoutHTML=`<div class="ro-name" style="color:${res.ok?'var(--mint)':'var(--coral)'}">${res.ok?'✓':'✗'} Administered <b>${made.name}</b> — ${res.msg}${tbTag}</div>`;
+    readoutHTML=`<div class="ro-name" style="color:${res.ok?'var(--mint)':'var(--coral)'}">${res.ok?'✓':'✗'} Administered <b>${made.name}</b>, ${res.msg}${tbTag}</div>`;
     UI.renderLeft(); UI.renderRight(); UI.renderDock(); UI.updateVitals();
     if(XS.app.result) UI.showResult(); };
 
@@ -464,7 +464,7 @@ UI.showSynthesis=function(){ const sc=XS.app.sc, r=XS.app.zoomRegion; if(!sc||!r
       // surface shimmer
       ctx.fillStyle=`rgba(255,255,255,0.18)`; ctx.beginPath();
       ctx.ellipse(120,level+Math.sin(now/500)*1.5,72,6,0,0,Math.PI*2); ctx.fill();
-      // bubbles — more and faster the hotter the dial is set
+      // bubbles, more and faster the hotter the dial is set
       const heat=st.hot||0;
       if(heat>0.05 || (cr.made&&cr.step==='ferment')){
         const n=Math.round(2+heat*10), spd=700-heat*420;
@@ -480,7 +480,7 @@ UI.showSynthesis=function(){ const sc=XS.app.sc, r=XS.app.zoomRegion; if(!sc||!r
     ctx.beginPath(); ctx.moveTo(nx1+2,ny+4); ctx.lineTo(nx1+2,sh); ctx.lineTo(bx1+6,by-4); ctx.stroke();
     ctx.lineWidth=4; ctx.strokeStyle='rgba(210,240,248,0.95)';
     ctx.beginPath(); ctx.moveTo(nx1-9,ny); ctx.lineTo(nx2+9,ny); ctx.stroke();   // lip
-    // heat halo under the flask — reads the dial even before a product forms
+    // heat halo under the flask, reads the dial even before a product forms
     if((st.hot||0)>0.05){ const h=st.hot; ctx.save(); ctx.globalAlpha=Math.min(0.75,h*0.9);
       const hg=ctx.createRadialGradient(120,by+6,2,120,by+6,70);
       hg.addColorStop(0,`rgba(255,${Math.round(190-h*120)},60,0.85)`); hg.addColorStop(1,'rgba(255,90,20,0)');
@@ -528,16 +528,16 @@ UI.showFormulary=function(hi,back){
     const phc=(f.ph!=null)?`<span class="fm-chip ph">⚗ pH ${f.ph}</span>`:'';
     return `${mats}<span class="fm-op">+</span><span class="fm-chip step">${st.glyph||''} ${st.label||f.step}</span>${tmp}${phc}`+
       `<span class="fm-op">→</span><span class="fm-chip drug">${XS.agentName(f.agent)}</span>`; };
-  /* HINT MODE · say what the drug must DO and where such things come from —
+  /* HINT MODE · say what the drug must DO and where such things come from 
      never the shopping list. You still have to work the bench out yourself. */
   const hintRow=f=>{
     const src=(f.source||'').replace(/<[^>]+>/g,'');
-    const heat = f.temp<=10?'somewhere near freezing' : f.temp<30?'barely warm — body-cool at most'
+    const heat = f.temp<=10?'somewhere near freezing' : f.temp<30?'barely warm, body-cool at most'
       : f.temp<60?'gently warm' : f.temp<100?'hot, but never boiling' : f.temp<=110?'a rolling boil'
       : 'hotter than boiling water can go';
     const acid = f.ph==null?'' : f.ph<=2?', in something savagely acidic' : f.ph<5?', on the acid side'
       : f.ph<=7.8?', close to neutral' : f.ph<11?', on the alkaline side' : ', in something caustic';
-    return `<div class="fm-hint"><b>${XS.agentName(f.agent)}</b> — ${src}`+
+    return `<div class="fm-hint"><b>${XS.agentName(f.agent)}</b>, ${src}`+
       `<div class="fm-hintcond">🌡 Prepared ${heat}${acid}.</div></div>`; };
   // intermediates you must build first, shown as their own sub-recipes
   const preRows=(XS.PRECURSORS||[]).map(p=>{ const st=(XS.LAB_STEPS||[]).find(s=>s.id===p.step)||{};
@@ -570,10 +570,10 @@ UI.showFormulary=function(hi,back){
   const steps=(XS.LAB_STEPS||[]).map(s=>`<span class="fm-step">${s.glyph} <b>${s.label}</b> <small>${s.desc.split(' ').slice(0,6).join(' ')}…</small></span>`).join('');
   card(
     `<div class="sub">Field formulary · how to build any cure</div><h2>Make the right cure</h2>`+
-    `<p class="muted">Pick a <b>raw material</b> + a <b>preparation step</b> + the <b>exact temperature and pH</b>. These are <b>clues, not answers</b> — each entry tells you what the drug must <em>do</em> and roughly what conditions it wants. Working out which jar on the shelf that means is your job.</p>`+
+    `<p class="muted">Pick a <b>raw material</b> + a <b>preparation step</b> + the <b>exact temperature and pH</b>. These are <b>clues, not answers</b>, each entry tells you what the drug must <em>do</em> and roughly what conditions it wants. Working out which jar on the shelf that means is your job.</p>`+
     `<div class="fm-steps">${steps}</div>`+
     (preRows?`<div class="fm-sec-h">Reagents you must build first <em class="pre">intermediates</em></div>`+
-      `<p class="muted" style="margin:2px 0 0;font-size:12.5px">Some things aren’t on the shelf — you synthesise them from their own chemical precursors, then use them in a drug recipe.</p>${preRows}`:'')+
+      `<p class="muted" style="margin:2px 0 0;font-size:12.5px">Some things aren’t on the shelf, you synthesise them from their own chemical precursors, then use them in a drug recipe.</p>${preRows}`:'')+
     `<div class="fm-sec-h">Saving a sick organism <em class="save">preserve · cure the affliction</em></div>${pres}`+
     (alienRows?`<div class="fm-sec-h">Non-Earth biology <em class="xeno">xeno · the rules don’t apply</em></div>`+
       `<p class="muted" style="margin:2px 0 0;font-size:12.5px">Each of these breaks an assumption every Earth cure depends on, so the normal shelf fails and you need chemistry aimed at the new rule.</p>${alienRows}`:'')+
@@ -593,10 +593,10 @@ UI.showIdentify=function(){
   const sc=XS.app.sc, r=XS.app.zoomRegion; if(!sc||!r) return;
   const opt=XS.identifyOptions(sc), hall=XS.DX_HALLMARK||{};
   const btns=opt.options.map(o=>`<button class="idopt" data-o="${o}"><b>${o}</b><small>${hall[o]||''}</small></button>`).join('');
-  const evList=r.evidence.length?r.evidence.map(e=>`<div class="ev-row">• ${e}</div>`).join(''):'<div class="muted">You have gathered no evidence yet — this is a guess.</div>';
+  const evList=r.evidence.length?r.evidence.map(e=>`<div class="ev-row">• ${e}</div>`).join(''):'<div class="muted">You have gathered no evidence yet, this is a guess.</div>';
   card(`<div class="sub">Diagnosis · ${r.name}</div><h2>${opt.prompt}</h2>`+
     `<div class="cap" style="margin:8px 0 6px">Your evidence</div><div class="ev-list">${evList}</div>`+
-    `<p class="muted" style="margin-top:8px">A wrong call raises the ${sc.objective==='preserve'?'host’s risk':'organism’s adaptation'} — so read the evidence before you commit.</p>`+
+    `<p class="muted" style="margin-top:8px">A wrong call raises the ${sc.objective==='preserve'?'host’s risk':'organism’s adaptation'}, so read the evidence before you commit.</p>`+
     `<div class="idgrid">${btns}</div><div class="idnote" id="idNote"></div>`+
     `<div class="cta"><button class="btn" id="idCancel">Back to analysis</button></div>`);
   UI.overlay.querySelectorAll('.idopt').forEach(b=>b.onclick=()=>{
@@ -620,7 +620,7 @@ UI.showMenu=function(){
   const rank=XS.rankFor(XS.progress.xp), next=XS.nextRank(XS.progress.xp), p=XS.progress;
   const pct=next?Math.round((p.xp-rank.xp)/(next.xp-rank.xp)*100):100;
   const done=XS.storyProgress(), total=XS.STORY.length, fresh=!p.tutorialSeen&&!done;
-  const storySub = done>=total ? 'Campaign complete — replay any chapter'
+  const storySub = done>=total ? 'Campaign complete, replay any chapter'
     : done ? `Chapter ${done+1} of ${total} · ${XS.STORY[done].title}` : `Begin the campaign · ${total} chapters`;
   card(
     `<h1><span class="x">XENO</span><span class="o">SCOPE</span></h1>`+
@@ -664,8 +664,8 @@ UI.showMenu=function(){
 /* free play · pick mode + difficulty here instead of cluttering the menu */
 UI.MODES=[
   {id:'quick',    ico:'⚡', name:'Quick',        desc:'Pick a ready-made treatment. Fast, punchy runs.'},
-  {id:'advanced', ico:'⚗',  name:'Advanced',     desc:'More time — and you synthesise the cure yourself at the bench.'},
-  {id:'ultra',    ico:'🧬', name:'Ultra',        desc:'Named real diseases — COVID, malaria, MRSA. Make the actual drug.'},
+  {id:'advanced', ico:'⚗',  name:'Advanced',     desc:'More time, and you synthesise the cure yourself at the bench.'},
+  {id:'ultra',    ico:'🧬', name:'Ultra',        desc:'Named real diseases. COVID, malaria, MRSA. Make the actual drug.'},
   {id:'alien',    ico:'👽', name:'Xeno',         desc:'Afflictions that break Earth\u2019s rules. Your normal shelf fails.'},
   {id:'contact',  ico:'🛸', name:'First Contact',desc:'Alien species from kingdoms that never existed here.'},
 ];
@@ -717,14 +717,14 @@ UI.showResult=function(){
   sfx(win?'win':'lose'); if(app.rankUp) setTimeout(()=>sfx('rank'),650);
   const xpList=app.lastXP.slice(0,5).map(x=>`<div class="xp-row"><span>${x.reason}</span><b>+${x.n}</b></div>`).join('');
   const rankUp=app.rankUp?`<div class="rankup">⬆ Promoted to <b>${app.rankUp.name}</b>!</div>`:'';
-  const flawless=win&&app.missionWrong===0?`<div class="streakline">🎯 Clean diagnosis — no wrong treatments</div>`:'';
+  const flawless=win&&app.missionWrong===0?`<div class="streakline">🎯 Clean diagnosis, no wrong treatments</div>`:'';
   const ultraBlock=sc.intruder?`<div class="rev ultra">🧬 CASE · <span class="hl">${sc.intruder.name}</span> <span class="muted">(${sc.intruder.aka})</span> · REAL-WORLD DRUG · <span class="hl">${sc.intruder.drug}</span>${win?(sc.textbookMatch?` · <span class="hl" style="color:var(--aqua)">✓ you built the textbook drug</span>`:` <span class="muted">· a valid drug of the right class, though not the classic choice</span>`):''}</div>`:'';
-  const shareStr=app.daily?`XENOSCOPE Daily ${XS.dailyKey()} — ${sc.name} ${win?'✅ '+O.label.toLowerCase():'❌ failed'}`:'';
+  const shareStr=app.daily?`XENOSCOPE Daily ${XS.dailyKey()}, ${sc.name} ${win?'✅ '+O.label.toLowerCase():'❌ failed'}`:'';
   const dailyBlock=app.daily?`<div class="sharebox"><div class="share-h">🗓 Daily ${XS.dailyKey()}</div><div class="sharestr" id="shareStr">${shareStr}</div><button class="chipbtn" id="copyShare">📋 Copy result</button></div>`:'';
   card(
     `<div class="sub">Field report · ${sc.name}</div>`+
     `<div class="verdict ${win?'win':'lose'}">${win?'✦ '+O.winT:'ASSIGNMENT FAILED'}</div>`+
-    `<p>${win?`You correctly ${sc.objective==='preserve'?'diagnosed and cured':'found the weakness of'} <b>${sc.name}</b>, ${sc.A.body}.`:`<b>${sc.name}</b> — ${app.result.why||'the objective was missed'}.`}</p>`+
+    `<p>${win?`You correctly ${sc.objective==='preserve'?'diagnosed and cured':'found the weakness of'} <b>${sc.name}</b>, ${sc.A.body}.`:`<b>${sc.name}</b>, ${app.result.why||'the objective was missed'}.`}</p>`+
     rankUp+flawless+ultraBlock+
     `<div class="rev">CAUSE · <span class="hl">${sc.objective==='preserve'?XS.PATHOGENS[sc.pathType].label:'structural weakness'}</span> · CORRECT TREATMENT · <span class="hl">${XS.agentName(sc.agent)}</span></div>`+
     `<div class="xp-list">${xpList}</div>`+ dailyBlock+
@@ -748,7 +748,7 @@ UI.showStory=function(){
       return `<button class="vy-ch ${st}" data-ch="${i}"${st==='locked'?' disabled':''}>`+
         `<span class="vy-node"></span>`+
         `<span class="vy-body"><span class="vy-title">${st==='locked'?'Unrecorded':ch.title}</span>`+
-        `<span class="vy-sub">${st==='locked'?'—':ch.teaches}</span></span>`+
+        `<span class="vy-sub">${st==='locked'?', ':ch.teaches}</span></span>`+
         `<span class="vy-mark">${st==='done'?'✓':st==='next'?'▶':'🔒'}</span></button>`;}).join('');
     return `<section class="vy-act"><header class="vy-acth"><span class="vy-num">${num}</span>`+
       `<span class="vy-name">${rest.join(' · ')}</span></header><div class="vy-line">${rows}</div></section>`;}).join('');
@@ -783,7 +783,7 @@ UI.showChapterOutro=function(){
   const spared=XS.app.storyChoice==='spare';
   const body = spared
     ? `<p class="st-p">You log it as <b>unclassified</b> and do not fire.</p>`+
-      `<p class="st-p">Command will want a reason. You do not have one that fits the form — only that a thing which changes its pattern when you speak to it has met you halfway, and you were not certain, and being uncertain seemed like the whole point of the job.</p>`+
+      `<p class="st-p">Command will want a reason. You do not have one that fits the form, only that a thing which changes its pattern when you speak to it has met you halfway, and you were not certain, and being uncertain seemed like the whole point of the job.</p>`+
       `<p class="st-p">The <b>Verity</b> moves on. Six days later, the field is still following.</p>`
     : `<p class="st-p">${ch.out}</p>`+ (last?`<p class="st-p">You carried out the order. It was lawful, it was quick, and it was probably correct.\n\nYou will not find out.</p>`:'');
   card(`<div class="ch-head"><span class="ch-act">${ch.act}</span>`+
@@ -823,7 +823,7 @@ UI.showOutbreakCase=function(){ const run=XS.app.run; if(!run) return; const lg=
 };
 UI.showOutbreakSummary=function(){ const run=XS.app.run; if(!run){ UI.showMenu(); return; }
   const best=XS.progress.outbreakBest||0;
-  const share=`XENOSCOPE Outbreak — ${run.cleared} case${run.cleared===1?'':'s'} cleared · ${run.score} pts${run.newBest?' 🏅 new best!':''}`;
+  const share=`XENOSCOPE Outbreak, ${run.cleared} case${run.cleared===1?'':'s'} cleared · ${run.score} pts${run.newBest?' 🏅 new best!':''}`;
   card(
     `<div class="sub">Outbreak · run over</div>`+
     `<div class="verdict ${run.newBest?'win':'lose'}">${run.newBest?'🏅 NEW HIGH SCORE':'OUTBREAK CONTAINED'}</div>`+

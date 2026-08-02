@@ -61,7 +61,7 @@ function drawZoom(app,t){ const spec=app.spec; if(!spec) return;
   if(zt<1){ const s=0.5+0.5*ease(zt); ctx.globalAlpha=ease(zt); ctx.translate(cx,cy); ctx.scale(s,s); ctx.translate(-cx,-cy); }
   const da=app;
   if(spec.tissue)drawTissue(da,t); else if(spec.isVirus)drawVirus(da,t); else drawCell(da,t);
-  // Invaders stay an UNRESOLVED biosignature until the morphology assay is run —
+  // Invaders stay an UNRESOLVED biosignature until the morphology assay is run 
   // so you can never identify one just by its shape, size or colour.
   if(app.zoomPathogen){ const rg=app.zoomRegion;
     drawPathogens(app.zoomPathogen, t, !!(rg&&rg.tests&&rg.tests.morph)); }
@@ -216,7 +216,7 @@ function drawPart(app,p,rad,asp,t){
     case 'eyespot': ctx.globalCompositeOperation='lighter';ctx.fillStyle='#ff9a5c';ctx.shadowColor='#ff9a5c';ctx.shadowBlur=10;ctx.beginPath();ctx.arc(x,y,s,0,6.3);ctx.fill(); break;
     case 'halo': ctx.strokeStyle='rgba(191,224,255,.35)';ctx.lineWidth=cl(rad*.03,2,5);ctx.beginPath();ctx.arc(cx,cy,rad*1.02,0,6.3);ctx.stroke(); p._x=cx;p._y=cy-rad;p._r=rad*.2; break;
     /* ---- XENO structures: nothing Earth-shaped ---- */
-    case 'lattice': {                       // silicate lattice node — a hard refracting prism
+    case 'lattice': {                       // silicate lattice node, a hard refracting prism
       ctx.save(); ctx.translate(x,y); ctx.rotate(p.ang*0.5);
       ctx.fillStyle='rgba(159,240,234,.45)'; ctx.strokeStyle='rgba(199,251,255,.95)'; ctx.lineWidth=1.5;
       const S6=s*2.1; ctx.beginPath(); for(let k=0;k<6;k++){ const a=k/6*6.283, px=Math.cos(a)*S6, py=Math.sin(a)*S6*.86; k?ctx.lineTo(px,py):ctx.moveTo(px,py); }
@@ -225,12 +225,12 @@ function drawPart(app,p,rad,asp,t){
       for(let k=0;k<3;k++){ const a=k/3*3.14; ctx.beginPath(); ctx.moveTo(Math.cos(a)*S6,Math.sin(a)*S6*.86); ctx.lineTo(-Math.cos(a)*S6,-Math.sin(a)*S6*.86); ctx.stroke(); }
       const gl=0.35+0.35*Math.sin(t*1.4+p.ph); ctx.fillStyle=`rgba(255,255,255,${gl*0.5})`;
       ctx.beginPath(); ctx.arc(0,0,S6*0.26,0,6.3); ctx.fill(); ctx.restore(); p._r=Math.max(p._r,S6*0.8); break; }
-    case 'accretion': {                     // growth front — banded mineral layers at the rim
+    case 'accretion': {                     // growth front, banded mineral layers at the rim
       ctx.strokeStyle='rgba(199,251,255,.55)'; ctx.lineWidth=1.3;
       for(let k=0;k<4;k++){ ctx.globalAlpha=0.75-k*0.15; ctx.beginPath();
         ctx.ellipse(cx,cy,rad*(1.0-k*0.055)*asp,rad*(1.0-k*0.055),0,0,6.29); ctx.stroke(); }
       ctx.globalAlpha=1; p._x=cx;p._y=cy-rad;p._r=rad*.25; break; }
-    case 'plasmacore': {                    // ionised knot — no membrane, pure light
+    case 'plasmacore': {                    // ionised knot, no membrane, pure light
       ctx.globalCompositeOperation='lighter';
       const cr=s*1.7*(1+0.10*Math.sin(t*4+p.ph));
       const g=ctx.createRadialGradient(x,y,0,x,y,cr*2.2);
@@ -240,7 +240,7 @@ function drawPart(app,p,rad,asp,t){
         ctx.lineWidth=1.1; ctx.beginPath(); ctx.moveTo(x,y);
         ctx.lineTo(x+Math.cos(a)*cr*2.1, y+Math.sin(a)*cr*2.1); ctx.stroke(); }
       break; }
-    case 'fieldloop': {                     // magnetic confinement loop — the actual boundary
+    case 'fieldloop': {                     // magnetic confinement loop, the actual boundary
       ctx.globalCompositeOperation='lighter';
       ctx.strokeStyle=`rgba(255,210,122,${0.30+0.20*Math.sin(t*1.8+p.ph)})`; ctx.lineWidth=1.8;
       ctx.shadowColor='#ffd27a'; ctx.shadowBlur=10;
@@ -256,7 +256,7 @@ function drawPart(app,p,rad,asp,t){
         ctx.beginPath(); ctx.moveTo(cx+Math.cos(a)*r0,cy+Math.sin(a)*r0*.92);
         ctx.lineTo(cx+Math.cos(a)*r0*1.12,cy+Math.sin(a)*r0*1.03); ctx.stroke(); }
       p._x=cx;p._y=cy;p._r=rad*p.sz*.7; break; }
-    case 'oxidecrust': {                    // precipitated metal armour — pitted, non-living
+    case 'oxidecrust': {                    // precipitated metal armour, pitted, non-living
       ctx.strokeStyle='rgba(185,163,122,.95)'; ctx.lineWidth=cl(rad*.05,3,7);
       ctx.beginPath(); ctx.ellipse(cx,cy,rad*1.01*asp,rad*1.01,0,0,6.29); ctx.stroke();
       for(let k=0;k<18;k++){ const a=k/18*6.283+p.ph; const rr=rad*(0.99+0.02*Math.sin(k*2.3));
@@ -360,7 +360,7 @@ XS.partAt=function(app,px,py){ let best=null,bd=1e9;
     if(d<Math.max(p._r+8,16)&&d<bd){bd=d;best=p;} } return best; };
 
 /* ==================================================================
-   MACRO WORLD — exoplanet + whole organism + zoomable region hotspots
+   MACRO WORLD, exoplanet + whole organism + zoomable region hotspots
 ================================================================== */
 function skyBg(sc,t){
   const P=sc.planet, a=P.accent.join(','), gy=H*0.72, mn=Math.min(W,H);
@@ -374,7 +374,7 @@ function skyBg(sc,t){
   neb(W*0.28+Math.sin(t*0.05)*20, H*0.32, mn*0.55, a, 0.055);
   neb(W*0.74, H*0.46+Math.cos(t*0.04)*16, mn*0.6, a, 0.04);
   ctx.restore();
-  // stars — varied sizes, gentle twinkle
+  // stars, varied sizes, gentle twinkle
   ctx.save();
   for(let i=0;i<bokeh.length;i++){ const b=bokeh[i], x=(b.x*1.7)%W, y=(b.y*0.9)%(H*0.68), tw=0.45+0.55*Math.sin(t*1.4+i*1.3), s=(i%7===0)?1.9:1.0;
     ctx.fillStyle=`rgba(255,255,255,${(0.22+b.a*4)*tw})`; ctx.fillRect(x,y,s,s); }
@@ -563,7 +563,7 @@ XS.PLANS={
     shard(-0.36,0.10,0.15,0.52,-0.20,0.2); shard(0.34,0.16,0.13,0.44,0.24,0.2);
     shard(-0.16,-0.06,0.17,0.72,-0.06,0.5); shard(0.18,-0.02,0.16,0.66,0.08,0.5);
     shard(0.01,-0.20,0.20,0.92,0.0,1.0);
-    // slow internal refraction glints — it is mineral, so it sparkles rather than breathes
+    // slow internal refraction glints, it is mineral, so it sparkles rather than breathes
     for(let i=0;i<7;i++){ const ph=(t*0.5+i*0.9)%3, a=Math.max(0,1-Math.abs(ph-1.2));
       if(a<=0) continue; ctx.fillStyle=`rgba(255,255,255,${a*0.75})`;
       ctx.beginPath(); ctx.arc(ccx+Math.sin(i*2.1)*S*0.3, ccy-S*0.6+((i*0.27)%1.5)*S*0.9, S*0.018, 0, 6.3); ctx.fill(); }
@@ -586,7 +586,7 @@ XS.PLANS={
       gl.addColorStop(0,`rgba(255,255,255,${0.10+0.06*Math.sin(t*0.8+n)})`); gl.addColorStop(1,'rgba(255,255,255,0)');
       ctx.fillStyle=gl; ctx.beginPath(); ctx.arc(0,0,r*S*0.7,0,6.3); ctx.fill(); ctx.restore(); });
   },
-  // Plasma held by magnetic loops — no body, only field.
+  // Plasma held by magnetic loops, no body, only field.
   plasmawisp(ccx,ccy,S,t,sc,health){ const col=sc.A.col, acc=sc.planet.accent, gcol=mix(col,acc,0.4);
     auraGlow(ccx,ccy,S*2.0,gcol,0.16+0.20*health);
     ctx.save(); ctx.globalCompositeOperation='lighter';
@@ -621,7 +621,7 @@ XS.PLANS={
     g.addColorStop(1,`rgba(${col.map(c=>Math.round(c*0.5)).join(',')},.55)`);
     ctx.fillStyle=g; ctx.beginPath(); ctx.ellipse(0,0,S*0.62,S*0.7,0,0,6.283); ctx.fill();
     ctx.strokeStyle=`rgba(${col.join(',')},.9)`; ctx.lineWidth=2.4; ctx.stroke();
-    // frost spicules — it is colder than its surroundings, so it rimes over
+    // frost spicules, it is colder than its surroundings, so it rimes over
     for(let i=0;i<20;i++){ const a=i/20*6.283+Math.sin(t*0.4)*0.1, r0=S*0.62, r1=r0+S*(0.10+0.07*((i*0.41)%1));
       ctx.strokeStyle=`rgba(235,250,255,${0.35+0.30*Math.abs(Math.sin(t+i))})`; ctx.lineWidth=1.6;
       ctx.beginPath(); ctx.moveTo(Math.cos(a)*r0,Math.sin(a)*r0*1.12); ctx.lineTo(Math.cos(a)*r1,Math.sin(a)*r1*1.12); ctx.stroke(); }
@@ -1021,7 +1021,7 @@ XS.PLANS={
       for(let i=0;i<10;i++){ const yy=ccy-S*0.62-((t*30+i*22)%(S*0.7)); ctx.beginPath(); ctx.arc(ccx-S*0.02+Math.sin(t+i)*S*0.06,yy,2,0,6.3); ctx.fill(); }
       ctx.fillStyle=rC(mix(acc,[255,255,255],0.3),0.6);
       for(let i=0;i<14;i++){ const a=i*2.2, x=ccx+Math.cos(a)*S*0.14, y=gy-((i*S*0.09)%(S*0.55)); ctx.beginPath(); ctx.arc(x,y,S*0.03,0,6.3); ctx.fill(); } ctx.restore(); }
-    else { // 'crust' — flat crust with nodules + acid haze
+    else { // 'crust', flat crust with nodules + acid haze
       const pts=[]; for(let i=0;i<=20;i++){ const f=i/20, x=ccx+(-0.9+1.8*f)*S, y=gy-Math.max(0,Math.sin(f*3.14))*S*0.14; pts.push([x,y]); }
       pts.push([ccx+S*0.9,gy+S*0.14]); pts.push([ccx-S*0.9,gy+S*0.14]);
       fillGlow(pts,bodyGrad(ccx,gy-S*0.08,S*0.9,col,acc,health),gcol,1.4);
@@ -1251,7 +1251,7 @@ XS.PLANS={
     // reticulopodia (fine radiating threads)
     ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.strokeStyle=rC(mix(acc,[255,255,255],0.3),0.28); ctx.lineWidth=1;
     for(let i=0;i<20;i++){ const a=i/20*6.283+Math.sin(t*0.5)*0.05; ctx.beginPath(); ctx.moveTo(ccx+Math.cos(a)*S*0.3,ccy+Math.sin(a)*S*0.3); ctx.lineTo(ccx+Math.cos(a)*S*0.85,ccy+Math.sin(a)*S*0.85); ctx.stroke(); } ctx.restore();
-    // chambered spiral shell — overlapping orbs of decreasing size
+    // chambered spiral shell, overlapping orbs of decreasing size
     const N=7; for(let k=N;k>=1;k--){ const a=k*0.9, r=S*0.34*(k/N), x=ccx+Math.cos(a)*S*0.16*(1-k/N/2), y=ccy+Math.sin(a)*S*0.16*(1-k/N/2);
       orb(x,y,r,mix(col,[255,255,255],(N-k)*0.03),acc,health); }
     ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.strokeStyle=rC(gcol,0.3); ctx.lineWidth=1;
@@ -1291,13 +1291,13 @@ function drawPathogens(kind,t,resolved){ ctx.save(); ctx.globalCompositeOperatio
       ctx.fillStyle='rgba(180,255,140,.5)'; ctx.shadowColor='#b4ff8c'; ctx.shadowBlur=10;
       ctx.beginPath(); ctx.arc(x,y,s*0.5,0,6.3); ctx.fill();
       ctx.fillStyle='rgba(180,255,140,.25)'; ctx.beginPath(); ctx.arc(x+Math.sin(t+i)*s,y+Math.cos(t*1.3+i)*s,s*0.3,0,6.3); ctx.fill(); }
-    else if(kind==='silicate'){ // hard angular glass crystal — no membrane at all
+    else if(kind==='silicate'){ // hard angular glass crystal, no membrane at all
       ctx.save(); ctx.translate(x,y); ctx.rotate(a*0.3);
       ctx.fillStyle='rgba(160,240,235,.45)'; ctx.strokeStyle='#9ff0ea'; ctx.shadowColor='#9ff0ea'; ctx.shadowBlur=10; ctx.lineWidth=1.4;
       ctx.beginPath(); ctx.moveTo(0,-s*1.6); ctx.lineTo(s*0.9,-s*0.4); ctx.lineTo(s*0.6,s*1.3);
       ctx.lineTo(-s*0.6,s*1.3); ctx.lineTo(-s*0.9,-s*0.4); ctx.closePath(); ctx.fill(); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(0,-s*1.6); ctx.lineTo(0,s*1.3); ctx.stroke(); ctx.restore(); }
-    else if(kind==='chiral'){ // mirrored pair — same shape, opposite handedness
+    else if(kind==='chiral'){ // mirrored pair, same shape, opposite handedness
       ctx.save(); ctx.translate(x,y); ctx.rotate(a);
       ctx.strokeStyle='#ff9ad5'; ctx.shadowColor='#ff9ad5'; ctx.shadowBlur=9; ctx.lineWidth=1.8;
       for(const sgn of [1,-1]){ ctx.beginPath();
