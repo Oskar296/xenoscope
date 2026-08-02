@@ -637,6 +637,9 @@ UI.showMenu=function(){
       `<button class="m-card" id="outbreakBtn"><span class="m-ico">🌊</span><span class="m-tx"><b>Outbreak</b><small>${p.outbreakBest?`Best ${p.outbreakBest}`:'Scored survival run'}</small></span></button>`+
       `<button class="m-card ${fresh?'pulse':''}" id="tutBtn"><span class="m-ico">🎓</span><span class="m-tx"><b>Tutorial</b><small>Learn the loop</small></span></button>`+
     `</div>`+
+    `<button class="m-card creator" id="creatorBtn"><span class="m-ico">🧫</span>`+
+      `<span class="m-tx"><b>Creator</b><small>${(p.custom||[]).length?`${p.custom.length} species designed — build another`:'Design your own organism, then play it'}</small></span>`+
+      `<span class="m-go">＋</span></button>`+
 
     `<div class="m-rank"><div class="m-rk"><b>${rank.name}</b><span>${p.xp} XP${next?` · ${next.xp-p.xp} to ${next.name}`:''}</span></div>`+
       `<div class="xpbar"><i style="width:${pct}%"></i></div>`+
@@ -660,6 +663,7 @@ UI.showMenu=function(){
   $('formularyBtn').onclick=()=>{ sfx('click'); UI.showFormulary(null,false); };
   $('achBtn').onclick=()=>{ sfx('click'); UI.showAchievements(); };
   $('setBtn').onclick=()=>{ sfx('click'); UI.showSettings(); };
+  $('creatorBtn').onclick=()=>{ sfx('click'); (XS.progress.custom||[]).length?UI.showMySpecies():UI.showCreator(XS.newCreatureDef()); };
 };
 
 /* free play · pick mode + difficulty here instead of cluttering the menu */
@@ -734,6 +738,82 @@ UI.showResult=function(){
   $('nextBtn').onclick=()=>{ sfx('click'); UI.hideOverlay(); XS.startMission(null,XS.app.tier); UI.renderPhase(); };
   $('menuBtn3').onclick=UI.showMenu; $('codexBtn3').onclick=UI.showCodex;
   const cs=$('copyShare'); if(cs) cs.onclick=()=>{ try{ navigator.clipboard.writeText(shareStr); cs.textContent='✓ Copied'; }catch(e){ cs.textContent='select ↑'; } };
+};
+
+/* ---------------- CREATOR · design your own organism ----------------
+   The preview IS the game's own renderer: we build a throwaway scenario and
+   let the normal loop draw it, so what you sculpt is exactly what you'll play.
+   The panel sits at the edges and leaves the creature visible in the middle. */
+UI.showCreator=function(def){
+  const D = def || XS._creatorDef || (XS._creatorDef=XS.newCreatureDef());
+  XS._creatorDef=D;
+  UI.hideOverlay();
+  XS.previewCreature(D);
+  UI.top.style.display='flex'; UI.renderTop();
+  if(UI.coach) UI.coach.style.display='none';
+  const runHud=document.getElementById('runhud'); if(runHud) runHud.style.display='none';
+
+  const K=XS.KINGDOMS[D.cell]||{}, weak=XS.killAgentsFor(D.cell)[0];
+  UI.left.innerHTML=
+    `<div class="cap">Design</div>`+
+    `<label class="cr-lab">Name</label>`+
+    `<input class="cr-name" id="crName" maxlength="22" placeholder="Name your organism" value="${(D.name||'').replace(/"/g,'&quot;')}">`+
+    `<label class="cr-lab">Kingdom <span class="muted">— sets its biology</span></label>`+
+    `<select class="cr-sel" id="crCell">${XS.CREATOR_KINGDOMS.map(k=>`<option value="${k}"${k===D.cell?' selected':''}>${(XS.KINGDOMS[k]||{}).label||k}${(XS.KINGDOMS[k]||{}).alien?' · alien':''}</option>`).join('')}</select>`+
+    `<div class="cr-bio"><b>${K.label||D.cell}</b><small>${K.blurb||''}</small>`+
+      `<div class="cr-weak">Weakness · <b>${XS.agentName(weak)}</b></div></div>`;
+  UI.right.innerHTML=
+    `<div class="cap">Appearance</div>`+
+    `<label class="cr-lab">Body plan <span class="muted">— shape only</span></label>`+
+    `<select class="cr-sel" id="crPlan">${XS.CREATOR_PLANS.map(pl=>`<option value="${pl}"${pl===D.plan?' selected':''}>${pl}</option>`).join('')}</select>`+
+    `<label class="cr-lab">Colour</label><input type="range" class="cr-rng" id="crHue" min="0" max="1" step="0.01" value="${D.hue}">`+
+    `<label class="cr-lab">Size</label><input type="range" class="cr-rng" id="crSize" min="0.7" max="1.4" step="0.01" value="${D.size}">`+
+    `<button class="btn cr-reroll" id="crRoll">🎲 Reroll details</button>`+
+    `<div class="cr-note">Shape and biology are independent — build a crystal that looks like a beast if you like. The assays will still tell the truth about what it is.</div>`;
+  UI.dock.innerHTML=
+    `<button class="abtn back" id="crBack"><b>← Menu</b><small>discard</small></button>`+
+    `<div class="dsep"></div>`+
+    `<button class="abtn" id="crSave"><b>💾 Save</b><small>add to your catalogue</small></button>`+
+    `<button class="abtn treat" id="crPlayP"><b>💚 Play · Preserve</b><small>something is killing it</small></button>`+
+    `<button class="abtn treat" id="crPlayN"><b>☠️ Play · Neutralize</b><small>it is the threat</small></button>`+
+    `<div class="dsep"></div>`+
+    `<button class="abtn" id="crList"><b>📚 My species</b><small>${(XS.progress.custom||[]).length} saved</small></button>`;
+
+  const re=()=>{ XS.previewCreature(D); };
+  $('crName').oninput=e=>{ D.name=e.target.value; };
+  $('crCell').onchange=e=>{ sfx('click'); D.cell=e.target.value; UI.showCreator(D); };
+  $('crPlan').onchange=e=>{ sfx('click'); D.plan=e.target.value; re(); };
+  $('crHue').oninput=e=>{ D.hue=+e.target.value; re(); };
+  $('crSize').oninput=e=>{ D.size=+e.target.value; re(); };
+  $('crRoll').onclick=()=>{ sfx('blip'); D.seed=Math.floor(Math.random()*1e9); re(); };
+  $('crBack').onclick=()=>{ sfx('click'); UI.showMenu(); };
+  $('crSave').onclick=()=>{ if(!(D.name||'').trim()){ D.name='Unnamed'; $('crName').value='Unnamed'; }
+    sfx('ok'); XS.saveCreature(D); UI.showCreator(D);
+    UI.showToast({icon:'🧬', name:'Saved', desc:D.name+' added to your catalogue'}); };
+  $('crPlayP').onclick=()=>{ sfx('click'); XS.startCustomMission(D,'preserve'); UI.renderPhase(); };
+  $('crPlayN').onclick=()=>{ sfx('click'); XS.startCustomMission(D,'neutralize'); UI.renderPhase(); };
+  $('crList').onclick=()=>{ sfx('click'); UI.showMySpecies(); };
+};
+UI.showMySpecies=function(){
+  const list=XS.progress.custom||[];
+  const rows=list.length? list.map(d=>{const K=XS.KINGDOMS[d.cell]||{};
+    return `<div class="cr-row"><div class="cr-rowtx"><b>${d.name||'Unnamed'}</b>`+
+      `<small>${K.label||d.cell} · ${d.plan}</small></div>`+
+      `<button class="chipbtn" data-edit="${d.seed}">Edit</button>`+
+      `<button class="chipbtn" data-play="${d.seed}">▶ Play</button>`+
+      `<button class="chipbtn danger" data-del="${d.seed}">✕</button></div>`;}).join('')
+    : `<div class="muted">Nothing saved yet. Design something and hit <b>Save</b>.</div>`;
+  card(`<div class="sub">Your catalogue · ${list.length} species</div><h2>My species</h2>`+
+    `<div class="cr-rows">${rows}</div>`+
+    `<div class="cta"><button class="btn pri" id="msNew">＋ New organism</button><button class="btn" id="msBack">← Back</button></div>`);
+  UI.overlay.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{ sfx('click');
+    UI.showCreator(Object.assign({}, list.find(x=>x.seed==b.dataset.edit))); });
+  UI.overlay.querySelectorAll('[data-play]').forEach(b=>b.onclick=()=>{ sfx('click'); UI.hideOverlay();
+    XS.startCustomMission(list.find(x=>x.seed==b.dataset.play), null); UI.renderPhase(); });
+  UI.overlay.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{ sfx('err');
+    XS.deleteCreature(+b.dataset.del); UI.showMySpecies(); });
+  $('msNew').onclick=()=>{ sfx('click'); UI.showCreator(XS.newCreatureDef()); };
+  $('msBack').onclick=()=>{ sfx('click'); if(XS.app.phase==='survey'&&XS.app.sc&&XS.app.sc.preview) UI.showCreator(); else UI.showMenu(); };
 };
 
 /* ---------------- STORY · The Long Survey ---------------- */

@@ -507,6 +507,44 @@ XS.INTRUDERS=[
 XS.intruderRecipeMatches=function(sc,items,step){ const tr=sc&&sc.textbookRecipe; if(!tr||!items||!step) return false;
   return step===tr.step && items.slice().sort().join('+')===tr.items.slice().sort().join('+'); };
 
+/* ---------------- CREATOR · player-authored species ----------------
+   You choose the LOOK (body plan, colour, size) and the BIOLOGY (kingdom)
+   independently — so you can build a crystal that looks like a beast, and the
+   assays will still tell the truth about what it is. Appearance is not
+   ancestry: that is real biology (convergent evolution), and it also means a
+   custom organism is always a solvable, honest case.
+------------------------------------------------------------ */
+XS.CREATOR_PLANS=['beast','medusa','arthropod','tentacled','worm','anemone','crinoid','starfish','winged','snail',
+  'tree','fern','vine','canopy','cactus','pitcher','mushroom','bracket','coral','puffball','lichen',
+  'amoeba','ciliate','diatom','radiolarian','urchin','slimemold','foram','colony',
+  'crystalspire','geodecluster','plasmawisp','cryodrifter','rustbloom','ferrovein'];
+XS.CREATOR_KINGDOMS=['Animalia','Plantae','Fungi','Protista','Monera','Archaea','Silicoid','Plasmoid','Ammonoid','Metallophyte'];
+XS.newCreatureDef=function(){ return {name:'', plan:'beast', cell:'Animalia', hue:0.5, size:1.0, seed:Math.floor(Math.random()*1e9)}; };
+/* turn a creator definition into a species entry the rest of the game accepts */
+XS.customSpecies=function(def){
+  const K=XS.KINGDOMS[def.cell]||XS.KINGDOMS.Animalia;
+  const h=def.hue, col=[
+    Math.round(120+120*Math.sin(6.283*h)),
+    Math.round(120+120*Math.sin(6.283*h+2.09)),
+    Math.round(120+120*Math.sin(6.283*h+4.19))];
+  const nm=(def.name||'Unnamed').trim()||'Unnamed';
+  return { id:'custom_'+(def.seed||0), custom:true, alien:!!K.alien,
+    name:[nm], epi:[''], kingdom:K.label, body:'an organism of your own design',
+    plan:def.plan, cell:def.cell, col, size:def.size||1, form:{}, minXP:0,
+    blurb:'A species you designed. Its shape is your choice — its biology follows its kingdom, and the assays will say so.' };
+};
+XS.saveCreature=function(def){
+  if(!XS.progress.custom) XS.progress.custom=[];
+  const d=Object.assign({}, def); if(!d.seed) d.seed=Math.floor(Math.random()*1e9);
+  const i=XS.progress.custom.findIndex(x=>x.seed===d.seed);
+  if(i>=0) XS.progress.custom[i]=d; else XS.progress.custom.push(d);
+  XS.award(15,'Catalogued: '+(d.name||'Unnamed')); XS.saveProgress(); return d;
+};
+XS.deleteCreature=function(seed){
+  if(!XS.progress.custom) return;
+  XS.progress.custom=XS.progress.custom.filter(x=>x.seed!==seed); XS.saveProgress();
+};
+
 /* ---------------- scenario generation ---------------- */
 XS.buildScenario=function(objective, tier, forceCell){
   const T=(XS.TIERS&&XS.TIERS[tier])||{margin:1};
@@ -514,7 +552,9 @@ XS.buildScenario=function(objective, tier, forceCell){
   const fc = ((XS.app&&XS.app.mode)||'quick')==='contact';       // 🛸 First Contact = alien species only
   const pool = forceCell ? XS.SPECIES.filter(s=>s.cell===forceCell)
     : XS.SPECIES.filter(s=> (fc? !!s.alien : !s.alien) && xp>=(s.minXP||0));
-  const base=pick(pool.length?pool:XS.SPECIES);
+  // a species you built yourself takes precedence over the random roll
+  const forced = XS.app && XS.app.forceSpecies;
+  const base = forced || pick(pool.length?pool:XS.SPECIES);
   const morph=XS.genMorph(base);
   const A=Object.assign({}, base, {label:base.kingdom, col:morph.col, form:morph.form, size:(base.size||1)*morph.size});
   const planet=pick(XS.PLANETS);

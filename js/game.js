@@ -13,7 +13,7 @@ XS.app={ phase:'menu', tier:'field', mode:'quick', time:0, daily:false, toasts:[
   hoverRegion:null, hoverPart:null, scan:null, result:null, craft:null, run:null,
   lastXP:[], rankUp:null, missionWrong:0, demo:null };
 
-function fresh(){ return { xp:0, organelles:[], organisms:[], subs:[], badges:[], archetypes:[], species:[],
+function fresh(){ return { xp:0, organelles:[], organisms:[], subs:[], badges:[], archetypes:[], species:[], custom:[],
   runs:0, wins:0, saves:0, kills:0, flawless:0, scans:0, dirWins:0, assays:0, sharpWins:0, hardWins:0, tutorialSeen:0 }; }
 XS.progress=null;
 XS.loadProgress=function(){
@@ -251,6 +251,29 @@ XS.checkAchievements=function(){
   for(const a of XS.ACHIEVEMENTS){ if(!XS.progress.badges.includes(a.id) && a.check(XS.progress)){ XS.progress.badges.push(a.id); newly.push(a); } }
   if(newly.length){ XS.saveProgress(); XS.app.toasts=(XS.app.toasts||[]).concat(newly.map(a=>({icon:a.icon,title:a.name,desc:a.desc}))); }
   return newly;
+};
+
+/* play a case built around a species you designed */
+XS.startCustomMission=function(def, objective){
+  const sp=XS.customSpecies(def);
+  XS.app.forceSpecies=sp;
+  try{ XS.startMission(objective||null, XS.app.tier); }
+  finally{ XS.app.forceSpecies=null; }
+  if(XS.app.sc) XS.app.sc.customCreature=def;
+  return XS.app.sc;
+};
+/* live preview: a throwaway scenario used only to draw the creature */
+XS.previewCreature=function(def){
+  const sp=XS.customSpecies(def);
+  XS.app.forceSpecies=sp;
+  let sc=null;
+  try{ sc=XS.buildScenario('neutralize','intern',null); }
+  finally{ XS.app.forceSpecies=null; }
+  sc.preview=true; sc.hostDrain=0; sc.traits=[];
+  sc.regions.forEach(r=>{ r.symbiont=false; r.decoy=false; });
+  XS.app.sc=sc; XS.app.phase='survey'; XS.app.result=null;
+  XS.app.zoomRegion=null; XS.app.spec=null; XS.app.hoverRegion=null;
+  return sc;
 };
 
 /* ---------------- STORY · "The Long Survey" ----------------
