@@ -1,7 +1,23 @@
 # itch.io release: XENOSCOPE
 
-Everything needed to publish. Upload `xenoscope-itch.zip` (index.html sits at the
-zip root, which itch requires).
+Everything needed to publish. There are two ways to upload the game and they
+behave identically in the browser:
+
+- **`index.html` (one file, 387 KB).** The whole game in a single file, with the
+  stylesheet and all eight scripts inlined. Nothing else to upload. This is the
+  simplest option and the one to use unless you have a reason not to.
+- **`xenoscope-itch.zip` (125 KB).** The normal multi-file build, with
+  `index.html` at the zip root as itch requires. Smaller over the wire and easier
+  to patch later, since you can diff the individual files.
+
+Either way, tick **"This file will be played in the browser"** after uploading.
+
+The single file is generated from the real source by `build-single.py`, so it
+never drifts by hand:
+
+```bash
+python3 build-single.py     # writes xenoscope-single.html, rename to index.html
+```
 
 ---
 
@@ -15,7 +31,7 @@ zip root, which itch requires).
 | **Kind of project** | **HTML** |
 | **Release status** | Released |
 | **Pricing** | Paid · **$4.99** (minimum), suggested $4.99 |
-| **Uploads** | `xenoscope-itch.zip` → tick **"This file will be played in the browser"** |
+| **Uploads** | `index.html` (single file) **or** `xenoscope-itch.zip` → tick **"This file will be played in the browser"** |
 | **Embed options** | Manually set size: **1280 × 800**<br>☑ Mobile friendly (orientation: default)<br>☑ Fullscreen button<br>☐ Scrollbars |
 | **Genre** | Puzzle |
 | **Tags** | `deduction`, `sci-fi`, `aliens`, `puzzle`, `mystery`, `biology`, `singleplayer`, `story-rich`, `atmospheric`, `html5` |
@@ -57,7 +73,8 @@ zip root, which itch requires).
 
 1. **itch.io → Dashboard → Create new project**
 2. Fill in the table above.
-3. **Upload** `xenoscope-itch.zip`, then tick **"This file will be played in the browser"**.
+3. **Upload** either `index.html` on its own or `xenoscope-itch.zip`, then tick
+   **"This file will be played in the browser"**.
 4. Set embed size **1280 × 800**, enable **fullscreen** and **mobile friendly**.
 5. Add screenshots (see below) and a cover image.
 6. Set visibility to **Public** and **Save**.
@@ -79,4 +96,6 @@ Five captures at 1280×800, in this order:
 
 - Play one full chapter in the itch preview to confirm saving works in the iframe.
 - Check the page on a phone, the layout is responsive but see it yourself.
-- The `LICENSE` (All Rights Reserved) ships inside the zip.
+- The `LICENSE` (All Rights Reserved) ships inside the zip. The single-file build
+  does not carry it, so if you upload that one, add the licence text to the page
+  itself or attach the zip as a second, non-playable download.
