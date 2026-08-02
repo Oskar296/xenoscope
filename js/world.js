@@ -467,23 +467,23 @@ XS.INTRUDERS=[
    dossier:'A DNA virus that hides in nerves and flares up. <b>Acyclovir</b>, a nucleoside analogue, shuts down its replication.'},
   // — bacteria (cure class: antibiotic) —
   {id:'tb', name:'Tuberculosis', aka:'Mycobacterium tuberculosis', kind:'bacterium', drug:'Rifampicin — a soil-actinomycete antibiotic',
-   recipe:{items:['soil_microbe'],step:'ferment'},
+   recipe:{items:['soil_microbe','broth'],step:'ferment'},
    dossier:'A slow, waxy-walled lung bacterium. Cured over months with <b>rifampicin</b> — an antibiotic fermented from a soil actinomycete.'},
   {id:'strep', name:'Strep throat', aka:'Streptococcus', kind:'bacterium', drug:'Penicillin — from Penicillium mould',
-   recipe:{items:['pen_mould'],step:'ferment'},
+   recipe:{items:['pen_mould','broth'],step:'ferment'},
    dossier:'A chain-forming bacterium with a peptidoglycan wall. Classic cure: <b>penicillin</b>, grown from Penicillium mould.'},
   {id:'mrsa', name:'MRSA', aka:'methicillin-resistant Staph', kind:'bacterium', drug:'Vancomycin — a soil-actinomycete glycopeptide',
-   recipe:{items:['soil_microbe'],step:'ferment'},
+   recipe:{items:['soil_microbe','broth'],step:'ferment'},
    dossier:'A drug-resistant Staph that shrugs off penicillin. Held in reserve: <b>vancomycin</b>, a glycopeptide from a soil actinomycete.'},
   {id:'cholera', name:'Cholera', aka:'Vibrio cholerae', kind:'bacterium', drug:'a tetracycline antibiotic (from Streptomyces)',
-   recipe:{items:['soil_microbe'],step:'ferment'},
+   recipe:{items:['soil_microbe','broth'],step:'ferment'},
    dossier:'A comma-shaped waterborne bacterium whose toxin drains the gut. Treated with a <b>tetracycline</b> antibiotic from soil Streptomyces (plus rehydration).'},
   // — fungi (cure class: antifungal) —
   {id:'ringworm', name:'Ringworm', aka:'dermatophyte', kind:'fungus', drug:'Griseofulvin — a mould antifungal',
-   recipe:{items:['griseo_mould'],step:'ferment'},
+   recipe:{items:['griseo_mould','broth'],step:'ferment'},
    dossier:'A skin fungus that eats keratin, spreading in itchy rings. The classic cure is <b>griseofulvin</b> — an antifungal grown from a mould.'},
   {id:'candida', name:'Candidiasis', aka:'Candida / thrush', kind:'fungus', drug:'an antifungal (an azole or amphotericin)',
-   recipe:{items:['griseo_mould'],step:'ferment'},
+   recipe:{items:['griseo_mould','broth'],step:'ferment'},
    dossier:'A yeast that overgrows warm, moist tissue. Cleared with an <b>antifungal</b> that hits the fungal membrane or wall.'},
   // — parasites (cure class: antiparasitic) —
   {id:'malaria', name:'Malaria', aka:'Plasmodium', kind:'parasite', drug:'Artemisinin — from sweet wormwood',
@@ -498,10 +498,10 @@ XS.INTRUDERS=[
    dossier:'Not a living thing — a misfolded protein that forces its neighbours to misfold. It has no genome; only a <b>denaturant</b> that unfolds protein can destroy it.'},
   // — toxins (cure class: antitoxin) —
   {id:'botulism', name:'Botulism', aka:'botulinum toxin', kind:'toxin_load', drug:'Antitoxin serum',
-   recipe:{items:['serum'],step:'filter'},
+   recipe:{items:['serum','toxoid'],step:'filter'},
    dossier:'The most lethal toxin known, made by Clostridium — it paralyses nerves. There is no microbe to kill in the blood; only <b>antitoxin serum</b> neutralises the poison.'},
   {id:'snakebite', name:'Snake envenomation', aka:'venom', kind:'toxin_load', drug:'Antivenom serum',
-   recipe:{items:['serum'],step:'filter'},
+   recipe:{items:['serum','toxoid'],step:'filter'},
    dossier:'A cocktail of venom proteins injected by a bite. Countered by <b>antivenom</b> — antibodies purified from an inoculated host’s serum.'},
 ];
 XS.intruderRecipeMatches=function(sc,items,step){ const tr=sc&&sc.textbookRecipe; if(!tr||!items||!step) return false;
@@ -595,6 +595,14 @@ XS.INGREDIENTS=[
   {id:'boron',      label:'Boron mineral',       glyph:'⬜', col:'#b9c6d6', note:'Borax — an exceptional neutron absorber, used for real reactor shielding.'},
   {id:'cryogen',    label:'Liquid nitrogen',     glyph:'❄️', col:'#cfefff', note:'Boils at −196 °C — the fastest way to pull energy out of anything. Prepared at the very bottom of the dial.'},
   {id:'citrate',    label:'Citrate / EDTA',      glyph:'🧪', col:'#c8e08a', note:'A chelator: its claw-shaped molecule wraps a metal ion and holds it out of reach.'},
+  {id:'agar',       label:'Agar / nutrient salts',glyph:'🥣', col:'#ddd2a8', note:'Seaweed gel and salts — the food a cultured microbe grows on. Useless alone; it must be made into sterile broth first.'},
+  {id:'venom_raw',  label:'Raw venom sample',    glyph:'🐍', col:'#a86b7d', note:'Active toxin milked from the source. Far too dangerous to inject — it has to be inactivated first.'},
+  {id:'formalin',   label:'Formaldehyde',        glyph:'⚗', col:'#9fd8c4', note:'Cross-links a protein so it keeps its shape but loses its bite — the classic way to make a toxoid.'},
+  // --- intermediates you SYNTHESISE (see XS.PRECURSORS) ---
+  {id:'broth',      label:'Sterile broth',       glyph:'🧴', col:'#e8dcae', made:true,
+   note:'Sterilised growth medium. Every fermentation needs it — you cannot culture a mould in nothing.'},
+  {id:'toxoid',     label:'Toxoid',              glyph:'💉', col:'#d69ab0', made:true,
+   note:'Venom that has been chemically disarmed. Inoculating a host with this is how real antivenom is raised.'},
   // --- intermediates you SYNTHESISE, not pick up ---
   {id:'nucleoside', label:'Nucleoside stock',    glyph:'🧬', col:'#61c3ff', made:true,
    note:'A counterfeit genome letter. You must build it: ribose sugar + a modified purine base, coupled at 60 °C.'},
@@ -602,16 +610,26 @@ XS.INGREDIENTS=[
 /* PRECURSOR SYNTHESIS — build an intermediate from real chemical precursors.
    Same bench, same dial: exact inputs AND an exact temperature. */
 XS.PRECURSORS=[
-  {items:['ribose','purine'], step:'boil', temp:60, tol:8, makes:'nucleoside', name:'Nucleoside stock',
-   how:'Glycosylation — the purine base is coupled to the ribose sugar at a gentle <b>60 °C</b>. Too cold and it won’t couple; too hot and the sugar caramelises.'},
+  {items:['ribose','purine'], step:'boil', temp:60, tol:8, ph:7, phTol:1.5, makes:'nucleoside', name:'Nucleoside stock',
+   how:'Glycosylation — the purine base is coupled to the ribose sugar at a gentle <b>60 °C</b>, held neutral at <b>pH 7</b>. Too cold and it won’t couple; too hot and the sugar caramelises; too acidic and the bond hydrolyses straight back off.'},
+  {items:['agar','pure_water'], step:'boil', temp:121, tol:6, ph:7, phTol:1.0, makes:'broth', name:'Sterile broth',
+   how:'Autoclaving — nutrient salts in water held at <b>121 °C</b>, the real sterilisation standard, at <b>pH 7</b>. Anything cooler leaves contaminants alive and your culture is ruined.'},
+  {items:['venom_raw','formalin'], step:'filter', temp:37, tol:5, ph:7.4, phTol:0.6, makes:'toxoid', name:'Toxoid',
+   how:'Formaldehyde cross-links the venom at body temperature <b>37 °C</b> and blood <b>pH 7.4</b>, so it keeps its shape but loses its toxicity. This is genuinely how antivenom production begins.'},
 ];
-XS.precursorResult=function(items,step,temp){
+/* Does the flask satisfy an exact condition? temp AND pH must both be in window. */
+function condOK(r,temp,ph){
+  if(temp==null || Math.abs(temp-r.temp)>(r.tol||8)) return false;
+  if(r.ph!=null && (ph==null || Math.abs(ph-r.ph)>(r.phTol||1.5))) return false;
+  return true;
+}
+XS.condOK=condOK;
+XS.precursorResult=function(items,step,temp,ph){
   if(!items||!items.length||!step) return null;
   const key=items.slice().sort().join('+');
   const p=XS.PRECURSORS.find(x=>x.step===step && x.items.slice().sort().join('+')===key);
   if(!p) return null;
-  const ok = (temp==null) ? false : Math.abs(temp-p.temp)<=p.tol;
-  return {p, ok, temp:p.temp, tol:p.tol};
+  return {p, ok:condOK(p,temp,ph), temp:p.temp, tol:p.tol, ph:p.ph, phTol:p.phTol};
 };
 /* PREPARATION STEPS — how you work the material (the method matters). */
 XS.LAB_STEPS=[
@@ -627,56 +645,56 @@ XS.LAB_STEPS=[
    Each carries an EXACT temperature (°C) with a tolerance — the real
    condition the process runs at, so "heat" is never just "heat". */
 XS.FORMULATIONS=[
-  {items:['pen_mould'],        step:'ferment', temp:24, tol:4, agent:'antibiotic',   name:'Penicillin',   source:'Grown from Penicillium mould — the first true antibiotic.',
-   why:'Penicillium is cultured cool, around <b>24 °C</b>. Fever-warm and the mould stops making penicillin.'},
-  {items:['soil_microbe'],     step:'ferment', temp:28, tol:4, agent:'antibiotic',   name:'Streptomycin', source:'Fermented from soil Streptomyces bacteria.',
-   why:'Soil actinomycetes ferment best at <b>28 °C</b> — soil-warm, not blood-warm.'},
-  {items:['soil_microbe'],     step:'extract', temp:40, tol:8, agent:'antiparasitic',name:'Ivermectin',   source:'The same soil microbe, purified another way, yields an antiparasitic.',
-   why:'A warm <b>40 °C</b> solvent extraction pulls the avermectins out intact.'},
-  {items:['griseo_mould'],     step:'ferment', temp:25, tol:4, agent:'antifungal',   name:'Griseofulvin', source:'A real mould secretion (griseofulvin) that jams a fungus’s cell-division machinery.',
-   why:'Another cool mould culture, about <b>25 °C</b>.'},
-  {items:['wormwood'],         step:'extract', temp:50, tol:8, agent:'antiparasitic',name:'Artemisinin',  source:'Steeped out of sweet wormwood leaves.',
-   why:'Artemisinin is heat-fragile — extract warm at <b>50 °C</b>, never boiling, or you destroy the peroxide bridge that kills the parasite.'},
-  {items:['cinchona'],         step:'extract', temp:80, tol:10, agent:'antiparasitic',name:'Quinine',     source:'Extracted from cinchona bark — the original antimalarial.',
-   why:'Quinine is tough — a hot <b>80 °C</b> steep drives it out of the bark.'},
-  {items:['nucleoside'],       step:'boil',    temp:95, tol:8, agent:'antiviral',    name:'Nucleoside analogue', source:'A fake building block that chain-terminates the viral genome.',
-   why:'Phosphorylating and activating the analogue needs a hard <b>95 °C</b> reaction.'},
-  {items:['egg_white'],        step:'extract', temp:20, tol:6, agent:'lysozyme',     name:'Lysozyme',     source:'The wall-cracking enzyme, drawn from egg white.',
-   why:'Lysozyme is a protein — keep it at room temperature, <b>20 °C</b>. Heat it and you denature the very enzyme you want.'},
-  {items:['lye','plant_oil'],  step:'boil',    temp:100, tol:10, agent:'detergent',  name:'Soap',         source:'Oil + lye, boiled — saponification makes a membrane-dissolving surfactant.',
-   why:'Saponification is a full rolling boil at <b>100 °C</b> to split the fat and form soap.'},
-  {items:['sea_salt'],         step:'boil',    temp:105, tol:10, agent:'hypertonic', name:'Concentrated brine', source:'Boiled down to a hypertonic solution that draws water out of walled cells.',
+  {items:['pen_mould','broth'],step:'ferment', temp:24, tol:4, ph:6.0, phTol:0.8, agent:'antibiotic', name:'Penicillin', source:'Penicillium mould cultured on sterile broth — the first true antibiotic.',
+   why:'Cultured cool at <b>24 °C</b> and slightly acidic, <b>pH 6</b>. Penicillin is famously unstable in alkali — swing the pH up and your yield destroys itself.'},
+  {items:['soil_microbe','broth'],step:'ferment', temp:28, tol:4, ph:7.2, phTol:0.8, agent:'antibiotic', name:'Streptomycin', source:'Soil Streptomyces fermented on sterile broth.',
+   why:'Soil actinomycetes ferment at <b>28 °C</b> and just alkaline of neutral, <b>pH 7.2</b> — soil-warm, not blood-warm.'},
+  {items:['soil_microbe'],     step:'extract', temp:40, tol:8, ph:8.0, phTol:1.0, agent:'antiparasitic',name:'Ivermectin', source:'The same soil microbe, purified another way, yields an antiparasitic.',
+   why:'A warm <b>40 °C</b> extraction, run alkaline at <b>pH 8</b> so the avermectins stay in the solvent rather than the water.'},
+  {items:['griseo_mould','broth'],step:'ferment', temp:25, tol:4, ph:6.5, phTol:0.8, agent:'antifungal', name:'Griseofulvin', source:'A mould secretion (griseofulvin) that jams a fungus’s cell-division machinery.',
+   why:'Another cool mould culture on sterile broth — <b>25 °C</b>, mildly acidic <b>pH 6.5</b>.'},
+  {items:['wormwood'],         step:'extract', temp:50, tol:8, ph:7, phTol:1.2, agent:'antiparasitic',name:'Artemisinin',  source:'Steeped out of sweet wormwood leaves.',
+   why:'Artemisinin is heat-fragile AND acid-fragile — extract warm at <b>50 °C</b> and neutral <b>pH 7</b>, or you destroy the peroxide bridge that kills the parasite.'},
+  {items:['cinchona'],         step:'extract', temp:80, tol:10, ph:10.0, phTol:1.0, agent:'antiparasitic',name:'Quinine',   source:'Extracted from cinchona bark — the original antimalarial.',
+   why:'A hot <b>80 °C</b> steep run strongly alkaline at <b>pH 10</b>: the base frees quinine from its salt so it will leave the bark. This is real alkaloid extraction.'},
+  {items:['nucleoside'],       step:'boil',    temp:95, tol:8, ph:7.5, phTol:1.0, agent:'antiviral',   name:'Nucleoside analogue', source:'A fake building block that chain-terminates the viral genome.',
+   why:'Phosphorylating and activating the analogue needs a hard <b>95 °C</b> reaction near neutral <b>pH 7.5</b>.'},
+  {items:['egg_white'],        step:'extract', temp:20, tol:6, ph:9.5, phTol:1.0, agent:'lysozyme',    name:'Lysozyme',     source:'The wall-cracking enzyme, drawn from egg white.',
+   why:'Keep it at room temperature <b>20 °C</b> — heat denatures the enzyme. Egg white is naturally alkaline, so the extraction runs at <b>pH 9.5</b>.'},
+  {items:['lye','plant_oil'],  step:'boil',    temp:100, tol:10, ph:13.0, phTol:1.0, agent:'detergent', name:'Soap', source:'Oil + lye, boiled — saponification makes a membrane-dissolving surfactant.',
+   why:'A full rolling boil at <b>100 °C</b> and strongly caustic <b>pH 13</b> — lye IS the alkali, so saponification only runs at the top of the scale.'},
+  {items:['sea_salt'],         step:'boil',    temp:105, tol:10, ph:7, phTol:2.0, agent:'hypertonic', name:'Concentrated brine', source:'Boiled down to a hypertonic solution that draws water out of walled cells.',
    why:'Boil past <b>105 °C</b> — saturated brine boils above pure water — to drive the water off and concentrate it.'},
-  {items:['pure_water'],       step:'filter',  temp:100, tol:12, agent:'hypotonic',  name:'Sterile pure water', source:'A hypotonic solvent that floods wall-less cells until they burst.',
-   why:'Distil at <b>100 °C</b>: steam leaves the salts behind, giving pure, sterile, hypotonic water.'},
-  {items:['urea'],             step:'boil',    temp:134, tol:10, agent:'denaturant', name:'Hot chaotrope',source:'A heated chaotrope that unfolds protein — the only thing that destroys a prion.',
+  {items:['pure_water'],       step:'filter',  temp:100, tol:12, ph:7, phTol:1.0, agent:'hypotonic', name:'Sterile pure water', source:'A hypotonic solvent that floods wall-less cells until they burst.',
+   why:'Distil at <b>100 °C</b>, neutral <b>pH 7</b>: steam leaves the salts behind, giving pure, sterile, hypotonic water.'},
+  {items:['urea'],             step:'boil',    temp:134, tol:10, ph:7, phTol:2.0, agent:'denaturant', name:'Hot chaotrope', source:'A heated chaotrope that unfolds protein — the only thing that destroys a prion.',
    why:'Prions survive ordinary boiling. Real prion decontamination is an autoclave at <b>134 °C</b> — that is why this one runs so hot.'},
-  {items:['serum'],            step:'filter',  temp:4, tol:6, agent:'antitoxin',     name:'Antitoxin serum', source:'Purified antibodies that bind and neutralise the poison.',
-   why:'Antibodies are proteins — purify them cold, at fridge temperature <b>4 °C</b>, or they denature and stop binding.'},
-  {items:['charcoal'],         step:'filter',  temp:25, tol:10, agent:'antitoxin',   name:'Charcoal binder', source:'Activated charcoal that adsorbs and traps the toxin.',
-   why:'Adsorption onto charcoal works fine at room temperature, <b>25 °C</b>.'},
+  {items:['serum','toxoid'],   step:'filter',  temp:4, tol:6, ph:7.4, phTol:0.6, agent:'antitoxin', name:'Antitoxin serum', source:'A host inoculated with toxoid raises antibodies; you purify them out of its serum.',
+   why:'Antibodies are proteins — purify them cold at <b>4 °C</b> and blood <b>pH 7.4</b>, or they denature and stop binding. You cannot skip the toxoid: raw venom would kill the donor.'},
+  {items:['charcoal'],         step:'filter',  temp:25, tol:10, ph:7, phTol:2.5, agent:'antitoxin', name:'Charcoal binder', source:'Activated charcoal that adsorbs and traps the toxin.',
+   why:'Adsorption onto charcoal is crude but forgiving — room temperature <b>25 °C</b> and almost any pH. The fast, dirty alternative to raising a serum.'},
   // — xeno formulations —
-  {items:['fluorspar','urea'], step:'boil',    temp:120, tol:10, agent:'fluoride',   name:'Fluoride flux', source:'Fluorspar reacted with acid gives hydrogen fluoride — the one chemistry that dissolves a silicon–oxygen lattice.',
-   why:'Driving fluoride off the ore needs a hot <b>120 °C</b> reaction. This is the real process behind glass etching.'},
-  {items:['chiral_cat','ribose'], step:'boil', temp:70, tol:8, agent:'enantiomer',   name:'Mirror-image drug', source:'The catalyst inverts the sugar backbone, building the drug as its own mirror image.',
-   why:'Inversion runs at <b>70 °C</b> — hot enough to flip the centre, cool enough not to scramble it back into a useless mixture.'},
-  {items:['boron'],            step:'filter',  temp:25, tol:12, agent:'shielding',   name:'Boron shield', source:'Milled boron packed around the tissue soaks up the neutrons a radiotroph feeds on.',
-   why:'Purely physical shielding — no reaction needed, so it is prepared at room temperature <b>25 °C</b>.'},
-  {items:['pure_water'],       step:'boil',    temp:70, tol:10, agent:'solvent_shock',name:'Aqueous shock', source:'Warm water — an ordinary solvent to us, a violently reactive one to ammonia-based biochemistry.',
-   why:'Served warm at <b>70 °C</b>: far above liquid ammonia’s range, so the alien solvent chemistry is destroyed on contact.'},
-  {items:['cryogen'],          step:'filter',  temp:0, tol:6, agent:'quench',        name:'Cryogenic quench', source:'Liquid nitrogen decanted cold — it strips energy fast enough that a plasma’s confining field collapses.',
+  {items:['fluorspar','urea'], step:'boil',    temp:120, tol:10, ph:1.0, phTol:1.0, agent:'fluoride', name:'Fluoride flux', source:'Fluorspar reacted with acid gives hydrogen fluoride — the one chemistry that dissolves a silicon–oxygen lattice.',
+   why:'A hot <b>120 °C</b> reaction at savagely acidic <b>pH 1</b> — it takes strong acid to drive fluoride off the ore. This is the real process behind glass etching.'},
+  {items:['chiral_cat','ribose'], step:'boil', temp:70, tol:8, ph:7, phTol:1.0, agent:'enantiomer', name:'Mirror-image drug', source:'The catalyst inverts the sugar backbone, building the drug as its own mirror image.',
+   why:'Inversion runs at <b>70 °C</b>, neutral <b>pH 7</b> — hot enough to flip the centre, mild enough not to scramble it back into a useless mixture.'},
+  {items:['boron'],            step:'filter',  temp:25, tol:12, ph:7, phTol:2.5, agent:'shielding', name:'Boron shield', source:'Milled boron packed around the tissue soaks up the neutrons a radiotroph feeds on.',
+   why:'Purely physical shielding — no reaction needed, so it is forgiving: room temperature <b>25 °C</b>, almost any pH.'},
+  {items:['pure_water'],       step:'boil',    temp:70, tol:10, ph:7, phTol:1.0, agent:'solvent_shock', name:'Aqueous shock', source:'Warm water — an ordinary solvent to us, a violently reactive one to ammonia-based biochemistry.',
+   why:'Served warm at <b>70 °C</b> and neutral: far above liquid ammonia’s range, so the alien solvent chemistry is destroyed on contact.'},
+  {items:['cryogen'],          step:'filter',  temp:0, tol:6, ph:7, phTol:2.5, agent:'quench', name:'Cryogenic quench', source:'Liquid nitrogen decanted cold — it strips energy fast enough that a plasma’s confining field collapses.',
    why:'The one recipe at the very bottom of the dial: hold it at <b>0 °C</b> or below. Any warmth and it boils off before it can quench anything.'},
-  {items:['citrate'],          step:'extract', temp:60, tol:10, agent:'chelation',   name:'Chelating agent', source:'Citrate/EDTA drawn into solution — its claw-shaped molecule captures metal ions and holds them.',
-   why:'Extracted warm at <b>60 °C</b> so the chelator dissolves fully without breaking down.'},
+  {items:['citrate'],          step:'extract', temp:60, tol:10, ph:5.0, phTol:0.8, agent:'chelation', name:'Chelating agent', source:'Citrate/EDTA drawn into solution — its claw-shaped molecule captures metal ions and holds them.',
+   why:'Extracted warm at <b>60 °C</b> and mildly acidic <b>pH 5</b>, where the chelator grips iron most tightly.'},
 ];
 /* Resolve the current flask (materials + step [+ temperature]) to a formulation.
    Pass a temp to enforce the exact condition; omit it to just match the recipe. */
-XS.benchResult=function(items,step,temp){
+XS.benchResult=function(items,step,temp,ph){
   if(!items||!items.length||!step) return null;
   const key=items.slice().sort().join('+');
   const f=XS.FORMULATIONS.find(f=>f.step===step && f.items.slice().sort().join('+')===key)||null;
   if(!f) return null;
-  if(temp!=null && f.temp!=null && Math.abs(temp-f.temp)>(f.tol||8)) return null;   // wrong temperature → no product
+  if(temp!=null && !condOK(f,temp,ph)) return null;   // wrong temperature or pH → no product
   return f;
 };
 /* All recipes that make a given agent (for the field guide). */

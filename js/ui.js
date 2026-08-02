@@ -285,6 +285,7 @@ UI.showSynthesis=function(){ const sc=XS.app.sc, r=XS.app.zoomRegion; if(!sc||!r
   let cr=XS.app.craft; if(!cr||!('items'in cr)) cr=XS.app.craft={items:[],step:null,made:null,tested:null};
   cr.items=cr.items||[]; cr.made=null; cr.tested=null;
   if(cr.temp==null) cr.temp=25;                       // bench dial, °C
+  if(cr.ph==null) cr.ph=7;                            // bench dial, pH
   cr.stock=cr.stock||{};                              // intermediates you've synthesised
   const dxLine = sc.alien
     ? `👽 Diagnosis: <b>${sc.dxAnswer}</b> — non-Earth biology. ${(XS.PATHOGENS[sc.pathType]||{}).why||''}`
@@ -311,7 +312,10 @@ UI.showSynthesis=function(){ const sc=XS.app.sc, r=XS.app.zoomRegion; if(!sc||!r
       `<div class="bench-col stepcol"><div class="cap">② Prepare it</div><div class="step-grid">${stepTiles}</div>`+
         `<div class="tempwrap"><div class="cap">③ Exact temperature <b class="tempval" id="tempVal">${cr.temp} °C</b></div>`+
           `<input type="range" id="tempDial" class="tempdial" min="0" max="150" step="1" value="${cr.temp}">`+
-          `<div class="temphint" id="tempHint">Every process has one right temperature.</div></div>`+
+          `<div class="temphint" id="tempHint">Every process has one right temperature.</div>`+
+          `<div class="cap" style="margin-top:11px">④ Exact pH <b class="tempval phval" id="phVal">${(+cr.ph).toFixed(1)}</b></div>`+
+          `<input type="range" id="phDial" class="tempdial phdial" min="0" max="14" step="0.1" value="${cr.ph}">`+
+          `<div class="temphint" id="phHint">Acid or alkali decides whether a reaction runs at all.</div></div>`+
         `<div class="bench-read" id="benchRead">Pick a raw material to begin.</div></div>`+
     `</div>`+
     `<div class="bench-test" id="benchTest" style="display:none"><canvas id="sampleCv" width="300" height="86"></canvas><div class="bench-testtx" id="benchTestTx"></div></div>`+
@@ -336,22 +340,29 @@ UI.showSynthesis=function(){ const sc=XS.app.sc, r=XS.app.zoomRegion; if(!sc||!r
         const em=b.querySelector('em'); if(em) em.textContent=lk?'🔒 must be synthesised':'✓ synthesised'; } });
     UI.overlay.querySelectorAll('[data-step]').forEach(b=>b.classList.toggle('sel',cr.step===b.dataset.step));
     // is this flask a PRECURSOR synthesis (building an intermediate) or a drug?
-    const pre=XS.precursorResult(cr.items,cr.step,cr.temp);
-    const madeExact=XS.benchResult(cr.items,cr.step,cr.temp);      // temperature enforced
-    const madeLoose=XS.benchResult(cr.items,cr.step);              // right inputs, maybe wrong heat
+    const pre=XS.precursorResult(cr.items,cr.step,cr.temp,cr.ph);
+    const madeExact=XS.benchResult(cr.items,cr.step,cr.temp,cr.ph);  // temperature AND pH enforced
+    const madeLoose=XS.benchResult(cr.items,cr.step);                // right inputs, maybe wrong conditions
     const made=madeExact; cr.made=made; cr.pre=pre;
     const cols=cr.items.map(id=>{const x=XS.INGREDIENTS.find(i=>i.id===id);return x?x.col:'#888';});
     st.target = cr.items.length?Math.min(1,0.28+cr.items.length*0.22):0;
     st.rgb = blendCols(cols);
     st.hot = Math.max(0, Math.min(1,(cr.temp-40)/110));            // glow ramps with heat
     const lbl=$('flaskLabel'), read=$('benchRead'), hint=$('tempHint'), tv=$('tempVal');
+    const phHint=$('phHint'), pv=$('phVal');
     if(tv) tv.textContent=cr.temp+' °C';
-    // temperature guidance: only reveal the target once the inputs+method are right
+    if(pv) pv.textContent=(+cr.ph).toFixed(1);
+    // guidance: only reveal the targets once the inputs+method are right
     const want = madeLoose||(pre&&pre.p);
     if(hint){ if(want){ const t=want.temp, d=cr.temp-t;
         hint.innerHTML = Math.abs(d)<=(want.tol||8) ? `<span class="ok">✓ on target — ${t} °C</span>`
           : `<span class="bad">${d<0?'🔻 too cold':'🔺 too hot'}</span> · this process needs <b>${t} °C</b>`;
       } else hint.innerHTML='Every process has one right temperature.'; }
+    if(phHint){ if(want && want.ph!=null){ const q=want.ph, d=cr.ph-q;
+        phHint.innerHTML = Math.abs(d)<=(want.phTol||1.5) ? `<span class="ok">✓ on target — pH ${q}</span>`
+          : `<span class="bad">${d<0?'🔻 too acidic':'🔺 too alkaline'}</span> · this process needs <b>pH ${q}</b>`;
+      } else if(want) phHint.innerHTML='<span class="ok">✓ pH is not critical here</span>';
+      else phHint.innerHTML='Acid or alkali decides whether a reaction runs at all.'; }
     if(made||(pre&&pre.ok)){ lbl.textContent='✓ '+(made?made.name:pre.p.name); lbl.className='flask-label ok'; }
     else if(cr.items.length){ lbl.textContent=cr.items.map(id=>XS.INGREDIENTS.find(i=>i.id===id).label).join(' + '); lbl.className='flask-label'; }
     else { lbl.textContent='Empty flask'; lbl.className='flask-label muted'; }
@@ -363,7 +374,9 @@ UI.showSynthesis=function(){ const sc=XS.app.sc, r=XS.app.zoomRegion; if(!sc||!r
     else if(made){ const an=XS.agentName(made.agent).toLowerCase(), art=/^[aeiou]/.test(an)?'an':'a';
       read.innerHTML=`✔ You made <b>${made.name}</b> — ${art} <b>${an}</b>.<div class="muted">${made.source}</div>`+
         (made.why?`<div class="muted">🌡 ${made.why}</div>`:''); }
-    else if(madeLoose){ read.innerHTML=`Right ingredients and method for <b>${madeLoose.name}</b> — but the temperature is wrong, so nothing usable forms.`+
+    else if(madeLoose){ const dT=Math.abs(cr.temp-madeLoose.temp)>(madeLoose.tol||8);
+      const dP=madeLoose.ph!=null && Math.abs(cr.ph-madeLoose.ph)>(madeLoose.phTol||1.5);
+      read.innerHTML=`Right ingredients and method for <b>${madeLoose.name}</b> — but the ${dT&&dP?'temperature <em>and</em> pH are':dP?'pH is':'temperature is'} wrong, so nothing usable forms.`+
         (madeLoose.why?`<div class="muted">🌡 ${madeLoose.why}</div>`:''); }
     else read.innerHTML='✗ Nothing usable forms this way. Try different materials, another method, or a different temperature.';
     read.className='bench-read '+((made||(pre&&pre.ok))?'ok':(cr.items.length&&cr.step?'bad':''));
@@ -387,6 +400,8 @@ UI.showSynthesis=function(){ const sc=XS.app.sc, r=XS.app.zoomRegion; if(!sc||!r
     const read=$('benchRead'); if(cr.items.includes(id)&&x&&!cr.step) read.innerHTML=`<b>${x.label}.</b> ${x.note}`; });
   const dial=$('tempDial'); if(dial){ dial.oninput=()=>{ cr.temp=+dial.value; $('benchTest').style.display='none'; sample=null; refresh(); };
     dial.onchange=()=>sfx('blip'); }
+  const pd=$('phDial'); if(pd){ pd.oninput=()=>{ cr.ph=+pd.value; $('benchTest').style.display='none'; sample=null; refresh(); };
+    pd.onchange=()=>sfx('blip'); }
   UI.overlay.querySelectorAll('[data-step]').forEach(b=>b.onclick=()=>{ cr.step=(cr.step===b.dataset.step)?null:b.dataset.step;
     sfx('blip'); st.flash=1; $('benchTest').style.display='none'; sample=null; refresh(); });
 
@@ -503,8 +518,10 @@ UI.showFormulary=function(hi,back){
   const recipeRow=f=>{ const st=(XS.LAB_STEPS||[]).find(s=>s.id===f.step)||{};
     const mats=f.items.map(id=>{const x=(XS.INGREDIENTS||[]).find(i=>i.id===id)||{label:id,col:'#888'};
       return `<span class="fm-chip mat"><span class="fm-d" style="background:${x.col}"></span>${x.label}</span>`;}).join('<span class="fm-op">+</span>');
-    const tmp=(f.temp!=null)?`<span class="fm-op">@</span><span class="fm-chip temp">🌡 ${f.temp} °C</span>`:'';
-    return `${mats}<span class="fm-op">+</span><span class="fm-chip step">${st.glyph||''} ${st.label||f.step}</span>${tmp}`+
+    const tmp=(f.temp!=null)?`<span class="fm-op">@</span><span class="fm-chip temp">🌡 ${f.temp} °C</span>`:''
+      +'';
+    const phc=(f.ph!=null)?`<span class="fm-chip ph">⚗ pH ${f.ph}</span>`:'';
+    return `${mats}<span class="fm-op">+</span><span class="fm-chip step">${st.glyph||''} ${st.label||f.step}</span>${tmp}${phc}`+
       `<span class="fm-op">→</span><span class="fm-chip drug">${XS.agentName(f.agent)}</span>`; };
   // intermediates you must build first, shown as their own sub-recipes
   const preRows=(XS.PRECURSORS||[]).map(p=>{ const st=(XS.LAB_STEPS||[]).find(s=>s.id===p.step)||{};
@@ -513,7 +530,8 @@ UI.showFormulary=function(hi,back){
     const out=(XS.INGREDIENTS||[]).find(i=>i.id===p.makes)||{label:p.makes,col:'#61c3ff'};
     return `<div class="fm-row"><div class="fm-target">${p.name}<span>intermediate</span></div><div class="fm-recipes">`+
       `<div class="fm-recipe">${mats}<span class="fm-op">+</span><span class="fm-chip step">${st.glyph||''} ${st.label||p.step}</span>`+
-      `<span class="fm-op">@</span><span class="fm-chip temp">🌡 ${p.temp} °C</span><span class="fm-op">→</span>`+
+      `<span class="fm-op">@</span><span class="fm-chip temp">🌡 ${p.temp} °C</span>`+
+      (p.ph!=null?`<span class="fm-chip ph">⚗ pH ${p.ph}</span>`:'')+`<span class="fm-op">→</span>`+
       `<span class="fm-chip mat"><span class="fm-d" style="background:${out.col}"></span>${out.label}</span></div>`+
       `<div class="fm-why">${p.how}</div></div></div>`; }).join('');
   const entry=(section,name,sub,agents)=>{ const fs=[]; agents.forEach(a=>(XS.recipesFor(a)||[]).forEach(f=>fs.push(f)));
