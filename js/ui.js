@@ -619,55 +619,88 @@ UI.showMenu=function(){
   XS.app.demo=XS.genSpecimen(XS.pick(['Plantae','Animalia','Fungi']),'field');
   const rank=XS.rankFor(XS.progress.xp), next=XS.nextRank(XS.progress.xp), p=XS.progress;
   const pct=next?Math.round((p.xp-rank.xp)/(next.xp-rank.xp)*100):100;
-  const cx=XS.codex();
-  const tiers=Object.entries(XS.TIERS).map(([k,t])=>`<button class="tierbtn ${k===XS.app.tier?'sel':''}" data-tier="${k}"><b>${t.label}</b><small>${t.blurb}</small></button>`).join('');
+  const done=XS.storyProgress(), total=XS.STORY.length, fresh=!p.tutorialSeen&&!done;
+  const storySub = done>=total ? 'Campaign complete — replay any chapter'
+    : done ? `Chapter ${done+1} of ${total} · ${XS.STORY[done].title}` : `Begin the campaign · ${total} chapters`;
   card(
-    `<div class="sub">Xenobiology Division · Field Expedition</div>`+
     `<h1><span class="x">XENO</span><span class="o">SCOPE</span></h1>`+
-    `<div class="tagline">Study a whole alien organism on its exoplanet. <b>Zoom into its tissues</b>, run lab assays to work out what it is, then <span class="gd">preserve</span> it or <span class="rk">neutralise</span> it.</div>`+
-    `<div class="how">`+
-      `<div class="how-step"><div class="how-ico">🪐</div><div><b>Survey</b><small>Meet the creature on its world &amp; read your orders</small></div></div>`+
-      `<div class="how-step"><div class="how-ico">🔬</div><div><b>Analyse</b><small>Zoom in, run assays, inspect cells, gather evidence</small></div></div>`+
-      `<div class="how-step"><div class="how-ico">⚗️</div><div><b>Diagnose &amp; treat</b><small>Identify the cause, then apply the one right agent</small></div></div>`+
+    `<div class="tagline">A deduction game about alien biology. <b>The answer is hidden.</b> Read the evidence, or the thing in front of you dies.</div>`+
+
+    `<div class="m-main">`+
+      `<button class="m-card hero" id="storyBtn"><span class="m-ico">📖</span>`+
+        `<span class="m-tx"><b>${done?'Continue Story':'Play Story'}</b><small>${storySub}</small></span>`+
+        `<span class="m-go">▶</span></button>`+
     `</div>`+
-    `<div class="rankcard"><div class="rk-left"><div class="rk-big">${rank.name}</div><div class="muted">${p.xp} XP${next?` · ${next.xp-p.xp} to ${next.name}`:' · max rank'}</div><div class="xpbar"><i style="width:${pct}%"></i></div></div>`+
-      `<div class="rk-stats"><span>💚 ${p.saves} saved</span><span>☠️ ${p.kills} neutralised</span><span>🧬 ${cx.organelles.length}/${cx.totalOrganelles} organelles</span></div></div>`+
-    `<div class="muted lbl">MODE</div><div class="tiers">`+
-      `<button class="tierbtn ${XS.app.mode==='quick'?'sel':''}" data-mode="quick"><b>⚡ Quick</b><small>Pick a ready-made treatment. Fast, punchy runs.</small></button>`+
-      `<button class="tierbtn ${XS.app.mode==='advanced'?'sel':''}" data-mode="advanced"><b>⚗ Advanced</b><small>Much more time — and you <b>synthesise the cure yourself</b> at the bench.</small></button>`+
-      `<button class="tierbtn ultra ${XS.app.mode==='ultra'?'sel':''}" data-mode="ultra"><b>🧬 Ultra</b><small>Named real diseases — <b>COVID, malaria, MRSA, botulism…</b> Synthesise the actual real drug for each.</small></button>`+
-      `<button class="tierbtn alien ${XS.app.mode==='alien'?'sel':''}" data-mode="alien"><b>👽 Xeno</b><small><b>Truly alien biology</b> — silicon lattices, mirror-life, radiation-eaters. Earth's whole shelf fails; you need new chemistry.</small></button>`+
-      `<button class="tierbtn contact ${XS.app.mode==='contact'?'sel':''}" data-mode="contact"><b>🛸 First Contact</b><small><b>Alien species</b>, not alien diseases — crystal spires, plasma wisps, ammonia cryophiles, rock-eaters. Classify a lifeform from <b>no Earth kingdom</b>, then contain it.</small></button>`+
+
+    `<div class="m-row">`+
+      `<button class="m-card" id="startBtn"><span class="m-ico">🧬</span><span class="m-tx"><b>Free play</b><small>Any mode, any difficulty</small></span></button>`+
+      `<button class="m-card" id="outbreakBtn"><span class="m-ico">🌊</span><span class="m-tx"><b>Outbreak</b><small>${p.outbreakBest?`Best ${p.outbreakBest}`:'Scored survival run'}</small></span></button>`+
+      `<button class="m-card ${fresh?'pulse':''}" id="tutBtn"><span class="m-ico">🎓</span><span class="m-tx"><b>Tutorial</b><small>Learn the loop</small></span></button>`+
     `</div>`+
-    `<div class="muted lbl">DIFFICULTY</div><div class="tiers">${tiers}</div>`+
-    `<div class="cta"><button class="btn pri" id="storyBtn">📖 Story${XS.storyProgress()?` · ch ${Math.min(XS.storyProgress()+1,XS.STORY.length)}`:' · begin'}</button>`+
-      `<button class="btn" id="startBtn">▶ Free assignment</button>`+
-      `<button class="btn ob" id="outbreakBtn">🌊 Outbreak${p.outbreakBest?` · best ${p.outbreakBest}`:''}</button>`+
-      `<button class="btn ${!p.tutorialSeen?'pulse':''}" id="tutBtn">🎓 Tutorial</button>`+
-      `<button class="btn" id="dailyBtn">🗓 Daily</button><button class="btn" id="codexBtn2">📖 Codex</button>`+
-      `<button class="btn" id="formularyBtn">📋 Formulary</button>`+
-      `<button class="btn" id="achBtn">🏆 ${p.badges.length}/${XS.ACHIEVEMENTS.length}</button></div>`+
-      (!p.tutorialSeen?`<div class="muted" style="margin-top:8px;font-size:12px">🆕 New here? Start with the <b>🎓 Tutorial</b> — it walks you through a case step by step.</div>`:'')+
-    `<div class="setrow"><span class="setlbl">🔊</span><input type="range" id="volSld" min="0" max="100" value="${Math.round((XS.sfx?XS.sfx.volume:.7)*100)}">`+
-      `<button class="chipbtn ${XS.sfx&&XS.sfx.enabled?'on':''}" id="muteBtn2">${XS.sfx&&XS.sfx.enabled?'Sound on':'Muted'}</button>`+
-      `<button class="chipbtn ${XS.sfx&&XS.sfx.ambient?'on':''}" id="ambBtn">Ambient</button>`+
-      (p.xp>0?`<button class="chipbtn" id="resetBtn">Reset</button>`:'')+`</div>`
+
+    `<div class="m-rank"><div class="m-rk"><b>${rank.name}</b><span>${p.xp} XP${next?` · ${next.xp-p.xp} to ${next.name}`:''}</span></div>`+
+      `<div class="xpbar"><i style="width:${pct}%"></i></div>`+
+      `<div class="m-stats"><span>💚 ${p.saves}</span><span>☠️ ${p.kills}</span><span>🏆 ${p.badges.length}/${XS.ACHIEVEMENTS.length}</span></div></div>`+
+
+    `<div class="m-tools">`+
+      `<button class="m-tool" id="codexBtn2" title="Codex">📖<span>Codex</span></button>`+
+      `<button class="m-tool" id="formularyBtn" title="Formulary">📋<span>Formulary</span></button>`+
+      `<button class="m-tool" id="dailyBtn" title="Daily">🗓<span>Daily</span></button>`+
+      `<button class="m-tool" id="achBtn" title="Achievements">🏆<span>Awards</span></button>`+
+      `<button class="m-tool" id="setBtn" title="Settings">⚙<span>Settings</span></button>`+
+    `</div>`+
+    (fresh?`<div class="m-new">🆕 New here? Start with the <b>Tutorial</b>, then the Story.</div>`:'')
   );
-  UI.overlay.querySelectorAll('[data-tier]').forEach(b=>b.onclick=()=>{sfx('click');XS.app.tier=b.dataset.tier;UI.overlay.querySelectorAll('[data-tier]').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');});
-  UI.overlay.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{sfx('click');XS.app.mode=b.dataset.mode;UI.overlay.querySelectorAll('[data-mode]').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');});
   $('storyBtn').onclick=()=>{ sfx('click'); UI.showStory(); };
-  $('startBtn').onclick=()=>{ sfx('click'); UI.hideOverlay(); XS.startMission(null,XS.app.tier); UI.renderPhase(); };
+  $('startBtn').onclick=()=>{ sfx('click'); UI.showPlaySetup(); };
   $('outbreakBtn').onclick=()=>{ sfx('click'); UI.hideOverlay(); XS.startOutbreak(); UI.renderPhase(); };
   $('tutBtn').onclick=()=>{ sfx('click'); UI.hideOverlay(); UI.startTutorial(); };
   $('dailyBtn').onclick=()=>{ sfx('click'); UI.hideOverlay(); XS.startDaily(); UI.renderPhase(); };
-  $('codexBtn2').onclick=()=>{sfx('click');UI.showCodex();};
+  $('codexBtn2').onclick=()=>{ sfx('click'); UI.showCodex(); };
   $('formularyBtn').onclick=()=>{ sfx('click'); UI.showFormulary(null,false); };
   $('achBtn').onclick=()=>{ sfx('click'); UI.showAchievements(); };
+  $('setBtn').onclick=()=>{ sfx('click'); UI.showSettings(); };
+};
+
+/* free play · pick mode + difficulty here instead of cluttering the menu */
+UI.MODES=[
+  {id:'quick',    ico:'⚡', name:'Quick',        desc:'Pick a ready-made treatment. Fast, punchy runs.'},
+  {id:'advanced', ico:'⚗',  name:'Advanced',     desc:'More time — and you synthesise the cure yourself at the bench.'},
+  {id:'ultra',    ico:'🧬', name:'Ultra',        desc:'Named real diseases — COVID, malaria, MRSA. Make the actual drug.'},
+  {id:'alien',    ico:'👽', name:'Xeno',         desc:'Afflictions that break Earth\u2019s rules. Your normal shelf fails.'},
+  {id:'contact',  ico:'🛸', name:'First Contact',desc:'Alien species from kingdoms that never existed here.'},
+];
+UI.showPlaySetup=function(){
+  const m=XS.app.mode, tier=XS.app.tier;
+  const modes=UI.MODES.map(x=>`<button class="pk ${m===x.id?'sel':''}" data-mode="${x.id}">`+
+    `<span class="pk-ico">${x.ico}</span><span class="pk-tx"><b>${x.name}</b><small>${x.desc}</small></span></button>`).join('');
+  const tiers=Object.entries(XS.TIERS).map(([k,t])=>`<button class="pk tier ${k===tier?'sel':''}" data-tier="${k}">`+
+    `<span class="pk-tx"><b>${t.label}</b><small>${t.blurb}</small></span></button>`).join('');
+  card(`<div class="sub">Free play</div><h2>Set up an assignment</h2>`+
+    `<div class="cap" style="margin:12px 0 7px">Mode</div><div class="pk-list">${modes}</div>`+
+    `<div class="cap" style="margin:14px 0 7px">Difficulty</div><div class="pk-list tiers">${tiers}</div>`+
+    `<div class="cta"><button class="btn pri" id="psGo">▶ Begin</button><button class="btn" id="psBack">← Menu</button></div>`);
+  const re=()=>{ UI.overlay.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('sel',b.dataset.mode===XS.app.mode));
+    UI.overlay.querySelectorAll('[data-tier]').forEach(b=>b.classList.toggle('sel',b.dataset.tier===XS.app.tier)); };
+  UI.overlay.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{ sfx('click'); XS.app.mode=b.dataset.mode; re(); });
+  UI.overlay.querySelectorAll('[data-tier]').forEach(b=>b.onclick=()=>{ sfx('click'); XS.app.tier=b.dataset.tier; re(); });
+  $('psGo').onclick=()=>{ sfx('click'); UI.hideOverlay(); XS.startMission(null,XS.app.tier); UI.renderPhase(); };
+  $('psBack').onclick=()=>{ sfx('click'); UI.showMenu(); };
+};
+UI.showSettings=function(){
+  const on=XS.sfx&&XS.sfx.enabled, amb=XS.sfx&&XS.sfx.ambient;
+  card(`<div class="sub">Settings</div><h2>Options</h2>`+
+    `<div class="setrow"><span class="setlbl">🔊 Volume</span><input type="range" id="volSld" min="0" max="100" value="${Math.round((XS.sfx?XS.sfx.volume:.7)*100)}"></div>`+
+    `<div class="setrow"><button class="chipbtn ${on?'on':''}" id="muteBtn2">${on?'Sound on':'Muted'}</button>`+
+      `<button class="chipbtn ${amb?'on':''}" id="ambBtn">Ambient</button>`+
+      (XS.progress.xp>0?`<button class="chipbtn" id="resetBtn">Reset progress</button>`:'')+`</div>`+
+    `<div class="cta"><button class="btn pri" id="setBack">← Menu</button></div>`);
   $('volSld').oninput=e=>{ if(XS.sfx) XS.sfx.setVolume((+e.target.value)/100); };
   $('volSld').onchange=()=>sfx('blip');
-  $('muteBtn2').onclick=()=>{ const on=XS.sfx.toggle(); const b=$('muteBtn2'); b.textContent=on?'Sound on':'Muted'; b.classList.toggle('on',on); };
-  $('ambBtn').onclick=()=>{ const on=XS.sfx.toggleAmbient(); $('ambBtn').classList.toggle('on',on); };
-  const rb=$('resetBtn'); if(rb) rb.onclick=()=>{ if(confirm('Reset all progress and Codex?')){XS.resetProgress();UI.showMenu();} };
+  $('muteBtn2').onclick=()=>{ const v=XS.sfx.toggle(); const b=$('muteBtn2'); b.textContent=v?'Sound on':'Muted'; b.classList.toggle('on',v); };
+  $('ambBtn').onclick=()=>{ const v=XS.sfx.toggleAmbient(); $('ambBtn').classList.toggle('on',v); };
+  const rb=$('resetBtn'); if(rb) rb.onclick=()=>{ if(confirm('Reset all progress and Codex?')){ XS.resetProgress(); UI.showMenu(); } };
+  $('setBack').onclick=()=>{ sfx('click'); UI.showMenu(); };
 };
 
 UI.showAchievements=function(){

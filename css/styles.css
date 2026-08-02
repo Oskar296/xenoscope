@@ -371,6 +371,66 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border:none;border-ra
 .tierbtn.alien b{color:#7ff0e0}
 .tierbtn.alien.sel{border-color:#7ff0e0;box-shadow:0 0 0 1px #7ff0e0,0 0 22px rgba(127,240,224,.28)}
 .fm-sec-h em.xeno{color:#04201d;background:#7ff0e0}
+/* ---- menu · one clear path in ---- */
+.card h1{margin:2px 0 10px}
+.m-main{margin:18px 0 10px}
+.m-row{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:16px}
+.m-card{display:flex;align-items:center;gap:12px;text-align:left;width:100%;cursor:pointer;
+  border:1px solid var(--line2);border-radius:14px;padding:13px 15px;color:var(--ink);
+  background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.015));
+  transition:border-color .16s,background .16s,transform .16s}
+.m-card:hover{border-color:var(--aqua);background:rgba(94,242,214,.07);transform:translateY(-1px)}
+.m-card:active{transform:translateY(0)}
+.m-card.hero{padding:18px 20px;border-color:rgba(94,242,214,.45);
+  background:linear-gradient(180deg,rgba(94,242,214,.13),rgba(94,242,214,.03));
+  box-shadow:0 0 0 1px rgba(94,242,214,.2),0 10px 34px rgba(0,0,0,.35)}
+.m-card.hero:hover{border-color:var(--aqua);box-shadow:0 0 0 1px var(--aqua),0 0 30px rgba(94,242,214,.22)}
+.m-ico{font-size:21px;line-height:1;flex:0 0 auto}
+.m-card.hero .m-ico{font-size:29px}
+.m-tx{flex:1;min-width:0}
+.m-tx b{display:block;font-size:14px;font-weight:700;letter-spacing:.1px}
+.m-card.hero .m-tx b{font-size:19px}
+.m-tx small{display:block;font-size:11.5px;color:var(--dim);margin-top:2px;line-height:1.4}
+.m-card.hero .m-tx small{font-size:12.5px;color:var(--mint)}
+.m-go{font-size:16px;color:var(--aqua);flex:0 0 auto}
+.m-row .m-card{flex-direction:column;align-items:flex-start;gap:7px;padding:13px}
+.m-row .m-tx b{font-size:13px}
+.m-rank{border:1px solid var(--line);border-radius:12px;padding:11px 14px;background:rgba(255,255,255,.02);margin-bottom:14px}
+.m-rk{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:7px}
+.m-rk b{font-size:14px} .m-rk span{font-size:11.5px;color:var(--dim);font-family:var(--mono)}
+.m-rank .xpbar{height:5px}
+.m-stats{display:flex;gap:14px;margin-top:8px;font-size:12px;color:var(--dim);font-family:var(--mono)}
+.m-tools{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
+.m-tool{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;padding:9px 4px;
+  border:1px solid var(--line);border-radius:11px;background:rgba(255,255,255,.02);color:var(--ink);
+  font-size:17px;transition:.14s}
+.m-tool span{font-size:10px;color:var(--dim);letter-spacing:.3px}
+.m-tool:hover{border-color:var(--aqua);background:rgba(94,242,214,.06)}
+.m-tool:hover span{color:var(--ink)}
+.m-new{margin-top:12px;font-size:12px;color:var(--dim);text-align:center}
+.m-new b{color:var(--aqua)}
+/* free-play picker */
+.pk-list{display:flex;flex-direction:column;gap:7px}
+.pk-list.tiers{display:grid;grid-template-columns:repeat(3,1fr)}
+.pk{display:flex;align-items:center;gap:11px;text-align:left;width:100%;cursor:pointer;color:var(--ink);
+  border:1px solid var(--line2);border-radius:12px;padding:10px 13px;background:rgba(255,255,255,.03);transition:.15s}
+.pk{position:relative}
+.pk:hover{border-color:var(--line2);background:rgba(255,255,255,.06)}
+.pk.sel{border-color:var(--aqua);background:rgba(94,242,214,.13);box-shadow:0 0 0 1px var(--aqua),inset 3px 0 0 var(--aqua)}
+.pk.sel::after{content:"✓";position:absolute;right:12px;top:50%;transform:translateY(-50%);
+  color:var(--aqua);font-weight:800;font-size:15px}
+.pk.tier.sel::after{top:12px;transform:none}
+.pk-ico{font-size:19px;flex:0 0 24px;text-align:center}
+.pk-tx b{display:block;font-size:13.5px;font-weight:700}
+.pk-tx small{display:block;font-size:11px;color:var(--dim);margin-top:2px;line-height:1.4}
+.pk.tier{flex-direction:column;align-items:flex-start;gap:2px}
+@media(max-width:620px){
+  .m-row{grid-template-columns:1fr;gap:7px}
+  .m-row .m-card{flex-direction:row;align-items:center;gap:11px;padding:11px 13px}
+  .m-tools{grid-template-columns:repeat(3,1fr)}
+  .pk-list.tiers{grid-template-columns:1fr}
+  .card h1{font-size:26px;letter-spacing:3px}
+}
 /* story · the long survey */
 .st-list{display:flex;flex-direction:column;gap:6px;margin:14px 0 4px;max-height:min(52vh,420px);overflow:auto;padding-right:3px}
 .st-act{font-family:var(--mono);font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin:12px 0 3px;padding-left:2px}
