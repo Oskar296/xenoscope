@@ -368,6 +368,26 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border:none;border-ra
 .tierbtn.alien b{color:#7ff0e0}
 .tierbtn.alien.sel{border-color:#7ff0e0;box-shadow:0 0 0 1px #7ff0e0,0 0 22px rgba(127,240,224,.28)}
 .fm-sec-h em.xeno{color:#04201d;background:#7ff0e0}
+/* story · the long survey */
+.st-list{display:flex;flex-direction:column;gap:6px;margin:14px 0 4px;max-height:min(52vh,420px);overflow:auto;padding-right:3px}
+.st-act{font-family:var(--mono);font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin:12px 0 3px;padding-left:2px}
+.st-act:first-child{margin-top:0}
+.st-ch{display:flex;align-items:center;gap:11px;text-align:left;border:1px solid var(--line2);border-radius:12px;
+  background:rgba(255,255,255,.03);color:var(--ink);cursor:pointer;padding:10px 13px;transition:.14s;width:100%}
+.st-n{flex:0 0 22px;font-size:14px;text-align:center}
+.st-tx b{display:block;font-size:14px;font-weight:700}
+.st-tx small{display:block;font-size:11px;color:var(--dim);margin-top:2px}
+.st-ch.next{border-color:var(--aqua);background:rgba(94,242,214,.10);box-shadow:0 0 0 1px var(--aqua)}
+.st-ch.next .st-n{color:var(--aqua)}
+.st-ch.done .st-n{color:var(--mint)} .st-ch.done b{color:var(--dim);font-weight:600}
+.st-ch.locked{opacity:.42;cursor:default}
+.st-ch:not(.locked):hover{border-color:var(--aqua);background:rgba(94,242,214,.07)}
+.st-log{margin:12px 0 6px;max-height:min(46vh,360px);overflow:auto;padding-right:4px}
+.st-p{font-size:14px;line-height:1.75;color:var(--ink);margin:0 0 13px;white-space:pre-line}
+.st-p i{color:var(--dim)} .st-p b{color:var(--aqua)}
+.st-teach{font-family:var(--mono);font-size:11.5px;color:var(--dim);border-top:1px solid var(--line);padding-top:10px;margin-top:2px}
+.st-teach b{color:var(--violet)}
+.abtn.stand{min-width:140px;border-color:var(--violet)} .abtn.stand b{color:var(--violet)}
 .tierbtn.contact b{color:#ffd27a}
 .tierbtn.contact.sel{border-color:#ffd27a;box-shadow:0 0 0 1px #ffd27a,0 0 22px rgba(255,210,122,.28)}
 /* interactive tutorial coach */

@@ -242,12 +242,17 @@ UI.renderDock=function(){
     const tb=id=>{const t=XS.TREATMENTS.find(x=>x.id===id)||{label:id,desc:''};return `<button class="abtn treat" data-a="${id}"><b>${t.label}</b><small>${t.desc.split('.')[0]}</small></button>`;};
     treatGroup=`<div class="dsep"></div><div class="dock-group ${active===3?'active':''}"><div class="dock-lab">③ Treat · ${r.name}</div><div class="btn-row treat-row">${opts.map(tb).join('')}</div></div>`;
   }
+  // STORY · the final chapter lets you refuse the order instead of firing
+  const standDown = (sc.story&&sc.story.choice&&dxDone)
+    ? `<div class="dsep"></div><div class="dock-group"><div class="dock-lab">◇ Or don’t</div>`+
+      `<button class="abtn stand" id="standBtn"><b>◇ Stand down</b><small>log it as unclassified</small></button></div>` : '';
   UI.dock.innerHTML=stepBar(active)+
     `<button class="abtn back" id="backBtn"><b>← Organism</b><small>zoom out</small></button>`+
     `<div class="dsep"></div>`+
     `<div class="dock-group ${active===1?'active':''}"><div class="dock-lab">① ${assayLab}</div><div class="btn-row assay-row">${assays.map(abtn).join('')}</div></div>`+
-    `<div class="dsep"></div>`+ idGroup + treatGroup;
+    `<div class="dsep"></div>`+ idGroup + treatGroup + standDown;
   $('backBtn').onclick=()=>{ sfx('click'); XS.exitRegion(); UI.renderPhase(); };
+  const sd=$('standBtn'); if(sd) sd.onclick=()=>{ sfx('ok'); if(XS.storyStandDown()) UI.showChapterOutro(); };
   const idb=$('idBtn'); if(idb) idb.onclick=()=>{ sfx('click'); UI.showIdentify(); };
   UI.dock.querySelectorAll('[data-assay]').forEach(b=>{
     b.onclick=()=>{ const out=XS.doAssay(b.dataset.assay); if(!out)return; sfx('blip');
@@ -621,7 +626,8 @@ UI.showMenu=function(){
       `<button class="tierbtn contact ${XS.app.mode==='contact'?'sel':''}" data-mode="contact"><b>🛸 First Contact</b><small><b>Alien species</b>, not alien diseases — crystal spires, plasma wisps, ammonia cryophiles, rock-eaters. Classify a lifeform from <b>no Earth kingdom</b>, then contain it.</small></button>`+
     `</div>`+
     `<div class="muted lbl">DIFFICULTY</div><div class="tiers">${tiers}</div>`+
-    `<div class="cta"><button class="btn pri" id="startBtn">▶ Receive Assignment</button>`+
+    `<div class="cta"><button class="btn pri" id="storyBtn">📖 Story${XS.storyProgress()?` · ch ${Math.min(XS.storyProgress()+1,XS.STORY.length)}`:' · begin'}</button>`+
+      `<button class="btn" id="startBtn">▶ Free assignment</button>`+
       `<button class="btn ob" id="outbreakBtn">🌊 Outbreak${p.outbreakBest?` · best ${p.outbreakBest}`:''}</button>`+
       `<button class="btn ${!p.tutorialSeen?'pulse':''}" id="tutBtn">🎓 Tutorial</button>`+
       `<button class="btn" id="dailyBtn">🗓 Daily</button><button class="btn" id="codexBtn2">📖 Codex</button>`+
@@ -635,6 +641,7 @@ UI.showMenu=function(){
   );
   UI.overlay.querySelectorAll('[data-tier]').forEach(b=>b.onclick=()=>{sfx('click');XS.app.tier=b.dataset.tier;UI.overlay.querySelectorAll('[data-tier]').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');});
   UI.overlay.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{sfx('click');XS.app.mode=b.dataset.mode;UI.overlay.querySelectorAll('[data-mode]').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');});
+  $('storyBtn').onclick=()=>{ sfx('click'); UI.showStory(); };
   $('startBtn').onclick=()=>{ sfx('click'); UI.hideOverlay(); XS.startMission(null,XS.app.tier); UI.renderPhase(); };
   $('outbreakBtn').onclick=()=>{ sfx('click'); UI.hideOverlay(); XS.startOutbreak(); UI.renderPhase(); };
   $('tutBtn').onclick=()=>{ sfx('click'); UI.hideOverlay(); UI.startTutorial(); };
@@ -659,6 +666,7 @@ UI.showAchievements=function(){
 UI.showResult=function(){
   if(XS.app.tutorial){ XS.app.tutorial.step=4; UI.updateCoach(); return; }   // tutorial handles its own finish
   if(XS.app.run && XS.app.run.active) return UI.showOutbreakCase();           // outbreak run · scored interstitial
+  if(XS.app.sc && XS.app.sc.story && XS.app.result && XS.app.result.win){ sfx('win'); return UI.showChapterOutro(); }
   const app=XS.app, sc=app.sc, O=XS.OBJECTIVE_INFO[sc.objective], win=app.result.win;
   sfx(win?'win':'lose'); if(app.rankUp) setTimeout(()=>sfx('rank'),650);
   const xpList=app.lastXP.slice(0,5).map(x=>`<div class="xp-row"><span>${x.reason}</span><b>+${x.n}</b></div>`).join('');
@@ -679,6 +687,56 @@ UI.showResult=function(){
   $('nextBtn').onclick=()=>{ sfx('click'); UI.hideOverlay(); XS.startMission(null,XS.app.tier); UI.renderPhase(); };
   $('menuBtn3').onclick=UI.showMenu; $('codexBtn3').onclick=UI.showCodex;
   const cs=$('copyShare'); if(cs) cs.onclick=()=>{ try{ navigator.clipboard.writeText(shareStr); cs.textContent='✓ Copied'; }catch(e){ cs.textContent='select ↑'; } };
+};
+
+/* ---------------- STORY · The Long Survey ---------------- */
+UI.showStory=function(){
+  const done=XS.storyProgress();
+  let act='';
+  const rows=XS.STORY.map((ch,i)=>{
+    const state = i<done?'done' : i===done?'next' : 'locked';
+    const head = ch.act!==act ? (act=ch.act, `<div class="st-act">${ch.act}</div>`) : '';
+    return head+`<button class="st-ch ${state}" data-ch="${i}"${state==='locked'?' disabled':''}>`+
+      `<span class="st-n">${state==='done'?'✓':state==='next'?'▶':'🔒'}</span>`+
+      `<span class="st-tx"><b>${state==='locked'?'— — —':ch.title}</b>`+
+      `<small>${state==='locked'?'Locked':ch.teaches}</small></span></button>`;
+  }).join('');
+  card(`<div class="sub">The Long Survey · chapter ${Math.min(done+1,XS.STORY.length)} of ${XS.STORY.length}</div>`+
+    `<h2>Story</h2>`+
+    `<p class="muted">A campaign aboard the survey ship <b>Verity</b>. Each chapter teaches one idea and hands you the next — the whole game, in order, without the noise.</p>`+
+    `<div class="st-list">${rows}</div>`+
+    `<div class="cta"><button class="btn" id="stBack">☰ Menu</button></div>`);
+  UI.overlay.querySelectorAll('[data-ch]').forEach(b=>b.onclick=()=>{ sfx('click'); UI.showChapterIntro(+b.dataset.ch); });
+  $('stBack').onclick=()=>{ sfx('click'); UI.showMenu(); };
+};
+UI.showChapterIntro=function(i){
+  const ch=XS.storyChapter(i); if(!ch) return;
+  const prose=ch.log.split('\n\n').map(p=>`<p class="st-p">${p}</p>`).join('');
+  card(`<div class="sub">${ch.act}</div><h2>${ch.title}</h2>`+
+    `<div class="st-log">${prose}</div>`+
+    `<div class="st-teach">This chapter is about: <b>${ch.teaches}</b></div>`+
+    `<div class="cta"><button class="btn pri" id="stGo">▶ Begin</button><button class="btn" id="stCancel">← Chapters</button></div>`);
+  $('stGo').onclick=()=>{ sfx('click'); UI.hideOverlay(); if(XS.startStory(i)) UI.renderPhase(); };
+  $('stCancel').onclick=()=>{ sfx('click'); UI.showStory(); };
+};
+UI.showChapterOutro=function(){
+  const sc=XS.app.sc, ch=sc.story, i=sc.storyIndex, last=i>=XS.STORY.length-1;
+  const spared=XS.app.storyChoice==='spare';
+  const body = spared
+    ? `<p class="st-p">You log it as <b>unclassified</b> and do not fire.</p>`+
+      `<p class="st-p">Command will want a reason. You do not have one that fits the form — only that a thing which changes its pattern when you speak to it has met you halfway, and you were not certain, and being uncertain seemed like the whole point of the job.</p>`+
+      `<p class="st-p">The <b>Verity</b> moves on. Six days later, the field is still following.</p>`
+    : `<p class="st-p">${ch.out}</p>`+ (last?`<p class="st-p">You carried out the order. It was lawful, it was quick, and it was probably correct.\n\nYou will not find out.</p>`:'');
+  card(`<div class="sub">${ch.act} · ${ch.title}</div>`+
+    `<div class="verdict win" style="font-size:22px;letter-spacing:2px">${spared?'◇ STOOD DOWN':'✦ CHAPTER CLEARED'}</div>`+
+    `<div class="st-log">${body}</div>`+
+    `<div class="cta">`+
+      (last?`<button class="btn pri" id="stDone">☰ Menu</button>`
+           :`<button class="btn pri" id="stNext">▶ Next chapter</button><button class="btn" id="stList">Chapters</button>`)+
+    `</div>`);
+  const n=$('stNext'); if(n) n.onclick=()=>{ sfx('click'); UI.showChapterIntro(i+1); };
+  const l=$('stList'); if(l) l.onclick=()=>{ sfx('click'); UI.showStory(); };
+  const d=$('stDone'); if(d) d.onclick=()=>{ sfx('click'); UI.showMenu(); };
 };
 
 /* ---------------- OUTBREAK · scored survival run ---------------- */

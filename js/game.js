@@ -201,6 +201,7 @@ XS.finishMission=function(res){
     run.lastGrade={g:win?g:'—', gained, el:Math.round(el), win, mult:run.mult};
     if(run.colony<=0) run.over=true;
   }
+  if(win && sc.story) XS.completeStory(sc.storyIndex);
   XS.app.result={win, why:res.why}; XS.app.phase='result'; XS.saveProgress(); XS.checkAchievements();
 };
 
@@ -250,6 +251,86 @@ XS.checkAchievements=function(){
   for(const a of XS.ACHIEVEMENTS){ if(!XS.progress.badges.includes(a.id) && a.check(XS.progress)){ XS.progress.badges.push(a.id); newly.push(a); } }
   if(newly.length){ XS.saveProgress(); XS.app.toasts=(XS.app.toasts||[]).concat(newly.map(a=>({icon:a.icon,title:a.name,desc:a.desc}))); }
   return newly;
+};
+
+/* ---------------- STORY · "The Long Survey" ----------------
+   A campaign aboard a survey ship. Each chapter introduces exactly ONE new
+   idea, so the game teaches itself instead of dropping every system on you at
+   once — and the arc walks from familiar biology out to things that don't
+   share our chemistry at all, ending on whether understanding obliges mercy.
+------------------------------------------------------------ */
+XS.STORY=[
+  {id:'ch1', act:'I · Familiar Ground', title:'Signal', mode:'quick', tier:'intern',
+   obj:'preserve', path:'bacterium', teaches:'survey → assay → diagnose → treat',
+   log:'Forty-one days out from the relay. The <b>Verity</b> logs a distress bloom from a world we have never named — a biosphere dying in patches.\n\nYou are the only xenobiologist aboard. Your first case is almost reassuring: whatever is killing this thing, it is built the way <i>we</i> are built. Walls. Ribosomes. Chemistry you were trained on.\n\nFind out what it is. Then save it.',
+   out:'It lives. You log the first entry in a catalogue that will get much stranger.'},
+
+  {id:'ch2', act:'I · Familiar Ground', title:'The Wrong Weapon', mode:'quick', tier:'intern',
+   obj:'neutralize', cell:'Archaea', teaches:'why the obvious cure can fail',
+   log:'Second site. Something is spreading through the survey habitat and the crew want it gone before it reaches the water reclaimers.\n\nIt <i>looks</i> bacterial. The temptation is to reach for an antibiotic and be done.\n\nDon\'t. Run the membrane assay first. Some things wear a familiar shape and share none of the machinery underneath — and a confident wrong answer costs more than an honest slow one.',
+   out:'No peptidoglycan. No antibiotic. You needed to look before you fired — a habit that will keep you alive later.'},
+
+  {id:'ch3', act:'II · The Bench', title:'Nothing In The Kit', mode:'advanced', tier:'field',
+   obj:'preserve', teaches:'making a cure instead of picking one',
+   log:'The medical printer fails at 03:40, and with it every pre-made treatment aboard.\n\nWhat is left is a shelf of raw material — mould, bark, oil, ash, serum — and the knowledge of what to do with it. Every drug humanity ever had started here, on a bench like this one.\n\nSomething down there is dying while you read this. Go and <b>make</b> the cure.',
+   out:'You made a drug out of mould and patience. The printer is still broken. It matters less than it did yesterday.'},
+
+  {id:'ch4', act:'II · The Bench', title:'Degrees', mode:'advanced', tier:'field',
+   obj:'preserve', path:'parasite', teaches:'exact temperature',
+   log:'A note, scratched inside the lab cabinet by whoever had this post before you:\n\n<i>"Boiled the wormwood. Killed the very thing I was trying to extract. Two days lost. The temperature is not a detail — it IS the recipe."</i>\n\nThey were right. Heat too little and nothing forms. Heat too much and you destroy the fragile part that does the work.',
+   out:'Fifty degrees. Not sixty. The difference between a cure and a cup of hot leaves.'},
+
+  {id:'ch5', act:'II · The Bench', title:'Sour And Sweet', mode:'advanced', tier:'field',
+   obj:'preserve', path:'bacterium', teaches:'exact pH',
+   log:'The same cabinet, further down:\n\n<i>"Penicillin dies in alkali. I did not know that. I know it now."</i>\n\nAcid and base are not background conditions — they decide whether a reaction happens at all. Get the pH wrong and perfectly good ingredients simply refuse to become medicine.',
+   out:'Right mould. Right heat. Wrong pH would have cost you the patient. It didn\'t.'},
+
+  {id:'ch6', act:'III · Foreign', title:'Two Voices', mode:'advanced', tier:'field',
+   obj:'preserve', trait:'coinfection', teaches:'more than one answer can be true',
+   log:'The readings do not resolve. You keep assuming the assay is faulty, because the alternative is untidy.\n\nThe alternative is correct. There are <b>two</b> things in this tissue, and they are not the same thing, and curing one leaves the other to finish the job.\n\nYou have been trained to find <i>the</i> answer. Sometimes there is no such article.',
+   out:'Two invaders. Two cures. The habit of assuming one cause nearly cost you everything.'},
+
+  {id:'ch7', act:'III · Foreign', title:'It Isn\'t Carbon', mode:'contact', tier:'field',
+   obj:'neutralize', cell:'Silicoid', teaches:'life that shares none of our chemistry',
+   log:'We had a word for the edge of the map and we have crossed it.\n\nThe thing growing across the southern shelf has no membrane. No genome. No water. It grows the way a stalactite grows, and it repairs itself, and by every definition we brought with us it is <i>alive</i>.\n\nEverything in your kit was designed to attack carbon. This is not carbon. Start again — from what it is actually <b>made of</b>.',
+   out:'Silicon and oxygen. Nothing we brought could touch it until you stopped assuming it was a variation on us.'},
+
+  {id:'ch8', act:'III · Foreign', title:'The Question', mode:'contact', tier:'director',
+   obj:'neutralize', cell:'Plasmoid', teaches:'whether understanding obliges mercy', choice:true,
+   log:'It has been following the <b>Verity</b> for six days.\n\nA knot of ionised gas that holds its own shape. No cells. No chemistry. Nothing you could call a body. It should not be able to persist and it has persisted, and this morning the magnetometer logged its field oscillating in a pattern that repeats — and then changes when we transmit.\n\nCommand has classified it a hazard and ordered containment. You know how to do that now. You could collapse it inside a minute.\n\nThe order does not require you to be certain. It only requires you to be quick.',
+   out:'Whatever it was, it is a decision you made rather than one you were handed.'},
+];
+XS.storyProgress=()=>((XS.progress&&XS.progress.story)|0);
+XS.storyChapter=i=>XS.STORY[i]||null;
+XS.startStory=function(i){
+  const ch=XS.STORY[i]; if(!ch) return false;
+  XS.app.mode=ch.mode||'quick'; XS.app.tier=ch.tier||'field';
+  XS.app.daily=false; XS.app.tutorial=null; XS.app.run=null;
+  const sc=XS.buildScenario(ch.obj, XS.app.tier, ch.cell||null);
+  // a story beat is authored, not random — pin exactly what it means to teach
+  sc.traits=[]; sc.shielded=false; sc.resistantStrain=false; sc.mutating=false;
+  sc.harsh=false; sc.cures=null; sc.decoy=false;
+  sc.regions.forEach(r=>{ r.symbiont=false; r.decoy=false; });
+  if(ch.obj==='preserve' && ch.path){ sc.pathType=ch.path; sc.agent=XS.PATHOGENS[ch.path].cure; sc.dxAnswer=XS.PATHOGENS[ch.path].dx;
+    const key=sc.regions.find(r=>r.id===sc.keyId); if(key) key.problem={kind:'pathogen', pathType:ch.path}; }
+  if(ch.trait){ const T=(XS.TRAITS||[]).find(t=>t.id===ch.trait); if(T&&T.apply){ sc.traits=[T]; T.apply(sc); } }
+  sc.story=ch; sc.storyIndex=i;
+  XS.app.sc=sc; XS.app.phase='survey'; XS.app.spec=null; XS.app.zoomRegion=null; XS.app.zoomPathogen=null;
+  XS.app.hoverRegion=null; XS.app.hoverPart=null; XS.app.scan=null; XS.app.result=null;
+  XS.app.rankUp=null; XS.app.missionWrong=0; XS.app.storyChoice=null;
+  return true;
+};
+XS.completeStory=function(i){
+  if(!XS.progress.story || XS.progress.story<=i){ XS.progress.story=i+1; XS.award(40,'Chapter cleared: '+XS.STORY[i].title); XS.saveProgress(); }
+};
+/* chapter 8 · refuse the order — a real ending, not a forfeit */
+XS.storyStandDown=function(){
+  const sc=XS.app.sc; if(!sc||!sc.story||!sc.story.choice||sc.done) return null;
+  sc.done=true; XS.app.storyChoice='spare';
+  XS.completeStory(sc.storyIndex);
+  XS.app.result={win:true, spared:true};
+  XS.app.phase='result';
+  return XS.app.result;
 };
 
 /* ---------------- daily (seeded) ---------------- */
