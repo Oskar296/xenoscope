@@ -10,7 +10,7 @@ zip root, which itch requires).
 | Field | Value |
 |---|---|
 | **Title** | XENOSCOPE |
-| **Short description** | A deduction game about alien biology. The answer is hidden — read the evidence, or it dies. |
+| **Short description** | Run the tests, read the evidence, and work out what's killing the alien before it dies. |
 | **Classification** | Game |
 | **Kind of project** | **HTML** |
 | **Release status** | Released |
