@@ -253,29 +253,6 @@ XS.checkAchievements=function(){
   return newly;
 };
 
-/* play a case built around a species you designed */
-XS.startCustomMission=function(def, objective){
-  const sp=XS.customSpecies(def);
-  XS.app.forceSpecies=sp;
-  try{ XS.startMission(objective||null, XS.app.tier); }
-  finally{ XS.app.forceSpecies=null; }
-  if(XS.app.sc) XS.app.sc.customCreature=def;
-  return XS.app.sc;
-};
-/* live preview: a throwaway scenario used only to draw the creature */
-XS.previewCreature=function(def){
-  const sp=XS.customSpecies(def);
-  XS.app.forceSpecies=sp;
-  let sc=null;
-  try{ sc=XS.buildScenario('neutralize','intern',null); }
-  finally{ XS.app.forceSpecies=null; }
-  sc.preview=true; sc.hostDrain=0; sc.traits=[];
-  sc.regions.forEach(r=>{ r.symbiont=false; r.decoy=false; });
-  XS.app.sc=sc; XS.app.phase='survey'; XS.app.result=null;
-  XS.app.zoomRegion=null; XS.app.spec=null; XS.app.hoverRegion=null;
-  return sc;
-};
-
 /* ---------------- STORY · "The Long Survey" ----------------
    A campaign aboard a survey ship. Each chapter introduces exactly ONE new
    idea, so the game teaches itself instead of dropping every system on you at

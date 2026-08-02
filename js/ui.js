@@ -637,10 +637,6 @@ UI.showMenu=function(){
       `<button class="m-card" id="outbreakBtn"><span class="m-ico">🌊</span><span class="m-tx"><b>Outbreak</b><small>${p.outbreakBest?`Best ${p.outbreakBest}`:'Scored survival run'}</small></span></button>`+
       `<button class="m-card ${fresh?'pulse':''}" id="tutBtn"><span class="m-ico">🎓</span><span class="m-tx"><b>Tutorial</b><small>Learn the loop</small></span></button>`+
     `</div>`+
-    `<button class="m-card creator" id="creatorBtn"><span class="m-ico">🧫</span>`+
-      `<span class="m-tx"><b>Creator</b><small>${(p.custom||[]).length?`${p.custom.length} species designed — build another`:'Design your own organism, then play it'}</small></span>`+
-      `<span class="m-go">＋</span></button>`+
-
     `<div class="m-rank"><div class="m-rk"><b>${rank.name}</b><span>${p.xp} XP${next?` · ${next.xp-p.xp} to ${next.name}`:''}</span></div>`+
       `<div class="xpbar"><i style="width:${pct}%"></i></div>`+
       `<div class="m-stats"><span>💚 ${p.saves}</span><span>☠️ ${p.kills}</span><span>🏆 ${p.badges.length}/${XS.ACHIEVEMENTS.length}</span></div></div>`+
@@ -663,7 +659,6 @@ UI.showMenu=function(){
   $('formularyBtn').onclick=()=>{ sfx('click'); UI.showFormulary(null,false); };
   $('achBtn').onclick=()=>{ sfx('click'); UI.showAchievements(); };
   $('setBtn').onclick=()=>{ sfx('click'); UI.showSettings(); };
-  $('creatorBtn').onclick=()=>{ sfx('click'); (XS.progress.custom||[]).length?UI.showMySpecies():UI.showCreator(XS.newCreatureDef()); };
 };
 
 /* free play · pick mode + difficulty here instead of cluttering the menu */
@@ -740,148 +735,46 @@ UI.showResult=function(){
   const cs=$('copyShare'); if(cs) cs.onclick=()=>{ try{ navigator.clipboard.writeText(shareStr); cs.textContent='✓ Copied'; }catch(e){ cs.textContent='select ↑'; } };
 };
 
-/* ---------------- CREATOR · design your own organism ----------------
-   The preview IS the game's own renderer: we build a throwaway scenario and
-   let the normal loop draw it, so what you sculpt is exactly what you'll play.
-   The panel sits at the edges and leaves the creature visible in the middle. */
-UI.showCreator=function(def){
-  const D = def || XS._creatorDef || (XS._creatorDef=XS.newCreatureDef());
-  XS._creatorDef=D;
-  UI.hideOverlay();
-  XS.previewCreature(D);
-  UI.top.style.display='flex'; UI.renderTop();
-  if(UI.coach) UI.coach.style.display='none';
-  const runHud=document.getElementById('runhud'); if(runHud) runHud.style.display='none';
-
-  const K=XS.KINGDOMS[D.cell]||{}, weak=XS.killAgentsFor(D.cell)[0];
-  UI.left.innerHTML=
-    `<div class="cap">Design</div>`+
-    `<label class="cr-lab">Name</label>`+
-    `<input class="cr-name" id="crName" maxlength="22" placeholder="Name your organism" value="${(D.name||'').replace(/"/g,'&quot;')}">`+
-    `<label class="cr-lab">Your kingdom <span class="muted">— what you call it</span></label>`+
-    `<input class="cr-name" id="crKing" maxlength="18" placeholder="e.g. Vitreoform" value="${(D.kingdomName||'').replace(/"/g,'&quot;')}">`+
-    `<label class="cr-lab">Based on <span class="muted">— sets its biology</span></label>`+
-    `<select class="cr-sel" id="crCell">${XS.CREATOR_KINGDOMS.map(k=>`<option value="${k}"${k===D.cell?' selected':''}>${(XS.KINGDOMS[k]||{}).label||k}${(XS.KINGDOMS[k]||{}).alien?' · alien':''}</option>`).join('')}</select>`+
-    `<div class="cr-bio"><b>${K.label||D.cell}</b><small>${K.blurb||''}</small>`+
-      `<div class="cr-weak">Weakness · <b>${XS.agentName(weak)}</b></div></div>`;
-  UI.right.innerHTML=
-    `<div class="cap">Body</div>`+
-    `<label class="cr-lab">Body plan</label>`+
-    `<select class="cr-sel" id="crPlan">${XS.CREATOR_PLANS.map(pl=>`<option value="${pl}"${pl===D.plan?' selected':''}>${pl}</option>`).join('')}</select>`+
-    `<label class="cr-lab">Build <b class="cr-val" id="crBuildv">${Math.round((D.build??0.5)*100)}%</b></label>`+
-    `<input type="range" class="cr-rng" id="crBuild" min="0" max="1" step="0.01" value="${D.build??0.5}">`+
-    `<div class="cr-note" style="margin-top:6px">Build scales limbs, segments and spines together — slender at the left, heavy and many-limbed at the right.</div>`+
-    `<label class="cr-lab">Colour</label>`+
-    `<input type="range" class="cr-rng" id="crHue" min="0" max="1" step="0.01" value="${D.hue}">`+
-    `<label class="cr-lab">Size <b class="cr-val" id="crSizev">${(+(D.size||1)).toFixed(2)}×</b></label>`+
-    `<input type="range" class="cr-rng" id="crSize" min="0.6" max="1.6" step="0.01" value="${D.size||1}">`+
-    `<button class="btn cr-reroll" id="crRoll">🎲 Surprise me</button>`;
-
-  // ORGANELLES — the kingdom forces some; you may add more
-  const forced=(XS.KINGDOMS[D.cell]||{}).parts||[];
-  const forcedIds=forced.map(x=>x[0]);
-  const chips=(XS.OPTIONAL_ORGS||[]).filter(id=>XS.ORG[id]).map(id=>{
-    const on=(D.orgs||[]).includes(id), lock=forcedIds.includes(id);
-    const o=XS.ORG[id];
-    return `<button class="cr-org ${on?'on':''} ${lock?'lock':''}" data-org="${id}" title="${o.fn.replace(/"/g,'')}">`+
-      `<span class="cr-dot" style="background:${o.col}"></span>${o.name}${lock?' 🔒':''}</button>`;}).join('');
-  UI.zlab.classList.remove('on');
-  let orgPanel=document.getElementById('crOrg');
-  if(!orgPanel){ orgPanel=document.createElement('div'); orgPanel.id='crOrg'; orgPanel.className='cr-orgwrap'; document.body.appendChild(orgPanel); }
-  orgPanel.style.display='block';
-  orgPanel.innerHTML=`<div class="cap">Organelles <span class="muted">— 🔒 required by ${(XS.KINGDOMS[D.cell]||{}).label||D.cell}</span></div>`+
-    `<div class="cr-orgs">${chips}</div>`;
-  orgPanel.querySelectorAll('[data-org]').forEach(bt=>bt.onclick=()=>{ const id=bt.dataset.org;
-    if(forcedIds.includes(id)){ sfx('err'); return; }
-    D.orgs=D.orgs||[]; const i=D.orgs.indexOf(id);
-    if(i>=0) D.orgs.splice(i,1); else D.orgs.push(id);
-    sfx('click'); UI.showCreator(D); });
-
-  UI.dock.innerHTML=
-    `<button class="abtn back" id="crBack"><b>← Menu</b><small>discard</small></button>`+
-    `<div class="dsep"></div>`+
-    `<button class="abtn" id="crSave"><b>💾 Save</b><small>add to your catalogue</small></button>`+
-    `<button class="abtn treat" id="crPlayP"><b>💚 Play · Preserve</b><small>something is killing it</small></button>`+
-    `<button class="abtn treat" id="crPlayN"><b>☠️ Play · Neutralize</b><small>it is the threat</small></button>`+
-    `<div class="dsep"></div>`+
-    `<button class="abtn" id="crCell"><b>🔬 Inspect cell</b><small>see the interior you built</small></button>`+
-    `<button class="abtn" id="crList"><b>📚 My species</b><small>${(XS.progress.custom||[]).length} saved</small></button>`;
-
-  const re=()=>{ XS.previewCreature(D); };
-  $('crName').oninput=e=>{ D.name=e.target.value; };
-  const kn=$('crKing'); if(kn) kn.oninput=e=>{ D.kingdomName=e.target.value; };
-  $('crCell').onchange=e=>{ sfx('click'); D.cell=e.target.value; UI.showCreator(D); };
-  $('crPlan').onchange=e=>{ sfx('click'); D.plan=e.target.value; re(); };
-  $('crBuild').oninput=e=>{ D.build=+e.target.value; const l=$('crBuildv'); if(l) l.textContent=Math.round(D.build*100)+'%'; XS.applySculpt(D); };
-  $('crHue').oninput=e=>{ D.hue=+e.target.value; XS.applySculpt(D); };
-  $('crSize').oninput=e=>{ D.size=+e.target.value; const l=$('crSizev'); if(l) l.textContent=D.size.toFixed(2)+'×'; XS.applySculpt(D); };
-  $('crRoll').onclick=()=>{ sfx('blip'); const R=Math.random;
-    D.plan=XS.CREATOR_PLANS[Math.floor(R()*XS.CREATOR_PLANS.length)];
-    D.build=R(); D.hue=R(); D.size=0.75+R()*0.6; D.seed=Math.floor(R()*1e9);
-    UI.showCreator(D); };
-  $('crBack').onclick=()=>{ sfx('click'); const op=document.getElementById('crOrg'); if(op) op.style.display='none'; UI.showMenu(); };
-  $('crSave').onclick=()=>{ if(!(D.name||'').trim()){ D.name='Unnamed'; $('crName').value='Unnamed'; }
-    sfx('ok'); XS.saveCreature(D); UI.showCreator(D);
-    UI.showToast({icon:'🧬', name:'Saved', desc:D.name+' added to your catalogue'}); };
-  const closeOrg=()=>{ const op=document.getElementById('crOrg'); if(op) op.style.display='none'; };
-  $('crPlayP').onclick=()=>{ sfx('click'); closeOrg(); XS.startCustomMission(D,'preserve'); UI.renderPhase(); };
-  $('crPlayN').onclick=()=>{ sfx('click'); closeOrg(); XS.startCustomMission(D,'neutralize'); UI.renderPhase(); };
-  $('crCell').onclick=()=>{ sfx('scan');
-    const sc=XS.app.sc; sc.regions.forEach(r=>r.cellSpec=null);
-    XS.enterRegion(sc.regions[0]); UI.renderPhase();
-    UI.dock.innerHTML=`<button class="abtn back" id="crCellBack"><b>← Back to sculpting</b><small>return to the creator</small></button>`;
-    $('crCellBack').onclick=()=>{ sfx('click'); XS.exitRegion(); UI.showCreator(D); }; };
-  $('crList').onclick=()=>{ sfx('click'); UI.showMySpecies(); };
-};
-UI.showMySpecies=function(){
-  const list=XS.progress.custom||[];
-  const rows=list.length? list.map(d=>{const K=XS.KINGDOMS[d.cell]||{};
-    return `<div class="cr-row"><div class="cr-rowtx"><b>${d.name||'Unnamed'}</b>`+
-      `<small>${K.label||d.cell} · ${d.plan}</small></div>`+
-      `<button class="chipbtn" data-edit="${d.seed}">Edit</button>`+
-      `<button class="chipbtn" data-play="${d.seed}">▶ Play</button>`+
-      `<button class="chipbtn danger" data-del="${d.seed}">✕</button></div>`;}).join('')
-    : `<div class="muted">Nothing saved yet. Design something and hit <b>Save</b>.</div>`;
-  card(`<div class="sub">Your catalogue · ${list.length} species</div><h2>My species</h2>`+
-    `<div class="cr-rows">${rows}</div>`+
-    `<div class="cta"><button class="btn pri" id="msNew">＋ New organism</button><button class="btn" id="msBack">← Back</button></div>`);
-  UI.overlay.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{ sfx('click');
-    UI.showCreator(Object.assign({}, list.find(x=>x.seed==b.dataset.edit))); });
-  UI.overlay.querySelectorAll('[data-play]').forEach(b=>b.onclick=()=>{ sfx('click'); UI.hideOverlay();
-    XS.startCustomMission(list.find(x=>x.seed==b.dataset.play), null); UI.renderPhase(); });
-  UI.overlay.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{ sfx('err');
-    XS.deleteCreature(+b.dataset.del); UI.showMySpecies(); });
-  $('msNew').onclick=()=>{ sfx('click'); UI.showCreator(XS.newCreatureDef()); };
-  $('msBack').onclick=()=>{ sfx('click'); if(XS.app.phase==='survey'&&XS.app.sc&&XS.app.sc.preview) UI.showCreator(); else UI.showMenu(); };
-};
-
 /* ---------------- STORY · The Long Survey ---------------- */
 UI.showStory=function(){
-  const done=XS.storyProgress();
-  let act='';
-  const rows=XS.STORY.map((ch,i)=>{
-    const state = i<done?'done' : i===done?'next' : 'locked';
-    const head = ch.act!==act ? (act=ch.act, `<div class="st-act">${ch.act}</div>`) : '';
-    return head+`<button class="st-ch ${state}" data-ch="${i}"${state==='locked'?' disabled':''}>`+
-      `<span class="st-n">${state==='done'?'✓':state==='next'?'▶':'🔒'}</span>`+
-      `<span class="st-tx"><b>${state==='locked'?'— — —':ch.title}</b>`+
-      `<small>${state==='locked'?'Locked':ch.teaches}</small></span></button>`;
-  }).join('');
-  card(`<div class="sub">The Long Survey · chapter ${Math.min(done+1,XS.STORY.length)} of ${XS.STORY.length}</div>`+
-    `<h2>Story</h2>`+
-    `<p class="muted">A campaign aboard the survey ship <b>Verity</b>. Each chapter teaches one idea and hands you the next — the whole game, in order, without the noise.</p>`+
-    `<div class="st-list">${rows}</div>`+
+  const done=XS.storyProgress(), total=XS.STORY.length;
+  const acts=[]; XS.STORY.forEach((ch,i)=>{ let A=acts[acts.length-1];
+    if(!A||A.name!==ch.act){ A={name:ch.act, items:[]}; acts.push(A); } A.items.push({ch,i}); });
+  const pct=Math.round(done/total*100);
+  const body=acts.map(A=>{
+    const [num,...rest]=A.name.split(' · ');
+    const rows=A.items.map(({ch,i})=>{
+      const st=i<done?'done':i===done?'next':'locked';
+      return `<button class="vy-ch ${st}" data-ch="${i}"${st==='locked'?' disabled':''}>`+
+        `<span class="vy-node"></span>`+
+        `<span class="vy-body"><span class="vy-title">${st==='locked'?'Unrecorded':ch.title}</span>`+
+        `<span class="vy-sub">${st==='locked'?'—':ch.teaches}</span></span>`+
+        `<span class="vy-mark">${st==='done'?'✓':st==='next'?'▶':'🔒'}</span></button>`;}).join('');
+    return `<section class="vy-act"><header class="vy-acth"><span class="vy-num">${num}</span>`+
+      `<span class="vy-name">${rest.join(' · ')}</span></header><div class="vy-line">${rows}</div></section>`;}).join('');
+  card(`<div class="vy-head">`+
+      `<div class="vy-ship">SURVEY VESSEL <b>VERITY</b></div>`+
+      `<h2 class="vy-title-main">The Long Survey</h2>`+
+      `<div class="vy-meter"><div class="vy-bar"><i style="width:${pct}%"></i></div>`+
+        `<span>${done} / ${total} logged</span></div>`+
+    `</div>`+
+    `<div class="vy-wrap">${body}</div>`+
     `<div class="cta"><button class="btn" id="stBack">☰ Menu</button></div>`);
+  const c=UI.overlay.querySelector('.card'); if(c) c.classList.add('vy-card');
   UI.overlay.querySelectorAll('[data-ch]').forEach(b=>b.onclick=()=>{ sfx('click'); UI.showChapterIntro(+b.dataset.ch); });
   $('stBack').onclick=()=>{ sfx('click'); UI.showMenu(); };
 };
 UI.showChapterIntro=function(i){
   const ch=XS.storyChapter(i); if(!ch) return;
-  const prose=ch.log.split('\n\n').map(p=>`<p class="st-p">${p}</p>`).join('');
-  card(`<div class="sub">${ch.act}</div><h2>${ch.title}</h2>`+
+  const [num,...rest]=ch.act.split(' · ');
+  const paras=ch.log.split('\n\n');
+  const prose=paras.map((t,k)=>k===0?`<p class="st-p lede">${t}</p>`:`<p class="st-p">${t}</p>`).join('');
+  card(`<div class="ch-head"><span class="ch-act">${num} · ${rest.join(' · ')}</span>`+
+      `<h2 class="ch-title">${ch.title}</h2><div class="ch-rule"></div></div>`+
     `<div class="st-log">${prose}</div>`+
-    `<div class="st-teach">This chapter is about: <b>${ch.teaches}</b></div>`+
-    `<div class="cta"><button class="btn pri" id="stGo">▶ Begin</button><button class="btn" id="stCancel">← Chapters</button></div>`);
+    `<div class="st-teach">This chapter is about <b>${ch.teaches}</b></div>`+
+    `<div class="cta"><button class="btn pri" id="stGo">▶ Begin</button><button class="btn" id="stCancel">← Log</button></div>`);
+  const c=UI.overlay.querySelector('.card'); if(c) c.classList.add('ch-card');
   $('stGo').onclick=()=>{ sfx('click'); UI.hideOverlay(); if(XS.startStory(i)) UI.renderPhase(); };
   $('stCancel').onclick=()=>{ sfx('click'); UI.showStory(); };
 };
@@ -893,8 +786,8 @@ UI.showChapterOutro=function(){
       `<p class="st-p">Command will want a reason. You do not have one that fits the form — only that a thing which changes its pattern when you speak to it has met you halfway, and you were not certain, and being uncertain seemed like the whole point of the job.</p>`+
       `<p class="st-p">The <b>Verity</b> moves on. Six days later, the field is still following.</p>`
     : `<p class="st-p">${ch.out}</p>`+ (last?`<p class="st-p">You carried out the order. It was lawful, it was quick, and it was probably correct.\n\nYou will not find out.</p>`:'');
-  card(`<div class="sub">${ch.act} · ${ch.title}</div>`+
-    `<div class="verdict win" style="font-size:22px;letter-spacing:2px">${spared?'◇ STOOD DOWN':'✦ CHAPTER CLEARED'}</div>`+
+  card(`<div class="ch-head"><span class="ch-act">${ch.act}</span>`+
+      `<h2 class="ch-title">${spared?'Stood down':'Logged'}</h2><div class="ch-rule"></div></div>`+
     `<div class="st-log">${body}</div>`+
     `<div class="cta">`+
       (last?`<button class="btn pri" id="stDone">☰ Menu</button>`

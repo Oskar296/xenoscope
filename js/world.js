@@ -507,105 +507,6 @@ XS.INTRUDERS=[
 XS.intruderRecipeMatches=function(sc,items,step){ const tr=sc&&sc.textbookRecipe; if(!tr||!items||!step) return false;
   return step===tr.step && items.slice().sort().join('+')===tr.items.slice().sort().join('+'); };
 
-/* ---------------- CREATOR · player-authored species ----------------
-   You choose the LOOK (body plan, colour, size) and the BIOLOGY (kingdom)
-   independently — so you can build a crystal that looks like a beast, and the
-   assays will still tell the truth about what it is. Appearance is not
-   ancestry: that is real biology (convergent evolution), and it also means a
-   custom organism is always a solvable, honest case.
------------------------------------------------------------- */
-XS.CREATOR_PLANS=['beast','medusa','arthropod','tentacled','worm','anemone','crinoid','starfish','winged','snail',
-  'tree','fern','vine','canopy','cactus','pitcher','mushroom','bracket','coral','puffball','lichen',
-  'amoeba','ciliate','diatom','radiolarian','urchin','slimemold','foram','colony',
-  'crystalspire','geodecluster','plasmawisp','cryodrifter','rustbloom','ferrovein'];
-XS.CREATOR_KINGDOMS=['Animalia','Plantae','Fungi','Protista','Monera','Archaea','Silicoid','Plasmoid','Ammonoid','Metallophyte'];
-XS.SHAPE_N=48;                                  // outline resolution you sculpt directly
-XS.newCreatureDef=function(){ return {name:'', kingdomName:'', cell:'Animalia', plan:'beast',
-  hue:0.5, size:1, build:1, seed:Math.floor(Math.random()*1e9), orgs:[] }; };
-/* one tool, used directly on the creature: push/pull the outline, or drag past
-   the edge to draw a limb. No parameters — you shape it with your hands. */
-XS.sculptAt=function(def, ang, dist, strength){
-  const N=XS.SHAPE_N; def.shape=def.shape||new Array(N).fill(1);
-  if(dist>1.34){                                 // beyond the body → draw a limb
-    def.limbs=def.limbs||[];
-    const near=def.limbs.find(L=>Math.abs(((L.a-ang+Math.PI*3)%(Math.PI*2))-Math.PI)<0.30);
-    if(near){ near.len=dist-1; near.w=Math.min(0.11,Math.max(0.025,near.w||0.05)); }
-    else if(def.limbs.length<14) def.limbs.push({a:ang, len:dist-1, w:0.05});
-    return;
-  }
-  const idx=((Math.round(ang/(Math.PI*2)*N))%N+N)%N;   // pull the outline toward the cursor
-  const target=Math.max(0.35,Math.min(1.65,dist));
-  for(let k=-4;k<=4;k++){ const i=((idx+k)%N+N)%N, fall=Math.cos(k/4*Math.PI*0.5)**2;
-    def.shape[i]+= (target-def.shape[i])*(strength||0.5)*fall; }
-};
-/* Push the sculpt straight into the live species. Rebuilding a whole scenario
-   on every pointer-move made dragging unusable; this is the per-frame path. */
-/* One knob shapes the whole silhouette: limb/segment/arm counts all scale
-   together, so a build slider gives real variety without fiddly manual work. */
-XS.buildForm=function(def){
-  const b=Math.max(0,Math.min(1,def.build??0.5)), n=(lo,hi)=>Math.round(lo+(hi-lo)*b);
-  return {legs:n(2,8), arms:n(3,9), segs:n(3,11), spines:n(4,16), fronds:n(3,9), tail:1};
-};
-XS.applySculpt=function(def){
-  const sc=XS.app&&XS.app.sc; if(!sc||!sc.A) return;
-  XS.migrateCreature(def);
-  const K=XS.KINGDOMS[def.cell]||XS.KINGDOMS.Animalia, h=def.hue;
-  sc.A.form=XS.buildForm(def);
-  sc.A.plan=def.plan||'beast';
-  sc.A.size=def.size||1;
-  sc.A.col=[Math.round(120+120*Math.sin(6.283*h)),
-            Math.round(120+120*Math.sin(6.283*h+2.09)),
-            Math.round(120+120*Math.sin(6.283*h+4.19))];
-  sc.A.label=(def.kingdomName||'').trim()||K.label;
-  sc.name=(def.name||'').trim()||'Unnamed';
-};
-XS.smoothShape=function(def){ const N=XS.SHAPE_N, s=def.shape||[]; const o=s.slice();
-  for(let i=0;i<N;i++){ o[i]=(s[(i-1+N)%N]+s[i]*2+s[(i+1)%N])/4; } def.shape=o; };
-XS.resetShape=function(def){ def.shape=new Array(XS.SHAPE_N).fill(1); def.limbs=[]; };
-/* organelles a player may add on top of the ones their kingdom forces */
-XS.OPTIONAL_ORGS=['mitochondrion','chloroplast','vacuole','food_vacuole','lysosome','golgi','er_rough',
-  'flagellum','cilia','pseudopod','pili','eyespot','spore','contractile','capsule','plasmid','centriole'];
-/* turn a creator definition into a species entry the rest of the game accepts */
-XS.customSpecies=function(def){
-  XS.migrateCreature(def);
-  const K=XS.KINGDOMS[def.cell]||XS.KINGDOMS.Animalia;
-  const h=def.hue, col=[
-    Math.round(120+120*Math.sin(6.283*h)),
-    Math.round(120+120*Math.sin(6.283*h+2.09)),
-    Math.round(120+120*Math.sin(6.283*h+4.19))];
-  const nm=(def.name||'Unnamed').trim()||'Unnamed';
-  return { id:'custom_'+(def.seed||0), custom:true, alien:!!K.alien,
-    name:[nm], epi:[''], kingdom:(def.kingdomName||'').trim()||K.label,
-    kingdomName:(def.kingdomName||'').trim()||null, body:'an organism of your own design',
-    plan:def.plan||'beast', cell:def.cell, col, size:def.size||1, minXP:0,
-    orgs:(def.orgs||[]).slice(),
-    form:XS.buildForm(def),
-    blurb:'A species you designed. Its shape is your choice — its biology follows its kingdom, and the assays will say so.' };
-};
-/* creatures saved before the direct-sculpt creator stored numeric parameters;
-   bring them forward instead of crashing on them */
-XS.migrateCreature=function(def){
-  if(!def) return def;
-  if(!def.plan || !XS.CREATOR_PLANS.includes(def.plan)) def.plan='beast';
-  if(typeof def.build!=='number') def.build=0.5;
-  delete def.shape; delete def.limbs;          // drop the removed sculpt data
-  if(!Array.isArray(def.orgs)) def.orgs=[];
-  if(typeof def.hue!=='number') def.hue=0.5;
-  if(typeof def.size!=='number') def.size=1;
-  return def;
-};
-XS.saveCreature=function(def){
-  if(!XS.progress.custom) XS.progress.custom=[];
-  const d=Object.assign({}, def); if(!d.seed) d.seed=Math.floor(Math.random()*1e9);
-  const i=XS.progress.custom.findIndex(x=>x.seed===d.seed);
-  if(i>=0) XS.progress.custom[i]=d; else XS.progress.custom.push(d);
-  XS.award(15,'Catalogued: '+(d.name||'Unnamed')); XS.saveProgress(); return d;
-};
-XS.deleteCreature=function(seed){
-  if(!XS.progress.custom) return;
-  XS.progress.custom=XS.progress.custom.filter(x=>x.seed!==seed); XS.saveProgress();
-};
-
 /* ---------------- scenario generation ---------------- */
 XS.buildScenario=function(objective, tier, forceCell){
   const T=(XS.TIERS&&XS.TIERS[tier])||{margin:1};
@@ -613,15 +514,11 @@ XS.buildScenario=function(objective, tier, forceCell){
   const fc = ((XS.app&&XS.app.mode)||'quick')==='contact';       // 🛸 First Contact = alien species only
   const pool = forceCell ? XS.SPECIES.filter(s=>s.cell===forceCell)
     : XS.SPECIES.filter(s=> (fc? !!s.alien : !s.alien) && xp>=(s.minXP||0));
-  // a species you built yourself takes precedence over the random roll
-  const forced = XS.app && XS.app.forceSpecies;
-  const base = forced || pick(pool.length?pool:XS.SPECIES);
+  const base = pick(pool.length?pool:XS.SPECIES);
   const morph=XS.genMorph(base);
   // a player-designed species keeps the exact shape it was sculpted with;
   // only procedurally-generated ones get random morphology
-  const A=base.custom
-    ? Object.assign({}, base, {label:base.kingdomName||base.kingdom})
-    : Object.assign({}, base, {label:base.kingdom, col:morph.col, form:morph.form, size:(base.size||1)*morph.size});
+  const A=Object.assign({}, base, {label:base.kingdom, col:morph.col, form:morph.form, size:(base.size||1)*morph.size});
   const planet=pick(XS.PLANETS);
   const tmpl=R_BY_PLAN[base.plan]||R_ANIMAL;
   const pos = base.plan==='colony' ? (COLONY_POS[(base.form&&base.form.style)]||null) : (PLAN_POS[base.plan]||null);
@@ -853,7 +750,7 @@ function rollTraits(sc, tier){
 /* lazily build the cell you meet in a region */
 XS.regionCell=function(sc, region){
   if(region.cellSpec) return region.cellSpec;
-  const spec=XS.genSpecimen(region.cell, sc.tier||'field', (sc.A&&sc.A.orgs)||null);
+  const spec=XS.genSpecimen(region.cell, sc.tier||'field');
   spec.task=null; spec.inspected=new Set();
   region.cellSpec=spec;
   return spec;
