@@ -45,7 +45,7 @@ UI.init=function(){
     const dx=x-fr.cx, dy=y-fr.cy, d=Math.hypot(dx,dy);
     if(d<fr.base*0.10) return false;                       // ignore the dead centre
     XS.sculptAt(D, Math.atan2(dy,dx), d/fr.base, 0.42);
-    XS.previewCreature(D); return true; };
+    XS.applySculpt(D); return true; };            // live, in-place: no scenario rebuild
   cv.addEventListener('pointerdown',e=>{ if(!XS.app.sculpt) return;
     sculpting=sculptPoint(e); if(sculpting){ cv.setPointerCapture&&cv.setPointerCapture(e.pointerId); sfx('blip'); } });
   cv.addEventListener('pointermove',e=>{ if(sculpting && XS.app.sculpt) sculptPoint(e); });
@@ -774,7 +774,9 @@ UI.showCreator=function(def){
     `<div class="cap">Design</div>`+
     `<label class="cr-lab">Name</label>`+
     `<input class="cr-name" id="crName" maxlength="22" placeholder="Name your organism" value="${(D.name||'').replace(/"/g,'&quot;')}">`+
-    `<label class="cr-lab">Kingdom <span class="muted">— sets its biology</span></label>`+
+    `<label class="cr-lab">Your kingdom <span class="muted">— what you call it</span></label>`+
+    `<input class="cr-name" id="crKing" maxlength="18" placeholder="e.g. Vitreoform" value="${(D.kingdomName||'').replace(/"/g,'&quot;')}">`+
+    `<label class="cr-lab">Based on <span class="muted">— sets its biology</span></label>`+
     `<select class="cr-sel" id="crCell">${XS.CREATOR_KINGDOMS.map(k=>`<option value="${k}"${k===D.cell?' selected':''}>${(XS.KINGDOMS[k]||{}).label||k}${(XS.KINGDOMS[k]||{}).alien?' · alien':''}</option>`).join('')}</select>`+
     `<div class="cr-bio"><b>${K.label||D.cell}</b><small>${K.blurb||''}</small>`+
       `<div class="cr-weak">Weakness · <b>${XS.agentName(weak)}</b></div></div>`;
@@ -785,6 +787,8 @@ UI.showCreator=function(def){
       `Drag <b>past the edge</b> to draw a limb.<br>That is the whole tool — it is your hands, not settings.</div></div>`+
     `<label class="cr-lab">Colour</label>`+
     `<input type="range" class="cr-rng" id="crHue" min="0" max="1" step="0.01" value="${D.hue}">`+
+    `<label class="cr-lab">Size <b class="cr-val" id="crSizev">${(+(D.size||1)).toFixed(2)}×</b></label>`+
+    `<input type="range" class="cr-rng" id="crSize" min="0.6" max="1.6" step="0.01" value="${D.size||1}">`+
     `<div class="cr-acts">`+
       `<button class="btn" id="crSmooth">〜 Smooth</button>`+
       `<button class="btn" id="crReset">↺ Reset shape</button>`+
@@ -818,12 +822,15 @@ UI.showCreator=function(def){
     `<button class="abtn treat" id="crPlayP"><b>💚 Play · Preserve</b><small>something is killing it</small></button>`+
     `<button class="abtn treat" id="crPlayN"><b>☠️ Play · Neutralize</b><small>it is the threat</small></button>`+
     `<div class="dsep"></div>`+
+    `<button class="abtn" id="crCell"><b>🔬 Inspect cell</b><small>see the interior you built</small></button>`+
     `<button class="abtn" id="crList"><b>📚 My species</b><small>${(XS.progress.custom||[]).length} saved</small></button>`;
 
   const re=()=>{ XS.previewCreature(D); };
   $('crName').oninput=e=>{ D.name=e.target.value; };
+  const kn=$('crKing'); if(kn) kn.oninput=e=>{ D.kingdomName=e.target.value; };
   $('crCell').onchange=e=>{ sfx('click'); D.cell=e.target.value; UI.showCreator(D); };
-  $('crHue').oninput=e=>{ D.hue=+e.target.value; re(); };
+  $('crHue').oninput=e=>{ D.hue=+e.target.value; XS.applySculpt(D); };
+  $('crSize').oninput=e=>{ D.size=+e.target.value; const l=$('crSizev'); if(l) l.textContent=D.size.toFixed(2)+'×'; XS.applySculpt(D); };
   $('crSmooth').onclick=()=>{ sfx('blip'); XS.smoothShape(D); re(); };
   $('crReset').onclick=()=>{ sfx('err'); XS.resetShape(D); re(); };
   XS.app.sculpt=D;                       // arms the pointer tool on the canvas
@@ -834,6 +841,11 @@ UI.showCreator=function(def){
   const closeOrg=()=>{ XS.app.sculpt=null; const op=document.getElementById('crOrg'); if(op) op.style.display='none'; };
   $('crPlayP').onclick=()=>{ sfx('click'); closeOrg(); XS.startCustomMission(D,'preserve'); UI.renderPhase(); };
   $('crPlayN').onclick=()=>{ sfx('click'); closeOrg(); XS.startCustomMission(D,'neutralize'); UI.renderPhase(); };
+  $('crCell').onclick=()=>{ sfx('scan'); XS.app.sculpt=null;
+    const sc=XS.app.sc; sc.regions.forEach(r=>r.cellSpec=null);
+    XS.enterRegion(sc.regions[0]); UI.renderPhase();
+    UI.dock.innerHTML=`<button class="abtn back" id="crCellBack"><b>← Back to sculpting</b><small>return to the creator</small></button>`;
+    $('crCellBack').onclick=()=>{ sfx('click'); XS.exitRegion(); UI.showCreator(D); }; };
   $('crList').onclick=()=>{ sfx('click'); UI.showMySpecies(); };
 };
 UI.showMySpecies=function(){

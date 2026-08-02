@@ -538,6 +538,22 @@ XS.sculptAt=function(def, ang, dist, strength){
   for(let k=-4;k<=4;k++){ const i=((idx+k)%N+N)%N, fall=Math.cos(k/4*Math.PI*0.5)**2;
     def.shape[i]+= (target-def.shape[i])*(strength||0.5)*fall; }
 };
+/* Push the sculpt straight into the live species. Rebuilding a whole scenario
+   on every pointer-move made dragging unusable; this is the per-frame path. */
+XS.applySculpt=function(def){
+  const sc=XS.app&&XS.app.sc; if(!sc||!sc.A) return;
+  XS.migrateCreature(def);
+  const K=XS.KINGDOMS[def.cell]||XS.KINGDOMS.Animalia, h=def.hue;
+  sc.A.form=sc.A.form||{};
+  sc.A.form.shape=(def.shape||[]).slice();
+  sc.A.form.limbs=(def.limbs||[]).map(L=>({a:L.a,len:L.len,w:L.w}));
+  sc.A.size=def.size||1;
+  sc.A.col=[Math.round(120+120*Math.sin(6.283*h)),
+            Math.round(120+120*Math.sin(6.283*h+2.09)),
+            Math.round(120+120*Math.sin(6.283*h+4.19))];
+  sc.A.label=(def.kingdomName||'').trim()||K.label;
+  sc.name=(def.name||'').trim()||'Unnamed';
+};
 XS.smoothShape=function(def){ const N=XS.SHAPE_N, s=def.shape||[]; const o=s.slice();
   for(let i=0;i<N;i++){ o[i]=(s[(i-1+N)%N]+s[i]*2+s[(i+1)%N])/4; } def.shape=o; };
 XS.resetShape=function(def){ def.shape=new Array(XS.SHAPE_N).fill(1); def.limbs=[]; };
@@ -554,7 +570,8 @@ XS.customSpecies=function(def){
     Math.round(120+120*Math.sin(6.283*h+4.19))];
   const nm=(def.name||'Unnamed').trim()||'Unnamed';
   return { id:'custom_'+(def.seed||0), custom:true, alien:!!K.alien,
-    name:[nm], epi:[''], kingdom:K.label, body:'an organism of your own design',
+    name:[nm], epi:[''], kingdom:(def.kingdomName||'').trim()||K.label,
+    kingdomName:(def.kingdomName||'').trim()||null, body:'an organism of your own design',
     plan:'custom', cell:def.cell, col, size:1, minXP:0,
     orgs:(def.orgs||[]).slice(),
     form:{ shape:(def.shape||new Array(XS.SHAPE_N).fill(1)).slice(), limbs:(def.limbs||[]).map(L=>({a:L.a,len:L.len,w:L.w})) },
@@ -573,6 +590,7 @@ XS.migrateCreature=function(def){
   def.limbs=def.limbs.filter(L=>L&&typeof L.a==='number');
   if(!Array.isArray(def.orgs)) def.orgs=[];
   if(typeof def.hue!=='number') def.hue=0.5;
+  if(typeof def.size!=='number') def.size=1;
   return def;
 };
 XS.saveCreature=function(def){
@@ -601,7 +619,7 @@ XS.buildScenario=function(objective, tier, forceCell){
   // a player-designed species keeps the exact shape it was sculpted with;
   // only procedurally-generated ones get random morphology
   const A=base.custom
-    ? Object.assign({}, base, {label:base.kingdom})
+    ? Object.assign({}, base, {label:base.kingdomName||base.kingdom})
     : Object.assign({}, base, {label:base.kingdom, col:morph.col, form:morph.form, size:(base.size||1)*morph.size});
   const planet=pick(XS.PLANETS);
   const tmpl=R_BY_PLAN[base.plan]||R_ANIMAL;
